@@ -241,7 +241,12 @@ final class TypeScriptAnalyzer {
     for (final pattern in includePatterns) {
       final glob = Glob(pattern);
       await for (final entity in glob.list(root: projectPath)) {
-        if (entity is File && (entity.path.endsWith('.ts') || entity.path.endsWith('.tsx'))) {
+        if (entity is File &&
+            !entity.path.endsWith('.d.ts') &&
+            (entity.path.endsWith('.ts') ||
+             entity.path.endsWith('.tsx') ||
+             entity.path.endsWith('.js') ||
+             entity.path.endsWith('.jsx'))) {
           included.add(p.normalize(entity.path));
         }
       }
