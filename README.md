@@ -138,6 +138,7 @@ Vetro has been heavily tested and verified against real-world projects and produ
 * **[Performance Benchmark Report](docs/performance_benchmark_report.md):** Execution speed benchmarks on medium-to-large codebases pre- and post-algorithmic optimizations.
 * **[Token Savings & Cost Report](docs/token_savings_and_cost_report.md):** Comparative analysis of execution costs and time between Vetro and equivalent LLM-based code audits.
 * **[Pull Request Audits](docs/walkthrough.md#cupertino_http-manual--pr-audits-verification):** Real-world case studies analyzing production PRs from Google and RxDart repositories (such as [Google PR Audit](docs/google_pr_audit_report.md), [RxDart PR Audit](docs/rxdart_pr_audit_report.md), and [GitHub Experiments](docs/github_experiments_report.md)).
+* **[Scientific Validation Roadmap](docs/scientific_validation_roadmap.md):** Research methodology, property-based algebraic invariant proofs, and future roadmap for scientific validation of Vetro.
 
 ## Philosophy
 

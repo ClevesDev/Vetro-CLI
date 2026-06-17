@@ -138,6 +138,7 @@ Vetro ha sido probado y verificado exhaustivamente contra proyectos reales y pul
 * **[Reporte de Rendimiento (Benchmark)](docs/performance_benchmark_report.md):** Tiempos de ejecución y velocidad del analizador en bases de código medianas y grandes, antes y después de nuestras optimizaciones algorítmicas.
 * **[Reporte de Ahorro de Tokens y Costos](docs/token_savings_and_cost_report.md):** Comparativa del costo financiero y de tiempo entre Vetro y auditorías equivalentes basadas en LLM.
 * **[Auditorías de Pull Requests](docs/walkthrough.md#cupertino_http-manual--pr-audits-verification):** Casos de estudio en el mundo real analizando PRs de producción de repositorios de Google y RxDart (incluyendo la [Auditoría de PR de Google](docs/google_pr_audit_report.md), la [Auditoría de PR de RxDart](docs/rxdart_pr_audit_report.md), y el [Reporte de Experimentos de GitHub](docs/github_experiments_report.md)).
+* **[Hoja de Ruta de Validación Científica](docs/scientific_validation_roadmap.md):** Metodología de investigación, pruebas de invariantes algebraicos basadas en propiedades y planificación de fases científicas para la verificación de Vetro.
 
 ## Filosofía
 
