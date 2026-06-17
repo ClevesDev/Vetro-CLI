@@ -1,0 +1,29 @@
+vetro:
+  version: 1
+
+  # Archivos a analizar
+  include:
+    - lib/*.dart
+    - lib/**/*.dart
+
+  # Archivos a excluir
+  exclude:
+    - "**/*.g.dart"
+    - "**/*.freezed.dart"
+    - "**/*.mocks.dart"
+
+  # Configuración de reglas
+  rules:
+    tight_coupling:
+      enabled: true
+      max_coupling: 0.25
+      severity: info
+
+    boundary_violation:
+      enabled: true
+      severity: error
+      layers:
+        - core
+        - analyzers
+        - cli
+        - bin

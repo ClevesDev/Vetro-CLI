@@ -1,0 +1,316 @@
+{
+  "version": "0.1.0",
+  "project_path": "/home/dimas/development/Vetro/scratch/http/pkgs/cupertino_http",
+  "analyzed_at": "2026-06-16T18:32:56.236755Z",
+  "summary": {
+    "file_count": 4,
+    "line_count": 2187,
+    "ai_debt_score": 86,
+    "analysis_time_ms": 414,
+    "findings_by_severity": {
+      "error": 0,
+      "warning": 14,
+      "info": 7
+    }
+  },
+  "findings": [
+    {
+      "rule_id": "intent_gap",
+      "rule_name": "Intent Gap",
+      "severity": "info",
+      "file": "/home/dimas/development/Vetro/scratch/http/pkgs/cupertino_http/lib/src/cupertino_api.dart",
+      "line": 106,
+      "column": 0,
+      "message": "Function \"_buildDelegate\" has complexity 8 but no intent documentation (no comments explaining why).",
+      "evidence": {
+        "cyclomatic_complexity": "8",
+        "intent_comments": "0"
+      }
+    },
+    {
+      "rule_id": "halstead_complexity",
+      "rule_name": "Halstead Complexity",
+      "severity": "warning",
+      "file": "/home/dimas/development/Vetro/scratch/http/pkgs/cupertino_http/lib/src/cupertino_api.dart",
+      "line": 106,
+      "column": 0,
+      "message": "Function \"_buildDelegate\" has Halstead effort 68865.5 (threshold: 50000.0).",
+      "evidence": {
+        "halstead_effort": "68865.5",
+        "halstead_volume": "2835.0",
+        "halstead_difficulty": "24.3",
+        "distinct_operators": "16",
+        "distinct_operands": "55",
+        "threshold": "50000.0"
+      }
+    },
+    {
+      "rule_id": "copy_mutate",
+      "rule_name": "Copy-Mutate Pattern",
+      "severity": "warning",
+      "file": "/home/dimas/development/Vetro/scratch/http/pkgs/cupertino_http/lib/src/cupertino_api.dart",
+      "line": 478,
+      "column": 0,
+      "message": "Function \"URLSessionConfiguration.toString\" is 91.0% structurally similar to \"URLSessionTask._toStringHelper\" at /home/dimas/development/Vetro/scratch/http/pkgs/cupertino_http/lib/src/cupertino_api.dart:779.",
+      "evidence": {
+        "similarity": "91.0%",
+        "function_a": "/home/dimas/development/Vetro/scratch/http/pkgs/cupertino_http/lib/src/cupertino_api.dart:478 (URLSessionConfiguration.toString)",
+        "function_b": "/home/dimas/development/Vetro/scratch/http/pkgs/cupertino_http/lib/src/cupertino_api.dart:779 (URLSessionTask._toStringHelper)"
+      }
+    },
+    {
+      "rule_id": "copy_mutate",
+      "rule_name": "Copy-Mutate Pattern",
+      "severity": "warning",
+      "file": "/home/dimas/development/Vetro/scratch/http/pkgs/cupertino_http/lib/src/cupertino_api.dart",
+      "line": 746,
+      "column": 0,
+      "message": "Function \"URLSessionTask.delegate\" is 95.0% structurally similar to \"URLSession.delegate\" at /home/dimas/development/Vetro/scratch/http/pkgs/cupertino_http/lib/src/cupertino_api.dart:1033.",
+      "evidence": {
+        "similarity": "95.0%",
+        "function_a": "/home/dimas/development/Vetro/scratch/http/pkgs/cupertino_http/lib/src/cupertino_api.dart:746 (URLSessionTask.delegate)",
+        "function_b": "/home/dimas/development/Vetro/scratch/http/pkgs/cupertino_http/lib/src/cupertino_api.dart:1033 (URLSession.delegate)"
+      }
+    },
+    {
+      "rule_id": "copy_mutate",
+      "rule_name": "Copy-Mutate Pattern",
+      "severity": "warning",
+      "file": "/home/dimas/development/Vetro/scratch/http/pkgs/cupertino_http/lib/src/cupertino_api.dart",
+      "line": 827,
+      "column": 0,
+      "message": "Function \"URLSessionWebSocketTask.sendMessage\" is 82.5% structurally similar to \"URLSessionWebSocketTask.receiveMessage\" at /home/dimas/development/Vetro/scratch/http/pkgs/cupertino_http/lib/src/cupertino_api.dart:849.",
+      "evidence": {
+        "similarity": "82.5%",
+        "function_a": "/home/dimas/development/Vetro/scratch/http/pkgs/cupertino_http/lib/src/cupertino_api.dart:827 (URLSessionWebSocketTask.sendMessage)",
+        "function_b": "/home/dimas/development/Vetro/scratch/http/pkgs/cupertino_http/lib/src/cupertino_api.dart:849 (URLSessionWebSocketTask.receiveMessage)"
+      }
+    },
+    {
+      "rule_id": "semantic_duplication",
+      "rule_name": "Semantic Duplication",
+      "severity": "warning",
+      "file": "/home/dimas/development/Vetro/scratch/http/pkgs/cupertino_http/lib/src/cupertino_api.dart",
+      "line": 478,
+      "column": 0,
+      "message": "Function \"URLSessionConfiguration.toString\" is 82.8% semantically similar to \"URLSessionTask._toStringHelper\" at /home/dimas/development/Vetro/scratch/http/pkgs/cupertino_http/lib/src/cupertino_api.dart:779.",
+      "evidence": {
+        "similarity": "82.8%",
+        "function_a": "URLSessionConfiguration.toString",
+        "function_b": "URLSessionTask._toStringHelper",
+        "location_a": "/home/dimas/development/Vetro/scratch/http/pkgs/cupertino_http/lib/src/cupertino_api.dart:478",
+        "location_b": "/home/dimas/development/Vetro/scratch/http/pkgs/cupertino_http/lib/src/cupertino_api.dart:779"
+      }
+    },
+    {
+      "rule_id": "semantic_duplication",
+      "rule_name": "Semantic Duplication",
+      "severity": "warning",
+      "file": "/home/dimas/development/Vetro/scratch/http/pkgs/cupertino_http/lib/src/cupertino_api.dart",
+      "line": 746,
+      "column": 0,
+      "message": "Function \"URLSessionTask.delegate\" is 92.3% semantically similar to \"URLSession.delegate\" at /home/dimas/development/Vetro/scratch/http/pkgs/cupertino_http/lib/src/cupertino_api.dart:1033.",
+      "evidence": {
+        "similarity": "92.3%",
+        "function_a": "URLSessionTask.delegate",
+        "function_b": "URLSession.delegate",
+        "location_a": "/home/dimas/development/Vetro/scratch/http/pkgs/cupertino_http/lib/src/cupertino_api.dart:746",
+        "location_b": "/home/dimas/development/Vetro/scratch/http/pkgs/cupertino_http/lib/src/cupertino_api.dart:1033"
+      }
+    },
+    {
+      "rule_id": "tight_coupling",
+      "rule_name": "Tight Coupling",
+      "severity": "warning",
+      "file": "/home/dimas/development/Vetro/scratch/http/pkgs/cupertino_http/lib/src/cupertino_api.dart",
+      "line": 1,
+      "column": 0,
+      "message": "File \"lib/src/cupertino_api.dart\" has tight coupling: 50.0% (fan-in: 2, fan-out: 0).",
+      "evidence": {
+        "coupling": "50.0%",
+        "fan_in": "2",
+        "fan_out": "0",
+        "threshold": "25.0%"
+      }
+    },
+    {
+      "rule_id": "eigenvector_centrality",
+      "rule_name": "Eigenvector Centrality",
+      "severity": "warning",
+      "file": "/home/dimas/development/Vetro/scratch/http/pkgs/cupertino_http/lib/src/cupertino_api.dart",
+      "line": 1,
+      "column": 0,
+      "message": "File \"lib/src/cupertino_api.dart\" has high eigenvector centrality: 0.827 (fan-in: 2, fan-out: 0).",
+      "evidence": {
+        "eigenvector_centrality": "0.827",
+        "fan_in": "2",
+        "fan_out": "0",
+        "threshold": "0.400"
+      }
+    },
+    {
+      "rule_id": "cyclomatic_complexity",
+      "rule_name": "Cyclomatic Complexity",
+      "severity": "warning",
+      "file": "/home/dimas/development/Vetro/scratch/http/pkgs/cupertino_http/lib/src/cupertino_client.dart",
+      "line": 108,
+      "column": 0,
+      "message": "Function \"_findReasonPhrase\" has cyclomatic complexity 41 (threshold: 15).",
+      "evidence": {
+        "cyclomatic_complexity": "41",
+        "threshold": "15"
+      }
+    },
+    {
+      "rule_id": "cyclomatic_complexity",
+      "rule_name": "Cyclomatic Complexity",
+      "severity": "warning",
+      "file": "/home/dimas/development/Vetro/scratch/http/pkgs/cupertino_http/lib/src/cupertino_client.dart",
+      "line": 348,
+      "column": 0,
+      "message": "Function \"send\" has cyclomatic complexity 17 (threshold: 15).",
+      "evidence": {
+        "cyclomatic_complexity": "17",
+        "threshold": "15"
+      }
+    },
+    {
+      "rule_id": "intent_gap",
+      "rule_name": "Intent Gap",
+      "severity": "info",
+      "file": "/home/dimas/development/Vetro/scratch/http/pkgs/cupertino_http/lib/src/cupertino_client.dart",
+      "line": 108,
+      "column": 0,
+      "message": "Function \"_findReasonPhrase\" has complexity 41 but no intent documentation (no comments explaining why).",
+      "evidence": {
+        "cyclomatic_complexity": "41",
+        "intent_comments": "0"
+      }
+    },
+    {
+      "rule_id": "intent_gap",
+      "rule_name": "Intent Gap",
+      "severity": "info",
+      "file": "/home/dimas/development/Vetro/scratch/http/pkgs/cupertino_http/lib/src/cupertino_client.dart",
+      "line": 197,
+      "column": 0,
+      "message": "Function \"_onComplete\" has complexity 12 but no intent documentation (no comments explaining why).",
+      "evidence": {
+        "cyclomatic_complexity": "12",
+        "intent_comments": "0"
+      }
+    },
+    {
+      "rule_id": "intent_gap",
+      "rule_name": "Intent Gap",
+      "severity": "info",
+      "file": "/home/dimas/development/Vetro/scratch/http/pkgs/cupertino_http/lib/src/cupertino_client.dart",
+      "line": 348,
+      "column": 0,
+      "message": "Function \"send\" has complexity 17 but no intent documentation (no comments explaining why).",
+      "evidence": {
+        "cyclomatic_complexity": "17",
+        "intent_comments": "0"
+      }
+    },
+    {
+      "rule_id": "halstead_complexity",
+      "rule_name": "Halstead Complexity",
+      "severity": "warning",
+      "file": "/home/dimas/development/Vetro/scratch/http/pkgs/cupertino_http/lib/src/cupertino_client.dart",
+      "line": 348,
+      "column": 0,
+      "message": "Function \"send\" has Halstead effort 230872.7 (threshold: 50000.0).",
+      "evidence": {
+        "halstead_effort": "230872.7",
+        "halstead_volume": "5011.8",
+        "halstead_difficulty": "46.1",
+        "distinct_operators": "38",
+        "distinct_operands": "106",
+        "threshold": "50000.0"
+      }
+    },
+    {
+      "rule_id": "low_cohesion",
+      "rule_name": "Low Cohesion",
+      "severity": "warning",
+      "file": "/home/dimas/development/Vetro/scratch/http/pkgs/cupertino_http/lib/src/cupertino_client.dart",
+      "line": 78,
+      "column": 0,
+      "message": "Class \"CupertinoClient\" has low cohesion: 12.1% (threshold: 15.0%).",
+      "evidence": {
+        "semantic_cohesion": "12.1%",
+        "threshold": "15.0%"
+      }
+    },
+    {
+      "rule_id": "tight_coupling",
+      "rule_name": "Tight Coupling",
+      "severity": "warning",
+      "file": "/home/dimas/development/Vetro/scratch/http/pkgs/cupertino_http/lib/src/cupertino_client.dart",
+      "line": 1,
+      "column": 0,
+      "message": "File \"lib/src/cupertino_client.dart\" has tight coupling: 50.0% (fan-in: 1, fan-out: 1).",
+      "evidence": {
+        "coupling": "50.0%",
+        "fan_in": "1",
+        "fan_out": "1",
+        "threshold": "25.0%"
+      }
+    },
+    {
+      "rule_id": "eigenvector_centrality",
+      "rule_name": "Eigenvector Centrality",
+      "severity": "warning",
+      "file": "/home/dimas/development/Vetro/scratch/http/pkgs/cupertino_http/lib/src/cupertino_client.dart",
+      "line": 1,
+      "column": 0,
+      "message": "File \"lib/src/cupertino_client.dart\" has high eigenvector centrality: 0.447 (fan-in: 1, fan-out: 1).",
+      "evidence": {
+        "eigenvector_centrality": "0.447",
+        "fan_in": "1",
+        "fan_out": "1",
+        "threshold": "0.400"
+      }
+    },
+    {
+      "rule_id": "intent_gap",
+      "rule_name": "Intent Gap",
+      "severity": "info",
+      "file": "/home/dimas/development/Vetro/scratch/http/pkgs/cupertino_http/lib/src/cupertino_web_socket.dart",
+      "line": 60,
+      "column": 0,
+      "message": "Function \"connect\" has complexity 7 but no intent documentation (no comments explaining why).",
+      "evidence": {
+        "cyclomatic_complexity": "7",
+        "intent_comments": "0"
+      }
+    },
+    {
+      "rule_id": "intent_gap",
+      "rule_name": "Intent Gap",
+      "severity": "info",
+      "file": "/home/dimas/development/Vetro/scratch/http/pkgs/cupertino_http/lib/src/cupertino_web_socket.dart",
+      "line": 179,
+      "column": 0,
+      "message": "Function \"_closeConnectionWithError\" has complexity 6 but no intent documentation (no comments explaining why).",
+      "evidence": {
+        "cyclomatic_complexity": "6",
+        "intent_comments": "0"
+      }
+    },
+    {
+      "rule_id": "intent_gap",
+      "rule_name": "Intent Gap",
+      "severity": "info",
+      "file": "/home/dimas/development/Vetro/scratch/http/pkgs/cupertino_http/lib/src/cupertino_web_socket.dart",
+      "line": 239,
+      "column": 0,
+      "message": "Function \"close\" has complexity 11 but no intent documentation (no comments explaining why).",
+      "evidence": {
+        "cyclomatic_complexity": "11",
+        "intent_comments": "0"
+      }
+    }
+  ]
+}

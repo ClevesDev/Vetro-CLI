@@ -1,0 +1,34 @@
+# https://dart.dev/guides/libraries/private-files
+
+# Files and directories created by pub
+.dart_tool/
+.packages
+build/
+.pub/
+
+# IDE files
+.idea/
+.vscode/
+*.iml
+*.ipr
+*.iws
+
+# OS-specific files
+.DS_Store
+Thumbs.db
+
+# Env / Secret files
+.env
+.env.*
+*.local
+credentials.json
+secret.yaml
+
+# Compiled binaries and scratch test folders
+bin/vetro
+scratch/test_project/
+scratch/marionette_mcp/
+scratch/rxdart/
+scratch/http/
+
+
