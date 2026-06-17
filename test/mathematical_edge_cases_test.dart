@@ -3,6 +3,7 @@ import 'package:test/test.dart';
 import 'package:vetro/core/metrics/cohesion.dart';
 import 'package:vetro/core/metrics/dependency_graph.dart';
 import 'package:vetro/core/metrics/entropy.dart';
+import 'package:vetro/core/metrics/halstead.dart';
 import 'package:vetro/core/metrics/similarity.dart';
 
 void main() {
@@ -299,6 +300,202 @@ void main() {
 
       expect(hB, greaterThan(hA),
           reason: 'Introducing a new unique element increases overall Shannon entropy (uncertainty increases)');
+    });
+
+    test('Triangle Inequality for Cosine-based Angular Distance', () {
+      // Cosine distance doesn't satisfy triangle inequality, but angular distance theta = arccos(cos_sim) does!
+      // For any three non-empty sequences A, B, C: theta(A, C) <= theta(A, B) + theta(B, C)
+      final a = ['class', 'FunctionDef', 'If'];
+      final b = ['class', 'FunctionDef', 'Constant'];
+      final c = ['class', 'While', 'Constant'];
+
+      final simAB = cosineSimilarity(a, b);
+      final simBC = cosineSimilarity(b, c);
+      final simAC = cosineSimilarity(a, c);
+
+      final thetaAB = math.acos(simAB);
+      final thetaBC = math.acos(simBC);
+      final thetaAC = math.acos(simAC);
+
+      expect(thetaAC, lessThanOrEqualTo(thetaAB + thetaBC + 1e-9),
+          reason: 'Angular distance must satisfy the triangle inequality');
+    });
+
+    test('Triangle Inequality for LCS-based Edit Distance', () {
+      // Edit distance d(X, Y) = |X| + |Y| - 2 * lcsLength(X, Y) must satisfy the triangle inequality.
+      // For any three sequences A, B, C: d(A, C) <= d(A, B) + d(B, C)
+      final a = ['x', 'y', 'z', 'w'];
+      final b = ['x', 'a', 'b', 'z'];
+      final c = ['a', 'b', 'c', 'd', 'z'];
+
+      double d(List<String> x, List<String> y) {
+        return (x.length + y.length - 2 * lcsLength(x, y)).toDouble();
+      }
+
+      final dAB = d(a, b);
+      final dBC = d(b, c);
+      final dAC = d(a, c);
+
+      expect(dAC, lessThanOrEqualTo(dAB + dBC),
+          reason: 'LCS-based edit distance must satisfy the triangle inequality');
+    });
+
+    test('Subadditivity and Independence properties of Shannon Entropy', () {
+      // H(X, Y) <= H(X) + H(Y), with equality if and only if X and Y are independent.
+      final x = ['a', 'b', 'a', 'b', 'a', 'b', 'a', 'b'];
+      final y = ['x', 'x', 'y', 'y', 'x', 'x', 'y', 'y'];
+
+      // Compute H(X) and H(Y)
+      final hX = shannonEntropyFromSequence(x);
+      final hY = shannonEntropyFromSequence(y);
+
+      // Compute joint entropy H(X, Y)
+      final xyJoint = List.generate(x.length, (i) => '${x[i]}_${y[i]}');
+      final hXY = shannonEntropyFromSequence(xyJoint);
+
+      expect(hXY, lessThanOrEqualTo(hX + hY + 1e-9),
+          reason: 'Joint entropy must satisfy subadditivity H(X, Y) <= H(X) + H(Y)');
+
+      // If X and Y are perfectly independent and uniform:
+      // P(X=a) = 0.5, P(X=b) = 0.5, H(X) = 1.0
+      // P(Y=x) = 0.5, P(Y=y) = 0.5, H(Y) = 1.0
+      // Joint outcomes (a_x, a_y, b_x, b_y) each have frequency 2 / 8 = 0.25
+      // Joint entropy H(X,Y) = 2.0. So equality holds!
+      expect(hXY, closeTo(hX + hY, 1e-9),
+          reason: 'For independent variables, joint entropy equals sum of individual entropies');
+    });
+
+    test('Concavity of Shannon Entropy', () {
+      // For any two distributions P and Q and lambda = 0.5:
+      // H(0.5 * P + 0.5 * Q) >= 0.5 * H(P) + 0.5 * H(Q)
+      final pCounts = {'a': 8, 'b': 2}; // H(P) = -0.8 * log2(0.8) - 0.2 * log2(0.2) ≈ 0.7219
+      final qCounts = {'a': 1, 'b': 9}; // H(Q) ≈ 0.469
+
+      final hP = shannonEntropyFromCounts(pCounts);
+      final hQ = shannonEntropyFromCounts(qCounts);
+
+      // Combined distribution counts
+      // P: a=0.8, b=0.2. Q: a=0.1, b=0.9
+      // Combined: a = 0.5 * 0.8 + 0.5 * 0.1 = 0.45
+      //           b = 0.5 * 0.2 + 0.5 * 0.9 = 0.55
+      final mixedCounts = {'a': 45, 'b': 55};
+      final hMixed = shannonEntropyFromCounts(mixedCounts);
+
+      expect(hMixed, greaterThanOrEqualTo(0.5 * hP + 0.5 * hQ - 1e-9),
+          reason: 'Shannon entropy is concave');
+    });
+
+    test('Exact recurrence relation verification for PageRank/Centrality', () {
+      // Create a small directed graph A -> B -> C, C -> A
+      final graph = DependencyGraph();
+      graph.addEdge('A', 'B');
+      graph.addEdge('B', 'C');
+      graph.addEdge('C', 'A');
+
+      const damping = 0.85;
+      final centrality = graph.eigenvectorCentrality(dampingFactor: damping);
+
+      // Verify that the converged centrality vector is an eigenvector
+      // of the Google transition matrix M.
+      // x*_v = gamma * ( (1 - alpha)/N + alpha * sum_{u in In(v)} x*_u / Out(u) )
+      final n = centrality.length;
+      final base = (1.0 - damping) / n;
+
+      final incoming = <String, List<String>>{
+        'A': ['C'],
+        'B': ['A'],
+        'C': ['B'],
+      };
+
+      // Let's compute the unscaled next iteration value for each node
+      final nextVal = <String, double>{};
+      for (final v in centrality.keys) {
+        var sum = 0.0;
+        for (final u in incoming[v]!) {
+          final outDegree = graph.fanOut(u);
+          sum += centrality[u]! / outDegree;
+        }
+        nextVal[v] = base + damping * sum;
+      }
+
+      // The ratio of centrality[v] / nextVal[v] should be constant (gamma) for all nodes.
+      var firstRatio = 0.0;
+      for (final v in centrality.keys) {
+        final ratio = centrality[v]! / nextVal[v]!;
+        if (firstRatio == 0.0) {
+          firstRatio = ratio;
+        } else {
+          expect(ratio, closeTo(firstRatio, 1e-5),
+              reason: 'Eigenvector centrality must satisfy the scaling relation of PageRank');
+        }
+      }
+    });
+
+    test('Local Clustering Coefficient of Neighbor Directed Cycles', () {
+      // Node V has neighbors A, B, C.
+      // The neighbors form a directed cycle: A -> B -> C -> A
+      // The number of neighbors kv = 3.
+      // The number of edges among neighbors ev = 3.
+      // Clustering Coefficient C_V = ev / (kv * (kv - 1)) = 3 / (3 * 2) = 0.5
+      final graph = DependencyGraph();
+      graph.addEdge('V', 'A');
+      graph.addEdge('V', 'B');
+      graph.addEdge('V', 'C');
+      // Neighbors cycle
+      graph.addEdge('A', 'B');
+      graph.addEdge('B', 'C');
+      graph.addEdge('C', 'A');
+
+      expect(graph.localClusteringCoefficient('V'), closeTo(0.5, 1e-9));
+
+      // Neighbors form a cycle of size 4: A -> B -> C -> D -> A
+      // kv = 4, ev = 4. C_V = 4 / (4 * 3) = 1/3 ≈ 0.333333333
+      final graph4 = DependencyGraph();
+      graph4.addEdge('V', 'A');
+      graph4.addEdge('V', 'B');
+      graph4.addEdge('V', 'C');
+      graph4.addEdge('V', 'D');
+      graph4.addEdge('A', 'B');
+      graph4.addEdge('B', 'C');
+      graph4.addEdge('C', 'D');
+      graph4.addEdge('D', 'A');
+
+      expect(graph4.localClusteringCoefficient('V'), closeTo(1 / 3, 1e-9));
+    });
+
+    test('Halstead Complexity Monotonicity & Boundary Cases', () {
+      // volume V = length * log2(vocabulary)
+      // difficulty D = (distinctOperators / 2) * (totalOperands / distinctOperands)
+      // effort E = D * V
+
+      // Boundary: Distinct operands = 0
+      final zeroOperands = halsteadFromClassifiedTokens(
+        operators: ['+', '-'],
+        operands: [],
+        totalOperators: 5,
+        totalOperands: 0,
+      );
+      expect(zeroOperands.difficulty, equals(0.0));
+      expect(zeroOperands.effort, equals(0.0));
+
+      // Monotonicity check
+      final base = halsteadFromClassifiedTokens(
+        operators: ['+', '-'],
+        operands: ['a', 'b'],
+        totalOperators: 5,
+        totalOperands: 5,
+      );
+
+      final higherOperands = halsteadFromClassifiedTokens(
+        operators: ['+', '-'],
+        operands: ['a', 'b'],
+        totalOperators: 5,
+        totalOperands: 15, // Increase total operands from 5 to 15
+      );
+
+      expect(higherOperands.volume, greaterThan(base.volume));
+      expect(higherOperands.difficulty, greaterThan(base.difficulty));
+      expect(higherOperands.effort, greaterThan(base.effort));
     });
   });
 }

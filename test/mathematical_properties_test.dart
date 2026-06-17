@@ -121,5 +121,106 @@ void main() {
             reason: 'L2-normalized centrality scores must sum of squares to 1.0');
       }
     });
+
+    test('Cosine Angular Distance Triangle Inequality on Corpus Declarations', () {
+      final declarations = <List<String>>[];
+      for (final unit in corpus) {
+        for (final decl in extractDeclarations(unit)) {
+          final tokens = tokenizeRaw(decl.node);
+          if (tokens.isNotEmpty) {
+            declarations.add(tokens);
+          }
+        }
+      }
+
+      // We select a subset of declarations to test triplets (to keep time complexity reasonable)
+      final sampleSize = declarations.length.clamp(0, 15);
+      for (var i = 0; i < sampleSize; i++) {
+        for (var j = 0; j < sampleSize; j++) {
+          for (var k = 0; k < sampleSize; k++) {
+            final a = declarations[i];
+            final b = declarations[j];
+            final c = declarations[k];
+
+            final simAB = cosineSimilarity(a, b);
+            final simBC = cosineSimilarity(b, c);
+            final simAC = cosineSimilarity(a, c);
+
+            final thetaAB = math.acos(simAB);
+            final thetaBC = math.acos(simBC);
+            final thetaAC = math.acos(simAC);
+
+            expect(thetaAC, lessThanOrEqualTo(thetaAB + thetaBC + 1e-9),
+                reason: 'Cosine angular distance must satisfy the triangle inequality on real corpus tokens');
+          }
+        }
+      }
+    });
+
+    test('LCS Edit Distance Triangle Inequality on Corpus Declarations', () {
+      final declarations = <List<String>>[];
+      for (final unit in corpus) {
+        for (final decl in extractDeclarations(unit)) {
+          final tokens = tokenizeRaw(decl.node);
+          if (tokens.isNotEmpty) {
+            declarations.add(tokens);
+          }
+        }
+      }
+
+      double d(List<String> x, List<String> y) {
+        return (x.length + y.length - 2 * lcsLength(x, y)).toDouble();
+      }
+
+      // We select a subset of declarations to test triplets
+      final sampleSize = declarations.length.clamp(0, 15);
+      for (var i = 0; i < sampleSize; i++) {
+        for (var j = 0; j < sampleSize; j++) {
+          for (var k = 0; k < sampleSize; k++) {
+            final a = declarations[i];
+            final b = declarations[j];
+            final c = declarations[k];
+
+            final dAB = d(a, b);
+            final dBC = d(b, c);
+            final dAC = d(a, c);
+
+            expect(dAC, lessThanOrEqualTo(dAB + dBC),
+                reason: 'LCS edit distance must satisfy the triangle inequality on real corpus tokens');
+          }
+        }
+      }
+    });
+
+    test('Local Clustering Coefficient bounds on actual Vetro corpus graph', () {
+      final graph = DependencyGraph();
+
+      // Let's populate the graph using the actual file imports in Vetro.
+      // We can scan import statements from the corpus source code.
+      for (var i = 0; i < corpus.length; i++) {
+        final path = 'File_$i';
+        graph.addNode(path);
+        final unit = corpus[i];
+        
+        // Find import directives
+        for (final directive in unit.directives) {
+          if (directive is ImportDirective) {
+            final uri = directive.uri.stringValue;
+            if (uri != null) {
+              // Add a dependency from this file to the imported URI
+              graph.addEdge(path, uri);
+            }
+          }
+        }
+      }
+
+      for (final node in graph.nodes) {
+        final cc = graph.localClusteringCoefficient(node);
+        expect(cc, greaterThanOrEqualTo(0.0),
+            reason: 'Clustering coefficient must be non-negative');
+        expect(cc, lessThanOrEqualTo(1.0 + 1e-9),
+            reason: 'Clustering coefficient cannot exceed 1.0');
+      }
+    });
   });
 }
