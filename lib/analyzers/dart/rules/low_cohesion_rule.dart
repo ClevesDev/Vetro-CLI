@@ -31,7 +31,8 @@ final class LowCohesionRule extends Rule {
     final findings = <Finding>[];
 
     for (final cls in extractClasses(unit)) {
-      if (cls.members.whereType<MethodDeclaration>().length >= minMethods) {
+      if (cls.abstractKeyword == null &&
+          cls.members.whereType<MethodDeclaration>().length >= minMethods) {
         final cohesion = classCohesion(cls);
         if (cohesion < minCohesion) {
           findings.add(

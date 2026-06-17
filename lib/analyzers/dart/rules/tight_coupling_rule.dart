@@ -63,16 +63,19 @@ final class TightCouplingRule extends CrossFileRule {
     }
 
     final maxCoupling = config.threshold('max_coupling', defaultValue: 0.25);
+    final minFanOut = config.options['min_fan_out'] is num
+        ? (config.options['min_fan_out'] as num).toInt()
+        : 0;
     final findings = <Finding>[];
 
     for (final node in graph.nodes) {
       // We check coupling ratio because files connected to a high percentage of the project
       // represent architectural bottlenecks and sources of fragility.
       final c = graph.coupling(node);
-      if (c > maxCoupling) {
+      final fanOutCount = graph.fanOut(node);
+      if (c > maxCoupling && fanOutCount >= minFanOut) {
         final relativePath = p.relative(node, from: projectRoot);
         final fanInCount = graph.fanIn(node);
-        final fanOutCount = graph.fanOut(node);
 
         findings.add(
           Finding(

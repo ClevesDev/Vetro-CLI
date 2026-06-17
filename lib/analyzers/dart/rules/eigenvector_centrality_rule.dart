@@ -53,6 +53,9 @@ final class EigenvectorCentralityRule extends CrossFileRule {
 
     final maxCentrality =
         config.threshold('max_centrality', defaultValue: 0.40);
+    final minFanOut = config.options['min_fan_out'] is num
+        ? (config.options['min_fan_out'] as num).toInt()
+        : 0;
     final centralities = graph.eigenvectorCentrality();
     final findings = <Finding>[];
 
@@ -60,10 +63,10 @@ final class EigenvectorCentralityRule extends CrossFileRule {
       final node = entry.key;
       final score = entry.value;
 
-      if (score > maxCentrality) {
+      final fanOutCount = graph.fanOut(node);
+      if (score > maxCentrality && fanOutCount >= minFanOut) {
         final relativePath = p.relative(node, from: projectRoot);
         final fanInCount = graph.fanIn(node);
-        final fanOutCount = graph.fanOut(node);
 
         findings.add(
           Finding(

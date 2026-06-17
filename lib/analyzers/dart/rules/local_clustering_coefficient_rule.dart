@@ -63,6 +63,9 @@ final class LocalClusteringCoefficientRule extends CrossFileRule {
 
     final minClustering = config.threshold('min_clustering', defaultValue: 0.15);
     final minConnections = config.threshold('min_connections', defaultValue: 4.0).toInt();
+    final minFanOut = config.options['min_fan_out'] is num
+        ? (config.options['min_fan_out'] as num).toInt()
+        : 0;
     final findings = <Finding>[];
 
     for (final node in graph.nodes) {
@@ -75,7 +78,8 @@ final class LocalClusteringCoefficientRule extends CrossFileRule {
       if (connections < minConnections) continue;
 
       final coef = graph.localClusteringCoefficient(node);
-      if (coef < minClustering) {
+      final fanOutCount = graph.fanOut(node);
+      if (coef < minClustering && fanOutCount >= minFanOut) {
         final relativePath = p.relative(node, from: projectRoot);
         findings.add(
           Finding(
