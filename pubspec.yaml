@@ -3,7 +3,7 @@ description: >-
   AI code debt scanner. Detects technical debt patterns specific to 
   AI-generated code using deterministic mathematical analysis on ASTs.
 version: 0.1.0
-repository: https://github.com/vetro-dev/vetro
+repository: https://github.com/ClevesDev/Vetro-CLI
 
 environment:
   sdk: ^3.11.0
