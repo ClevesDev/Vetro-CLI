@@ -7,11 +7,13 @@
 library;
 
 export 'analyzers/dart/dart_analyzer.dart';
+export 'analyzers/typescript/typescript_analyzer.dart';
 export 'core/metrics/complexity.dart';
 export 'core/metrics/entropy.dart';
 export 'core/metrics/similarity.dart';
 export 'core/models/config.dart';
 export 'core/models/finding.dart';
+export 'core/models/ts_node.dart';
 export 'core/report/json_reporter.dart';
 export 'core/report/markdown_reporter.dart';
 export 'core/report/reporter.dart';

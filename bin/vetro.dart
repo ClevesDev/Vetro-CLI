@@ -53,6 +53,13 @@ Future<void> main(List<String> arguments) async {
       allowed: ['error', 'warning', 'info', 'none'],
       defaultsTo: 'none',
       help: 'Exit with non-zero code if findings equal or exceed this severity.',
+    )
+    ..addOption(
+      'language',
+      abbr: 'l',
+      allowed: ['dart', 'typescript', 'auto'],
+      defaultsTo: 'auto',
+      help: 'Force a specific programming language analyzer or let it auto-detect.',
     );
 
   ArgResults argResults;
@@ -116,6 +123,12 @@ Future<void> main(List<String> arguments) async {
   final excludeList = [...config.exclude, ...extraExcludes];
 
   final verboseOption = argResults['verbose'] as bool;
+  final languageOption = argResults['language'] as String;
+  var language = AnalysisLanguage.fromString(languageOption);
+
+  if (language == AnalysisLanguage.auto) {
+    language = await _detectLanguage(absoluteTargetPath);
+  }
 
   config = VetroConfig(
     include: config.include,
@@ -127,20 +140,25 @@ Future<void> main(List<String> arguments) async {
   );
 
   if (config.verbose) {
+    print(Ansi.dim('Language selected: ${language.name.toUpperCase()}'));
     print(Ansi.dim('Loading analyzer rules registry...'));
   }
-
-  final analyzer = DartAnalyzer();
 
   if (config.verbose) {
     print(Ansi.dim('Starting analysis of "$absoluteTargetPath"...'));
   } else if (config.outputFormat == OutputFormat.terminal) {
-    print('Analyzing codebase...');
+    print('Analyzing codebase (${language.name})...');
   }
 
   ProjectReport report;
   try {
-    report = await analyzer.analyze(absoluteTargetPath, config);
+    if (language == AnalysisLanguage.typescript) {
+      final analyzer = TypeScriptAnalyzer();
+      report = await analyzer.analyze(absoluteTargetPath, config);
+    } else {
+      final analyzer = DartAnalyzer();
+      report = await analyzer.analyze(absoluteTargetPath, config);
+    }
   } catch (e, stack) {
     stderr.writeln(Ansi.red('Fatal error during analysis: $e'));
     if (config.verbose) {
@@ -197,4 +215,49 @@ Future<void> main(List<String> arguments) async {
   }
 
   exit(0);
+}
+
+enum AnalysisLanguage {
+  dart,
+  typescript,
+  auto;
+
+  static AnalysisLanguage fromString(String value) {
+    return switch (value.toLowerCase()) {
+      'dart' => AnalysisLanguage.dart,
+      'typescript' || 'ts' => AnalysisLanguage.typescript,
+      _ => AnalysisLanguage.auto,
+    };
+  }
+}
+
+Future<AnalysisLanguage> _detectLanguage(String projectPath) async {
+  // Check tsconfig.json or package.json
+  if (File(p.join(projectPath, 'tsconfig.json')).existsSync() ||
+      File(p.join(projectPath, 'package.json')).existsSync()) {
+    return AnalysisLanguage.typescript;
+  }
+
+  // Count .dart vs .ts/.tsx files
+  var dartCount = 0;
+  var tsCount = 0;
+
+  try {
+    final dir = Directory(projectPath);
+    await for (final entity in dir.list(recursive: true, followLinks: false)) {
+      if (entity is File) {
+        final path = entity.path;
+        if (path.endsWith('.dart')) {
+          dartCount++;
+        } else if (path.endsWith('.ts') || path.endsWith('.tsx')) {
+          tsCount++;
+        }
+      }
+    }
+  } catch (_) {}
+
+  if (tsCount > dartCount) {
+    return AnalysisLanguage.typescript;
+  }
+  return AnalysisLanguage.dart;
 }

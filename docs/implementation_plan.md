@@ -1,72 +1,80 @@
-# Plan de Implementación — Mejoras Matemáticas Avanzadas para Vetro (Fases 1-4)
+# Plan de Implementación — Soporte para TypeScript (Vetro v0.2.0)
 
-Este plan describe la incorporación de tres grandes mejoras matemáticas en el núcleo de Vetro para potenciar la detección objetiva de deuda técnica de IA y optimizar el rendimiento del análisis cruzado.
+Este plan describe la incorporación de soporte para analizar proyectos de TypeScript (.ts y .tsx) en Vetro, permitiendo detectar deuda técnica inducida por IA (duplicación semántica, complejidad cognitiva, baja entropía, acoplamiento estrecho, etc.) mediante un pipeline híbrido.
 
 ---
 
 ## User Review Required
 
 > [!IMPORTANT]
-> **Planificación por Fases:**
-> Proponemos 4 fases de ejecución secuencial para asegurar estabilidad, con suites de pruebas robustas en cada una y validación de dogfooding.
+> **Requisito de Entorno (Runtime):**
+> Dado que Dart no posee un compilador nativo de TypeScript, delegaremos el parseo sintáctico a un script auxiliar de Node.js que genera el AST en formato JSON.
+> * **Requisito:** El usuario debe tener instalado Node.js (versión 18+) para analizar archivos de TypeScript en producción.
+> * **Verificación:** Vetro validará si el comando `node` está disponible en el PATH del sistema; si no, fallará de forma controlada con un mensaje descriptivo.
+> * **Pruebas (CI/CD):** Para evitar depender de Node en las pruebas de integración y asegurar portabilidad, los tests unitarios en Dart utilizarán ASTs serializados (JSON mocks).
 
 ---
 
 ## Proposed Changes
 
-### Fase 1: Hashing de Estructura AST (Merkle Trees) para Duplicación Semántica
-* **Objetivo**: Evitar comparaciones cruzadas $O(N^2)$ costosas de tokens o LCS cuando las funciones poseen estructuras idénticas, reduciendo el análisis a tiempo constante $O(1)$ en coincidencias exactas.
-* **Componentes a Modificar**:
-  * #### [MODIFY] [similarity.dart](file:///home/dimas/development/Vetro/lib/core/metrics/similarity.dart)
-    * Implementar `String computeAstHash(AstNode node)` que normaliza la estructura del nodo (reemplazando nombres de variables e identificadores por marcadores secuenciales) y genera un hash MD5/SHA-256 de su firma sintáctica.
-  * #### [MODIFY] [copy_mutate_rule.dart](file:///home/dimas/development/Vetro/lib/analyzers/dart/rules/copy_mutate_rule.dart) y [semantic_duplication_rule.dart](file:///home/dimas/development/Vetro/lib/analyzers/dart/rules/semantic_duplication_rule.dart)
-    * Durante la fase de precomputación en el hilo principal o isolates, generar y almacenar `astHash`.
-    * En el bucle de comparación cruzada, si `hashA == hashB`, saltarse el cálculo de distancia de tokens/LCS y reportar de inmediato similitud del `100%`.
+### Componente: Core (Abstracción de AST de TypeScript)
+
+#### [NEW] [ts_node.dart](file:///home/dimas/development/Vetro/lib/core/models/ts_node.dart)
+* Implementar la clase `TsNode` que representará un nodo sintáctico de TypeScript deserializado desde JSON.
+* Atributos: `type` (ej. `IfStatement`), `raw` (mapa de propiedades), `children` (nodos hijos), `start`, `end`, `line`.
+* Métodos:
+  * `List<String> extractIdentifiers()`: Obtiene todos los nombres de variables/funciones declarados.
+  * `List<String> tokenizeRaw()`: Obtiene el flujo ordenado de tokens sintácticos para similitud del coseno.
+  * `int get nodeCount`: Retorna la cantidad total de subnodos.
 
 ---
 
-### Fase 2: Coeficiente de Agrupamiento Local (Clustering Coefficient) en Grafo de Dependencias
-* **Objetivo**: Identificar desorganización y parches de importación cruzada caótica (típica de LLMs) mediante la densidad local de aristas vecinas.
-* **Componentes a Modificar / Crear**:
-  * #### [MODIFY] [dependency_graph.dart](file:///home/dimas/development/Vetro/lib/core/metrics/dependency_graph.dart)
-    * Implementar `double localClusteringCoefficient(String node)` que calcula la modularidad local de un nodo midiendo cuántos de sus archivos vecinos (importadores o importados) están conectados entre sí.
-  * #### [NEW] [local_clustering_coefficient_rule.dart](file:///home/dimas/development/Vetro/lib/analyzers/dart/rules/local_clustering_coefficient_rule.dart)
-    * Crear la regla `LocalClusteringCoefficientRule` que evalúa archivos con alto acoplamiento (fan-in + fan-out) pero bajo agrupamiento local, indicando que el archivo actúa como un puente desordenado de dependencias.
-  * #### [MODIFY] [config.dart](file:///home/dimas/development/Vetro/lib/core/models/config.dart) y [dart_analyzer.dart](file:///home/dimas/development/Vetro/lib/analyzers/dart/dart_analyzer.dart)
-    * Registrar la regla `local_clustering_coefficient` (umbral por defecto: `< 0.15` para archivos con $\ge 4$ conexiones).
+### Componente: Parser Sintáctico (Node.js Helper)
+
+#### [NEW] [ts_parser.js](file:///home/dimas/development/Vetro/lib/analyzers/typescript/parser/ts_parser.js)
+* Un script ligero e independiente de JavaScript que lee un archivo `.ts`/`.tsx` y escribe en `stdout` la estructura del AST en formato JSON.
+* Utilizaremos `@babel/parser` o el paquete oficial de `typescript` a través de un bundle auto-contenido (empaquetado con `esbuild`) para que no requiera ninguna instalación de `npm` a nivel de usuario (cero dependencias en ejecución).
 
 ---
 
-### Fase 3: Entropía de Shannon de Identificadores (Low Identifier Entropy)
-* **Objetivo**: Detectar código repetitivo e inútil ("boilerplate") o variables redundantes generadas mecánicamente por LLMs evaluando el vocabulario real de identificadores.
-* **Componentes a Modificar**:
-  * #### [MODIFY] [entropy.dart](file:///home/dimas/development/Vetro/lib/core/metrics/entropy.dart)
-    * Implementar `double identifierEntropy(AstNode node)` que extrae todos los identificadores creados por el programador (nombres de variables, clases, métodos), filtra palabras clave de Dart, y calcula la entropía sobre su distribución de frecuencia.
-  * #### [MODIFY] [low_entropy_rule.dart](file:///home/dimas/development/Vetro/lib/analyzers/dart/rules/low_entropy_rule.dart)
-    * Extender la regla para evaluar tanto la entropía de tipos de nodos AST (estructura) como la entropía de nombres de identificadores (semántica), generando hallazgos cuando el vocabulario es anormalmente repetitivo (por defecto `< 2.0`).
+### Componente: Analyzers (Orquestador y Reglas de TypeScript)
+
+#### [NEW] [typescript_analyzer.dart](file:///home/dimas/development/Vetro/lib/analyzers/typescript/typescript_analyzer.dart)
+* Orquestador equivalente a `DartAnalyzer` para TypeScript.
+* Valida la presencia de `node` en el sistema.
+* Ejecuta el proceso secundario `node ts_parser.js <archivo>` para cada archivo, recolecta la salida y reconstruye el árbol `TsNode`.
+* Aplica las reglas registradas para TypeScript y consolida los resultados en un `ProjectReport`.
+
+#### [NEW] [lib/analyzers/typescript/rules/](file:///home/dimas/development/Vetro/lib/analyzers/typescript/rules/)
+Implementar las reglas homólogas adaptadas a la estructura de nodos de TypeScript (Babel/ESTree AST format):
+* **`ts_cyclomatic_complexity_rule.dart`**: Cuenta bifurcaciones (`IfStatement`, `SwitchCase`, `ConditionalExpression`, bucles).
+* **`ts_cognitive_complexity_rule.dart`**: Implementa la métrica de Campbell con anidamientos.
+* **`ts_low_entropy_rule.dart`**: Calcula la entropía sobre los tipos de nodos AST y los identificadores declarados.
+* **`ts_intent_gap_rule.dart`**: Ratio de comentarios explicativos frente a complejidad.
+* **`ts_low_cohesion_rule.dart`**: Cohesión de métodos dentro de clases/interfaces.
+* **`ts_tight_coupling_rule.dart`**: Grafo de dependencias a través de declaraciones `import`.
+* **`ts_circular_dependency_rule.dart`**: Detección de ciclos de importación mediante DFS.
+* **`ts_semantic_duplication_rule.dart`**: Similitud del coseno sobre tokens de funciones.
 
 ---
 
-### Fase 4: Pruebas Robustas y Verificación Multi-repo
-* **Objetivo**: Asegurar la máxima cobertura de testing y evaluar las nuevas reglas contra Vetro y `cupertino_http`.
-* **Componentes a Crear**:
-  * #### [NEW] [ast_hashing_test.dart](file:///home/dimas/development/Vetro/test/ast_hashing_test.dart)
-    * Pruebas para la consistencia del hash AST normalizado (debe dar el mismo hash para funciones idénticas renombradas).
-  * #### [NEW] [clustering_coefficient_test.dart](file:///home/dimas/development/Vetro/test/clustering_coefficient_test.dart)
-    * Pruebas del cálculo del coeficiente de agrupamiento local en grafos de prueba acoplados vs. modulares.
-  * #### [NEW] [identifier_entropy_test.dart](file:///home/dimas/development/Vetro/test/identifier_entropy_test.dart)
-    * Pruebas para detectar baja entropía de identificadores en código repetitivo.
+### Componente: CLI (bin/vetro.dart)
+
+#### [MODIFY] [vetro.dart](file:///home/dimas/development/Vetro/bin/vetro.dart)
+* **Auto-detección**: Analizar el directorio objetivo. Si contiene un archivo `tsconfig.json` o la mayoría de los archivos son `.ts`/`.tsx`, instanciar y ejecutar `TypeScriptAnalyzer`. De lo contrario, usar `DartAnalyzer`.
+* **Argumentos de Línea**: Añadir la opción `--language` / `-l` (valores: `dart`, `typescript`, `auto`, por defecto `auto`) para permitir al usuario forzar el motor de análisis.
 
 ---
 
 ## Verification Plan
 
 ### Automated Tests
-* Ejecutar la suite completa para comprobar que todas las pruebas (las existentes y las nuevas) estén en verde:
+* #### [NEW] [typescript_analyzer_test.dart](file:///home/dimas/development/Vetro/test/typescript_analyzer_test.dart)
+  * Suite de pruebas unitarias que simulan la ejecución de reglas sobre ASTs de TypeScript mockeados en JSON.
+* Ejecutar la suite completa para asegurar que no hay regresiones en Dart y que las nuevas reglas de TypeScript funcionan matemáticamente:
   ```bash
   dart test
   ```
 
 ### Manual Verification
-* **Vetro (Self-Analysis)**: Correr Vetro sobre sí mismo para asegurar que mantiene un score de `100/100` y evaluar los nuevos tiempos de ejecución tras optimizar la duplicidad con el hash AST.
-* **cupertino_http**: Analizar el paquete externo y reportar la variación en hallazgos (nuevas alertas de baja entropía o coeficiente de agrupamiento local).
+* **Estudio Piloto TypeScript**: Crear un archivo de prueba `scratch/test_project/index.ts` con duplicación de código e intentar analizarlo con Vetro para certificar que el pipeline del proceso secundario de Node.js funciona correctamente.

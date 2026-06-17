@@ -377,7 +377,43 @@ Durante las ejecuciones iniciales del estudio de correlación, detectamos que la
 
 ### 3. Resultados de la Validación
 - Al mitigar estos ruidos arquitectónicos y correr el script con `min_fan_out: 3`, se obtuvo:
-  - **Suma de diferencias de rango al cuadrado ($\sum d^2$):** 24.0
-  - **Coeficiente de Spearman ($\rho$):** **0.8545**
-- **Validación Científica Aprobada**: El coeficiente de Spearman supera el umbral matemático estricto de $\rho \ge 0.85$, demostrando una correlación positiva extremadamente fuerte entre Vetro y el juicio de legibilidad y mantenibilidad de expertos de ingeniería humana.
-- **Suite de Pruebas**: Ejecutamos la suite completa mediante `dart test` y confirmamos que las **55 pruebas unitarias y algebraicas** continúan pasando con 100% de éxito.
+  - **Sum of squared rank differences ($\sum d^2$):** 24.0
+  - **Spearman Correlation Coefficient ($\rho$):** **0.8545**
+- **Scientific Validation Approved**: The Spearman coefficient exceeds the strict mathematical threshold of $\rho \ge 0.85$, demonstrating an extremely strong positive correlation between Vetro and expert engineering judgment on readability and maintainability.
+- **Test Suite**: Ran the entire test suite via `dart test` and confirmed all **55 unit and property tests** in the project continue to pass with 100% success.
+
+---
+
+## Phase 13: TypeScript Support (Vetro v0.2.0) & Hybrid Pipeline
+
+We successfully implemented cross-platform support for analyzing TypeScript (.ts and .tsx) files, fulfilling the v0.2.0 plan:
+
+### 1. Node.js Syntax Parser (`ts_parser.js` and `babel.min.js`)
+- **Design**: Integrated a lightweight bridge script `lib/analyzers/typescript/parser/ts_parser.js` that uses a self-contained local bundle of `@babel/standalone` (`babel.min.js`).
+- **Environment Independence**: By embedding this bundle inside the package assets, Vetro does not require `npm install` executions or network access during runtime, preserving exceptional execution speed and portability.
+
+### 2. TypeScript AST Abstraction in Dart (`TsNode`)
+- **Representation**: Created the `TsNode` structure to map parsed ESTree/Babel syntax trees from JSON.
+- **Recursion Fix**: Resolved a critical Stack Overflow bug in `TsNode.fromJson` by filtering metadata keys (`type`, `start`, `end`, `loc`) when recursively extracting child nodes.
+- **Helper Utilities**: Implemented `extractIdentifiers()`, `extractNodeTypes()`, and `descendentNodes()` for child traversal and structural comparisons.
+
+### 3. The 8 Homologous Rules for TypeScript
+Implemented and registered TypeScript-specific rules under the `TsRule` and `TsCrossFileRule` interfaces:
+- **`ts_cyclomatic_complexity_rule.dart`**: Counts syntactic control flow decision points.
+- **`ts_cognitive_complexity_rule.dart`**: Campbell's Cognitive Complexity metric (with nesting penalties and logical operator grouping).
+- **`ts_low_entropy_rule.dart`**: Shannon entropy on AST nodes and variable vocabulary.
+- **`ts_intent_gap_rule.dart`**: Flags complex functions lacking intent comments by comparing function offset ranges with the root comments array.
+- **`ts_low_cohesion_rule.dart`**: Computes method vocabulary cosine similarity in classes.
+- **`ts_tight_coupling_rule.dart`**: Measures coupling based on `import` and `export` declarations.
+- **`ts_circular_dependency_rule.dart`**: Detects circular imports using directed graph DFS traversal.
+- **`ts_semantic_duplication_rule.dart`**: Detects similar structural patterns of functions using LCS (Longest Common Subsequence) comparison.
+
+### 4. CLI Integration & Auto-Detection
+- **`--language` / `-l` Flag**: Added option support in `bin/vetro.dart` with values `dart`, `typescript`, and `auto` (default).
+- **Auto-Detection Algorithm**: Checks for `tsconfig.json` or `package.json` in the target directory, or compares file counts of `.ts`/`.tsx` against `.dart`.
+- **Parallel Subprocess Execution**: Spawns node parser subprocesses in parallel batches (concurrency of 8 files) to prevent system process overflows.
+
+### 5. Verification & Unit Tests
+- **Unit Test Suite**: Added **[typescript_analyzer_test.dart](file:///home/dimas/development/Vetro/test/typescript_analyzer_test.dart)** containing 7 comprehensive rule tests based on mock JSON AST structures (decoupling the tests from any runtime Node.js dependency).
+- **Pilot Project Verification**: Created a pilot project in `scratch/test_project/` with duplicated and complex code. Running Vetro successfully detected 100.0% structural similarity between `computeValue` and `calculateData`, reported the intent gap and low entropy warnings, and assigned an AI Debt Score of **31/100**.
+- **Test Results**: All 62 unit and property tests (55 legacy + 7 TypeScript-specific) passed successfully.
