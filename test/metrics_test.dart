@@ -1,6 +1,8 @@
 import 'package:analyzer/dart/analysis/utilities.dart';
 import 'package:test/test.dart';
-import 'package:vetro/core/metrics/complexity.dart';
+import 'package:vetro/core/adapters/dart/dart_complexity.dart';
+import 'package:vetro/core/adapters/dart/dart_entropy.dart';
+import 'package:vetro/core/adapters/dart/dart_similarity.dart';
 import 'package:vetro/core/metrics/entropy.dart';
 import 'package:vetro/core/metrics/similarity.dart';
 

@@ -1,6 +1,4 @@
 import 'dart:math' as math;
-import 'package:analyzer/dart/ast/ast.dart';
-import 'package:analyzer/dart/ast/visitor.dart';
 
 /// Computes the ratio of intent comments to total comments in the source string.
 double commentIntentRatio(String source) {
@@ -30,23 +28,12 @@ double commentIntentRatio(String source) {
   return intentCount / commentCount;
 }
 
-
-/// Computes the Shannon entropy of the AST node types in [node].
-///
-/// Note: The purpose of this function is to estimate the informational complexity/variety
-/// of AST node type distributions, helping flag repetitive patterns or boilerplate blocks.
-double shannonEntropy(AstNode node) {
-  final counts = <String, int>{};
+/// Computes the Shannon entropy of a map of counts.
+double shannonEntropyFromCounts(Map<String, int> counts) {
   var total = 0;
-
-  void countNode(AstNode n) {
-    final typeStr = n.runtimeType.toString();
-    counts[typeStr] = (counts[typeStr] ?? 0) + 1;
-    total++;
-    n.visitChildren(_SimpleVisitor(countNode));
+  for (final count in counts.values) {
+    total += count;
   }
-
-  countNode(node);
 
   if (total == 0) return 0.0;
 
@@ -59,57 +46,11 @@ double shannonEntropy(AstNode node) {
   return entropy;
 }
 
-/// Computes the Shannon entropy of user-defined identifiers within [node].
-///
-/// High identifier entropy indicates high vocabulary variety.
-/// Low identifier entropy indicates highly repetitive naming typical of AI-generated
-/// or boilerplated code.
-double identifierEntropy(AstNode node) {
+/// Computes the Shannon entropy of a sequence of items.
+double shannonEntropyFromSequence(List<String> items) {
   final counts = <String, int>{};
-  var total = 0;
-
-  final keywords = const {
-    'void', 'int', 'double', 'num', 'String', 'bool', 'dynamic', 'null',
-    'true', 'false', 'this', 'super', 'override', 'var', 'final', 'const',
-    'class', 'extends', 'implements', 'with', 'import', 'export', 'part', 'of',
-    'show', 'hide', 'as', 'is', 'in', 'if', 'else', 'switch', 'case', 'default',
-    'for', 'while', 'do', 'break', 'continue', 'return', 'yield', 'throw',
-    'try', 'on', 'catch', 'finally', 'async', 'await', 'sync', 'get', 'set',
-    'library', 'external', 'typedef', 'operator', 'factory', 'mixin', 'extension',
-    'enum', 'abstract', 'covariant', 'deferred', 'late', 'required', 'interface',
-    'sealed', 'base', 'when'
-  };
-
-  void visit(AstNode n) {
-    if (n is SimpleIdentifier) {
-      final lexeme = n.name;
-      if (!keywords.contains(lexeme)) {
-        counts[lexeme] = (counts[lexeme] ?? 0) + 1;
-        total++;
-      }
-    }
-    n.visitChildren(_SimpleVisitor(visit));
+  for (final item in items) {
+    counts[item] = (counts[item] ?? 0) + 1;
   }
-
-  visit(node);
-
-  if (total == 0) return 0.0;
-
-  var entropy = 0.0;
-  for (final count in counts.values) {
-    final p = count / total;
-    entropy -= p * (math.log(p) / math.log(2));
-  }
-
-  return entropy;
-}
-
-final class _SimpleVisitor extends GeneralizingAstVisitor<void> {
-  _SimpleVisitor(this.callback);
-  final void Function(AstNode) callback;
-
-  @override
-  void visitNode(AstNode node) {
-    callback(node);
-  }
+  return shannonEntropyFromCounts(counts);
 }

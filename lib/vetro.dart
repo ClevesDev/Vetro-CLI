@@ -8,7 +8,11 @@ library;
 
 export 'analyzers/dart/dart_analyzer.dart';
 export 'analyzers/typescript/typescript_analyzer.dart';
-export 'core/metrics/complexity.dart';
+export 'core/adapters/dart/dart_complexity.dart';
+export 'core/adapters/dart/dart_similarity.dart';
+export 'core/adapters/dart/dart_entropy.dart';
+export 'core/adapters/dart/dart_halstead.dart';
+export 'core/adapters/dart/dart_cohesion.dart';
 export 'core/metrics/entropy.dart';
 export 'core/metrics/similarity.dart';
 export 'core/models/config.dart';
