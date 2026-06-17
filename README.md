@@ -169,5 +169,5 @@ It is a classic software engineering practice known as *self-hosting* or *dogfoo
 Absolutely not. Vetro does not aim to be a merciless executioner or an enforcer of excessive abstraction. Over-engineering is just as destructive as spaghetti code; breaking simple scripts into dozens of tiny files and speculative interfaces generates its own heavy indirection debt. Vetro is designed to prevent both extremes. For instance, the **Orphaned Abstractions** rule actively flags interfaces with only a single implementation, discouraging "just-in-case" speculative engineering. Vetro acts as a guiding rail to keep code simple, modular, and pragmatic—not over-designed.
 
 ## License
-
+Este proyecto está bajo la Licencia MIT. Consúltala en el archivo [LICENSE](LICENSE) para más detalles.
 MIT
