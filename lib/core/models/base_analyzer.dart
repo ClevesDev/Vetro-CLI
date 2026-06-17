@@ -166,8 +166,14 @@ abstract class BaseAnalyzer<AST> {
     final includePatterns = config.include.map((pattern) {
       if (pattern.endsWith('.dart') && !supportedExtensions.contains('.dart')) {
         final prefix = pattern.substring(0, pattern.length - 5);
-        final extensionsJoined = supportedExtensions.map((e) => e.startsWith('.') ? e.substring(1) : e).join(',');
-        return '$prefix{$extensionsJoined}';
+        if (supportedExtensions.length == 1) {
+          final ext = supportedExtensions.first;
+          final extClean = ext.startsWith('.') ? ext.substring(1) : ext;
+          return '$prefix$extClean';
+        } else {
+          final extensionsJoined = supportedExtensions.map((e) => e.startsWith('.') ? e.substring(1) : e).join(',');
+          return '$prefix{$extensionsJoined}';
+        }
       }
       return pattern;
     }).toList();
