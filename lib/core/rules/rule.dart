@@ -8,6 +8,7 @@ library;
 import 'package:analyzer/dart/ast/ast.dart';
 
 import 'package:vetro/core/models/config.dart';
+import 'package:vetro/core/models/context.dart';
 import 'package:vetro/core/models/finding.dart';
 
 /// A single analysis rule that inspects a Dart compilation unit
@@ -75,4 +76,38 @@ abstract class CrossFileRule extends Rule {
     String source,
   ) =>
       const [];
+}
+
+typedef ImportGraph = Map<String, List<String>>;
+
+/// Unified, AST-agnostic contract for all Vetro rules.
+abstract class AnalysisRule {
+  const AnalysisRule({required this.config});
+
+  /// Unique identifier for this rule (snake_case).
+  String get id;
+
+  /// Human-readable name.
+  String get name;
+
+  /// Brief description of what the rule detects.
+  String get description;
+
+  /// Configuration for this rule (severity, thresholds).
+  final RuleConfig config;
+
+  /// The effective severity for findings from this rule.
+  Severity get severity => config.severity;
+
+  /// Indicates if this rule needs project-wide/cross-file context.
+  bool get isCrossFile => false;
+
+  /// Analyzes a single file's context.
+  List<Finding> analyzeFile(FileContext context);
+
+  /// Analyzes the entire project context (only called if [isCrossFile] is true).
+  Future<List<Finding>> analyzeProject(
+    Map<String, FileContext> contexts,
+    ImportGraph graph,
+  ) async => const [];
 }
