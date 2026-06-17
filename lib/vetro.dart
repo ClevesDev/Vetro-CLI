@@ -8,6 +8,8 @@ library;
 
 export 'analyzers/dart/dart_analyzer.dart';
 export 'analyzers/typescript/typescript_analyzer.dart';
+export 'analyzers/python/python_analyzer.dart';
+export 'core/models/py_node.dart';
 export 'analyzers/dart/adapters/dart_complexity.dart';
 export 'analyzers/dart/adapters/dart_similarity.dart';
 export 'analyzers/dart/adapters/dart_entropy.dart';

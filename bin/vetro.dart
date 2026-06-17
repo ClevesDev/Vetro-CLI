@@ -57,7 +57,7 @@ Future<void> main(List<String> arguments) async {
     ..addOption(
       'language',
       abbr: 'l',
-      allowed: ['dart', 'typescript', 'auto'],
+      allowed: ['dart', 'typescript', 'python', 'auto'],
       defaultsTo: 'auto',
       help: 'Force a specific programming language analyzer or let it auto-detect.',
     );
@@ -155,6 +155,9 @@ Future<void> main(List<String> arguments) async {
     if (language == AnalysisLanguage.typescript) {
       final analyzer = TypeScriptAnalyzer();
       report = await analyzer.analyze(absoluteTargetPath, config);
+    } else if (language == AnalysisLanguage.python) {
+      final analyzer = PythonAnalyzer();
+      report = await analyzer.analyze(absoluteTargetPath, config);
     } else {
       final analyzer = DartAnalyzer();
       report = await analyzer.analyze(absoluteTargetPath, config);
@@ -220,27 +223,37 @@ Future<void> main(List<String> arguments) async {
 enum AnalysisLanguage {
   dart,
   typescript,
+  python,
   auto;
 
   static AnalysisLanguage fromString(String value) {
     return switch (value.toLowerCase()) {
       'dart' => AnalysisLanguage.dart,
       'typescript' || 'ts' => AnalysisLanguage.typescript,
+      'python' || 'py' => AnalysisLanguage.python,
       _ => AnalysisLanguage.auto,
     };
   }
 }
 
 Future<AnalysisLanguage> _detectLanguage(String projectPath) async {
+  // Check python configurations first
+  if (File(p.join(projectPath, 'requirements.txt')).existsSync() ||
+      File(p.join(projectPath, 'pyproject.toml')).existsSync() ||
+      File(p.join(projectPath, 'setup.py')).existsSync()) {
+    return AnalysisLanguage.python;
+  }
+
   // Check tsconfig.json or package.json
   if (File(p.join(projectPath, 'tsconfig.json')).existsSync() ||
       File(p.join(projectPath, 'package.json')).existsSync()) {
     return AnalysisLanguage.typescript;
   }
 
-  // Count .dart vs .ts/.tsx files
+  // Count .dart vs .ts/.tsx files vs .py files
   var dartCount = 0;
   var tsCount = 0;
+  var pyCount = 0;
 
   try {
     final dir = Directory(projectPath);
@@ -251,11 +264,16 @@ Future<AnalysisLanguage> _detectLanguage(String projectPath) async {
           dartCount++;
         } else if (path.endsWith('.ts') || path.endsWith('.tsx')) {
           tsCount++;
+        } else if (path.endsWith('.py')) {
+          pyCount++;
         }
       }
     }
   } catch (_) {}
 
+  if (pyCount > dartCount && pyCount > tsCount) {
+    return AnalysisLanguage.python;
+  }
   if (tsCount > dartCount) {
     return AnalysisLanguage.typescript;
   }
