@@ -18,6 +18,7 @@ export 'core/metrics/similarity.dart';
 export 'core/models/config.dart';
 export 'core/models/finding.dart';
 export 'core/models/context.dart';
+export 'core/models/base_analyzer.dart';
 export 'core/models/ts_node.dart';
 export 'core/report/json_reporter.dart';
 export 'core/report/markdown_reporter.dart';
