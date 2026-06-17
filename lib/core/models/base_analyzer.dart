@@ -27,9 +27,6 @@ abstract class BaseAnalyzer<AST> {
   /// Hook implemented by subclasses to map a parsed AST to a unified [FileContext].
   FileContext adaptToContext(AST ast, String filePath, String source);
 
-  /// Hook implemented by subclasses to extract imports and build a dependency graph.
-  Map<String, List<String>> extractImportGraph(Map<String, AST> asts);
-
   /// Hook implemented by subclasses to load rules for this analyzer.
   List<AnalysisRule> loadRules(VetroConfig config);
 
@@ -113,7 +110,13 @@ abstract class BaseAnalyzer<AST> {
     }
 
     // Step 6: Run cross-file rules.
-    final importGraph = extractImportGraph(asts);
+    final importGraph = <String, List<String>>{};
+    for (final entry in contexts.entries) {
+      importGraph[entry.key] = entry.value.imports
+          .map((e) => e.resolvedPath)
+          .whereType<String>()
+          .toList();
+    }
     final crossFindings = <Finding>[];
     for (final rule in crossFileRules) {
       crossFindings.addAll(await rule.analyzeProject(contexts, importGraph));

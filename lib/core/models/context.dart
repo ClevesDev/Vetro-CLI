@@ -69,10 +69,16 @@ final class ClassContext {
 final class ImportEdge {
   final String fromPath;
   final String targetUri;
+  final String? resolvedPath;
+  final int line;
+  final String importString;
 
   const ImportEdge({
     required this.fromPath,
     required this.targetUri,
+    this.resolvedPath,
+    required this.line,
+    required this.importString,
   });
 }
 

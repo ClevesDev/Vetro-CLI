@@ -68,14 +68,7 @@ final class DartAnalyzer extends BaseAnalyzer<CompilationUnit> {
     return adapter.adapt(ast, filePath, source);
   }
 
-  @override
-  Map<String, List<String>> extractImportGraph(Map<String, CompilationUnit> asts) {
-    final graph = <String, List<String>>{};
-    for (final entry in asts.entries) {
-      graph[entry.key] = ast_utils.extractImports(entry.value);
-    }
-    return graph;
-  }
+
 
   @override
   List<AnalysisRule> loadRules(VetroConfig config) {

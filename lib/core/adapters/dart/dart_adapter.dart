@@ -53,13 +53,26 @@ final class DartAdapter {
     }
 
     // 3. Map imports.
-    for (final impUri in ast_utils.extractImports(unit)) {
-      imports.add(
-        ImportEdge(
-          fromPath: filePath,
-          targetUri: impUri,
-        ),
-      );
+    final projectRoot = ast_utils.findProjectRoot(filePath);
+    final packageName = projectRoot != null ? (ast_utils.getPackageName(projectRoot) ?? '') : '';
+
+    for (final directive in unit.directives.whereType<ImportDirective>()) {
+      final importUri = directive.uri.stringValue;
+      if (importUri != null) {
+        final line = unit.lineInfo.getLocation(directive.offset).lineNumber;
+        final resolvedPath = projectRoot != null
+            ? ast_utils.resolveImport(importUri, filePath, projectRoot, packageName)
+            : null;
+        imports.add(
+          ImportEdge(
+            fromPath: filePath,
+            targetUri: importUri,
+            resolvedPath: resolvedPath,
+            line: line,
+            importString: directive.toString().trim(),
+          ),
+        );
+      }
     }
 
     return FileContext(
