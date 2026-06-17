@@ -9,9 +9,9 @@ import 'package:vetro/core/metrics/cohesion.dart';
 import 'package:vetro/core/metrics/dependency_graph.dart';
 import 'package:vetro/core/metrics/entropy.dart';
 import 'package:vetro/core/metrics/similarity.dart';
-import 'package:vetro/core/adapters/dart/dart_cohesion.dart';
-import 'package:vetro/core/adapters/dart/dart_entropy.dart';
-import 'package:vetro/core/adapters/dart/dart_similarity.dart';
+import 'package:vetro/analyzers/dart/adapters/dart_cohesion.dart';
+import 'package:vetro/analyzers/dart/adapters/dart_entropy.dart';
+import 'package:vetro/analyzers/dart/adapters/dart_similarity.dart';
 
 void main() {
   final corpus = <CompilationUnit>[];

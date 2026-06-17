@@ -3,10 +3,10 @@ import 'package:analyzer/dart/analysis/utilities.dart';
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/token.dart';
 import 'package:vetro/analyzers/dart/ast_utils.dart' as ast_utils;
-import 'package:vetro/core/adapters/dart/dart_cohesion.dart';
-import 'package:vetro/core/adapters/dart/dart_complexity.dart';
-import 'package:vetro/core/adapters/dart/dart_entropy.dart';
-import 'package:vetro/core/adapters/dart/dart_similarity.dart';
+import 'package:vetro/analyzers/dart/adapters/dart_cohesion.dart';
+import 'package:vetro/analyzers/dart/adapters/dart_complexity.dart';
+import 'package:vetro/analyzers/dart/adapters/dart_entropy.dart';
+import 'package:vetro/analyzers/dart/adapters/dart_similarity.dart';
 import 'package:vetro/core/metrics/entropy.dart';
 import 'package:vetro/core/models/context.dart';
 

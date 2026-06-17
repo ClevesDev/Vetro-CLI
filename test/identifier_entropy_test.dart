@@ -1,6 +1,6 @@
 import 'package:analyzer/dart/analysis/utilities.dart';
 import 'package:test/test.dart';
-import 'package:vetro/core/adapters/dart/dart_entropy.dart';
+import 'package:vetro/analyzers/dart/adapters/dart_entropy.dart';
 
 void main() {
   group('Identifier Entropy', () {

@@ -11,7 +11,7 @@ import 'package:vetro/analyzers/typescript/rules/ts_low_entropy_rule.dart';
 import 'package:vetro/analyzers/typescript/rules/ts_rule.dart';
 import 'package:vetro/analyzers/typescript/rules/ts_semantic_duplication_rule.dart';
 import 'package:vetro/analyzers/typescript/rules/ts_tight_coupling_rule.dart';
-import 'package:vetro/core/adapters/typescript/typescript_adapter.dart';
+import 'package:vetro/analyzers/typescript/adapters/typescript_adapter.dart';
 import 'package:vetro/core/models/base_analyzer.dart';
 import 'package:vetro/core/models/config.dart';
 import 'package:vetro/core/models/context.dart';

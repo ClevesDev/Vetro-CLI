@@ -7,7 +7,7 @@ library;
 import 'package:analyzer/dart/ast/ast.dart';
 
 import 'package:vetro/analyzers/dart/ast_utils.dart';
-import 'package:vetro/core/adapters/dart/dart_complexity.dart';
+import 'package:vetro/analyzers/dart/adapters/dart_complexity.dart';
 import 'package:vetro/core/models/finding.dart';
 import 'package:vetro/core/rules/rule.dart';
 

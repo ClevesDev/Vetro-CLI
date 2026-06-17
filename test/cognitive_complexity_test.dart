@@ -1,6 +1,6 @@
 import 'package:analyzer/dart/analysis/utilities.dart';
 import 'package:test/test.dart';
-import 'package:vetro/core/adapters/dart/dart_complexity.dart';
+import 'package:vetro/analyzers/dart/adapters/dart_complexity.dart';
 
 void main() {
   group('Cognitive Complexity', () {

@@ -24,7 +24,7 @@ import 'package:analyzer/dart/ast/ast.dart';
 
 import 'package:vetro/analyzers/dart/ast_utils.dart';
 import 'package:vetro/core/metrics/similarity.dart';
-import 'package:vetro/core/adapters/dart/dart_similarity.dart';
+import 'package:vetro/analyzers/dart/adapters/dart_similarity.dart';
 import 'package:vetro/core/models/finding.dart';
 import 'package:vetro/core/rules/rule.dart';
 
