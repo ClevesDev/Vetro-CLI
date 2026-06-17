@@ -26,9 +26,6 @@ secret.yaml
 
 # Compiled binaries and scratch test folders
 bin/vetro
-scratch/test_project/
-scratch/marionette_mcp/
-scratch/rxdart/
-scratch/http/
-
-
+scratch/
+.agents/
+ORIGINAL_REQUEST.md
