@@ -43,7 +43,7 @@ final class VetroConfig {
         ? (doc['exclude'] as YamlList).map((e) => e.toString()).toList()
         : const ['**/*.g.dart', '**/*.freezed.dart', '**/*.mocks.dart'];
 
-    final rules = <String, RuleConfig>{};
+    final rules = Map<String, RuleConfig>.from(VetroConfig.defaults().rules);
     final docRules = doc['rules'];
     if (docRules is YamlMap) {
       for (final entry in docRules.entries) {
