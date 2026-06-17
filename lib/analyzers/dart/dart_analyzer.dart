@@ -34,6 +34,7 @@ import 'package:vetro/analyzers/dart/rules/local_clustering_coefficient_rule.dar
 import 'package:vetro/analyzers/dart/rules/tight_coupling_rule.dart';
 import 'package:vetro/core/rules/cyclomatic_complexity_rule.dart' as core_rules;
 import 'package:vetro/core/rules/low_entropy_rule.dart' as core_rules;
+import 'package:vetro/core/rules/intent_gap_rule.dart' as core_rules;
 
 import 'ast_utils.dart' as ast_utils;
 
@@ -83,11 +84,15 @@ final class DartAnalyzer extends BaseAnalyzer<CompilationUnit> {
     if (entropyConfig.enabled) {
       rules.add(core_rules.LowEntropyRule(config: entropyConfig));
     }
+    final intentConfig = config.ruleConfig('intent_gap');
+    if (intentConfig.enabled) {
+      rules.add(core_rules.IntentGapRule(config: intentConfig));
+    }
 
     // Load remaining rules from the registry
     final legacyRules = RuleRegistry.instance.createRules(config);
     for (final rule in legacyRules) {
-      if (rule.id == 'cyclomatic_complexity' || rule.id == 'low_entropy') {
+      if (rule.id == 'cyclomatic_complexity' || rule.id == 'low_entropy' || rule.id == 'intent_gap') {
         continue;
       }
       rules.add(LegacyRuleAdapter(rule));

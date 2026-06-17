@@ -1,8 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
 import 'dart:isolate';
-import 'package:glob/glob.dart';
-import 'package:glob/list_local_fs.dart';
 import 'package:path/path.dart' as p;
 import 'package:vetro/analyzers/typescript/rules/ts_circular_dependency_rule.dart';
 import 'package:vetro/analyzers/typescript/rules/ts_cognitive_complexity_rule.dart';
@@ -13,16 +11,96 @@ import 'package:vetro/analyzers/typescript/rules/ts_low_entropy_rule.dart';
 import 'package:vetro/analyzers/typescript/rules/ts_rule.dart';
 import 'package:vetro/analyzers/typescript/rules/ts_semantic_duplication_rule.dart';
 import 'package:vetro/analyzers/typescript/rules/ts_tight_coupling_rule.dart';
+import 'package:vetro/core/adapters/typescript/typescript_adapter.dart';
+import 'package:vetro/core/models/base_analyzer.dart';
 import 'package:vetro/core/models/config.dart';
+import 'package:vetro/core/models/context.dart';
 import 'package:vetro/core/models/finding.dart';
 import 'package:vetro/core/models/ts_node.dart';
+import 'package:vetro/core/rules/rule.dart';
+
+import 'package:vetro/core/rules/cyclomatic_complexity_rule.dart' as core_rules;
+import 'package:vetro/core/rules/low_entropy_rule.dart' as core_rules;
+import 'package:vetro/core/rules/intent_gap_rule.dart' as core_rules;
 
 /// TypeScript analyzer orchestrator for Vetro.
 ///
 /// Coordinates parsing, rule execution, and result aggregation for
 /// a TypeScript/JSX project (.ts, .tsx).
-final class TypeScriptAnalyzer {
+final class TypeScriptAnalyzer extends BaseAnalyzer<TsNode> {
   TypeScriptAnalyzer();
+
+  Set<String> _allFiles = {};
+
+  @override
+  List<String> get supportedExtensions => const ['.ts', '.tsx', '.js', '.jsx'];
+
+  @override
+  Future<Map<String, TsNode>> parseFiles(List<File> files, VetroConfig config) async {
+    _allFiles = files.map((f) => p.normalize(f.path)).toSet();
+
+    final nodeExec = await _findNodeExecutable();
+    final parserScript = await _findParserScript();
+    final parsed = <String, TsNode>{};
+
+    const batchSize = 8;
+    for (var i = 0; i < files.length; i += batchSize) {
+      final end = i + batchSize > files.length ? files.length : i + batchSize;
+      final batch = files.sublist(i, end);
+
+      await Future.wait(batch.map((file) async {
+        final absolutePath = p.normalize(file.path);
+        try {
+          final result = await Process.run(nodeExec, [parserScript, absolutePath]);
+          if (result.exitCode != 0) {
+            throw Exception(result.stderr.toString());
+          }
+
+          final jsonAst = jsonDecode(result.stdout.toString()) as Map<String, dynamic>;
+          parsed[absolutePath] = TsNode.fromJson(jsonAst);
+        } catch (_) {
+          // Handled as parse errors by BaseAnalyzer
+        }
+      }));
+    }
+    return parsed;
+  }
+
+  @override
+  FileContext adaptToContext(TsNode ast, String filePath, String source) {
+    final adapter = TsAdapter(allFiles: _allFiles);
+    return adapter.adapt(ast, filePath, source);
+  }
+
+  @override
+  List<AnalysisRule> loadRules(VetroConfig config) {
+    final rules = <AnalysisRule>[];
+
+    // Load new unified rules if enabled in the configuration
+    final ccConfig = config.ruleConfig('cyclomatic_complexity');
+    if (ccConfig.enabled) {
+      rules.add(core_rules.CyclomaticComplexityRule(config: ccConfig));
+    }
+    final entropyConfig = config.ruleConfig('low_entropy');
+    if (entropyConfig.enabled) {
+      rules.add(core_rules.LowEntropyRule(config: entropyConfig));
+    }
+    final intentConfig = config.ruleConfig('intent_gap');
+    if (intentConfig.enabled) {
+      rules.add(core_rules.IntentGapRule(config: intentConfig));
+    }
+
+    // Load remaining TS rules
+    final tsRules = _createTsRules(config);
+    for (final rule in tsRules) {
+      if (rule.id == 'cyclomatic_complexity' || rule.id == 'low_entropy' || rule.id == 'intent_gap') {
+        continue;
+      }
+      rules.add(TsLegacyRuleAdapter(rule));
+    }
+
+    return rules;
+  }
 
   /// Creates and returns all active TypeScript rules based on [config].
   List<TsRule> _createTsRules(VetroConfig config) {
@@ -102,176 +180,44 @@ final class TypeScriptAnalyzer {
 
     throw StateError('Cannot locate ts_parser.js helper script. Ensure Vetro is installed correctly.');
   }
+}
 
-  /// Analyzes a TypeScript project at [projectPath] using [config].
-  Future<ProjectReport> analyze(
-    String projectPath,
-    VetroConfig config,
-  ) async {
-    final stopwatch = Stopwatch()..start();
+/// A wrapper that adapts the legacy [TsRule] or [TsCrossFileRule] to the new [AnalysisRule] interface.
+final class TsLegacyRuleAdapter extends AnalysisRule {
+  final TsRule legacyRule;
 
-    // Step 1: Discover files.
-    final files = await _discoverFiles(projectPath, config);
+  TsLegacyRuleAdapter(this.legacyRule) : super(config: legacyRule.config);
 
-    // Step 2: Locate Node & Parser.
-    final nodeExec = await _findNodeExecutable();
-    final parserScript = await _findParserScript();
+  @override
+  String get id => legacyRule.id;
 
-    // Step 3: Parse files in parallel batches.
-    final units = <String, TsNode>{};
-    final sources = <String, String>{};
-    final parseErrors = <String, List<Finding>>{};
+  @override
+  String get name => legacyRule.name;
 
-    const batchSize = 8;
-    for (var i = 0; i < files.length; i += batchSize) {
-      final end = i + batchSize > files.length ? files.length : i + batchSize;
-      final batch = files.sublist(i, end);
+  @override
+  String get description => legacyRule.description;
 
-      await Future.wait(batch.map((file) async {
-        final absolutePath = p.normalize(file.path);
-        try {
-          final source = await file.readAsString();
-          sources[absolutePath] = source;
+  @override
+  bool get isCrossFile => legacyRule is TsCrossFileRule;
 
-          final result = await Process.run(nodeExec, [parserScript, absolutePath]);
-          if (result.exitCode != 0) {
-            throw Exception(result.stderr.toString());
-          }
-
-          final jsonAst = jsonDecode(result.stdout.toString()) as Map<String, dynamic>;
-          units[absolutePath] = TsNode.fromJson(jsonAst);
-        } catch (e) {
-          final relativePath = p.relative(absolutePath, from: projectPath);
-          parseErrors[absolutePath] = [
-            Finding(
-              ruleId: 'syntax_error',
-              ruleName: 'Syntax Error',
-              severity: Severity.error,
-              filePath: absolutePath,
-              line: 1,
-              message: 'Failed to parse file "$relativePath" due to a syntax or compilation error: $e',
-              evidence: {'error': e.toString()},
-            )
-          ];
-          if (!sources.containsKey(absolutePath)) {
-            sources[absolutePath] = '';
-          }
-        }
-      }));
-    }
-
-    // Step 4: Create rules from config.
-    final rules = _createTsRules(config);
-    final singleFileRules = rules.where((r) => r is! TsCrossFileRule).toList();
-    final crossFileRules = rules.whereType<TsCrossFileRule>().toList();
-
-    // Step 5: Run single-file rules.
-    final fileFindings = <String, List<Finding>>{};
-    fileFindings.addAll(parseErrors);
-
-    for (final entry in units.entries) {
-      final filePath = entry.key;
-      final unit = entry.value;
-      final source = sources[filePath]!;
-      final findings = <Finding>[];
-
-      for (final rule in singleFileRules) {
-        findings.addAll(rule.analyze(unit, filePath, source));
-      }
-
-      fileFindings.putIfAbsent(filePath, () => <Finding>[]).addAll(findings);
-    }
-
-    // Step 6: Run cross-file rules.
-    final crossFindings = <Finding>[];
-    for (final rule in crossFileRules) {
-      crossFindings.addAll(await rule.analyzeProject(units, sources));
-    }
-
-    // Merge cross-file findings.
-    for (final finding in crossFindings) {
-      fileFindings
-          .putIfAbsent(finding.filePath, () => <Finding>[])
-          .add(finding);
-    }
-
-    // Step 7: Build FileReports.
-    final fileReports = <FileReport>[];
-    for (final entry in sources.entries) {
-      final filePath = entry.key;
-      final source = entry.value;
-      final findings = fileFindings[filePath] ?? const [];
-
-      fileReports.add(
-        FileReport(
-          filePath: filePath,
-          findings: findings,
-          lineCount: _lineCount(source),
-          analysisTimeMs: 0,
-        ),
-      );
-    }
-
-    stopwatch.stop();
-
-    return ProjectReport(
-      projectPath: projectPath,
-      fileReports: fileReports,
-      totalAnalysisTimeMs: stopwatch.elapsedMilliseconds,
-      analyzedAt: DateTime.now(),
-    );
+  @override
+  List<Finding> analyzeFile(FileContext context) {
+    if (legacyRule is TsCrossFileRule) return const [];
+    final root = context.nativeAst as TsNode;
+    return legacyRule.analyze(root, context.filePath, context.sourceCode);
   }
 
-  /// Discovers TypeScript files (.ts, .tsx) matching the include/exclude globs in [config].
-  Future<List<File>> _discoverFiles(
-    String projectPath,
-    VetroConfig config,
+  @override
+  Future<List<Finding>> analyzeProject(
+    Map<String, FileContext> contexts,
+    ImportGraph graph,
   ) async {
-    final included = <String>{};
+    if (legacyRule is! TsCrossFileRule) return const [];
+    final crossRule = legacyRule as TsCrossFileRule;
 
-    // If the include globs only have .dart extensions, map them to .ts/.tsx extensions.
-    final includePatterns = config.include.map((pattern) {
-      if (pattern.endsWith('.dart')) {
-        return pattern.replaceAll('.dart', '.ts*');
-      }
-      return pattern;
-    }).toList();
+    final roots = contexts.map((k, v) => MapEntry(k, v.nativeAst as TsNode));
+    final sources = contexts.map((k, v) => MapEntry(k, v.sourceCode));
 
-    // Resolve include globs.
-    for (final pattern in includePatterns) {
-      final glob = Glob(pattern);
-      await for (final entity in glob.list(root: projectPath)) {
-        if (entity is File &&
-            !entity.path.endsWith('.d.ts') &&
-            (entity.path.endsWith('.ts') ||
-             entity.path.endsWith('.tsx') ||
-             entity.path.endsWith('.js') ||
-             entity.path.endsWith('.jsx'))) {
-          included.add(p.normalize(entity.path));
-        }
-      }
-    }
-
-    // Remove excluded files.
-    final excludeGlobs = config.exclude.map(Glob.new).toList();
-    final files = <File>[];
-    for (final path in included) {
-      final relativePath = p.relative(path, from: projectPath);
-      final excluded = excludeGlobs.any(
-        (glob) => glob.matches(relativePath),
-      );
-      if (!excluded) {
-        files.add(File(path));
-      }
-    }
-
-    // Sort for deterministic ordering.
-    files.sort((a, b) => a.path.compareTo(b.path));
-    return files;
-  }
-
-  int _lineCount(String source) {
-    if (source.isEmpty) return 0;
-    return source.split('\n').length;
+    return crossRule.analyzeProject(roots, sources);
   }
 }
