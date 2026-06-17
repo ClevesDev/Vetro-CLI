@@ -18,6 +18,8 @@ final class LowEntropyRule extends AnalysisRule {
 
   @override
   List<Finding> analyzeFile(FileContext context) {
+    // Note: We retrieve thresholds from configuration.
+    // This is important because different languages and projects have different entropy baselines.
     final minEntropy =
         config.threshold('min_entropy', defaultValue: 1.8);
     final minIdentEntropy =
@@ -26,50 +28,33 @@ final class LowEntropyRule extends AnalysisRule {
         config.threshold('min_nodes', defaultValue: 30.0).toInt();
     final findings = <Finding>[];
 
-    // Check top-level functions
-    for (final fn in context.functions) {
-      _checkFunction(context.filePath, fn, minNodes, minEntropy, minIdentEntropy, findings);
-    }
-
-    // Check class methods
-    for (final cl in context.classes) {
-      for (final fn in cl.methods) {
-        _checkFunction(context.filePath, fn, minNodes, minEntropy, minIdentEntropy, findings);
+    // Note: We use forEachFunction because it abstracts function/method traversal
+    // and prevents copy-paste loop debt across unified rules.
+    forEachFunction(context, (fn) {
+      if (fn.nodeCount >= minNodes) {
+        if (fn.shannonEntropy < minEntropy) {
+          findings.add(
+            _buildFinding(
+              filePath: context.filePath,
+              fn: fn,
+              entropy: fn.shannonEntropy,
+              minEntropy: minEntropy,
+            ),
+          );
+        } else if (fn.identifierEntropy < minIdentEntropy) {
+          findings.add(
+            _buildIdentifierFinding(
+              filePath: context.filePath,
+              fn: fn,
+              entropy: fn.identifierEntropy,
+              minEntropy: minIdentEntropy,
+            ),
+          );
+        }
       }
-    }
+    });
 
     return findings;
-  }
-
-  void _checkFunction(
-    String filePath,
-    FunctionContext fn,
-    int minNodes,
-    double minEntropy,
-    double minIdentEntropy,
-    List<Finding> findings,
-  ) {
-    if (fn.nodeCount >= minNodes) {
-      if (fn.shannonEntropy < minEntropy) {
-        findings.add(
-          _buildFinding(
-            filePath: filePath,
-            fn: fn,
-            entropy: fn.shannonEntropy,
-            minEntropy: minEntropy,
-          ),
-        );
-      } else if (fn.identifierEntropy < minIdentEntropy) {
-        findings.add(
-          _buildIdentifierFinding(
-            filePath: filePath,
-            fn: fn,
-            entropy: fn.identifierEntropy,
-            minEntropy: minIdentEntropy,
-          ),
-        );
-      }
-    }
   }
 
   Finding _buildFinding({
@@ -84,8 +69,8 @@ final class LowEntropyRule extends AnalysisRule {
       severity: severity,
       filePath: filePath,
       line: fn.startLine,
-      message: 'Function "${fn.name}" has Shannon entropy ${entropy.toStringAsFixed(3)} '
-          'with ${fn.nodeCount} nodes (threshold: ${minEntropy.toStringAsFixed(3)}).',
+      message: 'Function "${fn.name}" has low AST node Shannon entropy '
+          '${entropy.toStringAsFixed(3)} with ${fn.nodeCount} nodes (threshold: ${minEntropy.toStringAsFixed(3)}).',
       evidence: {
         'shannon_entropy': entropy.toStringAsFixed(3),
         'node_count': '${fn.nodeCount}',
@@ -106,8 +91,8 @@ final class LowEntropyRule extends AnalysisRule {
       severity: severity,
       filePath: filePath,
       line: fn.startLine,
-      message: 'Function "${fn.name}" has low identifier Shannon entropy ${entropy.toStringAsFixed(3)} '
-          'with ${fn.nodeCount} nodes (threshold: ${minEntropy.toStringAsFixed(3)}).',
+      message: 'Function "${fn.name}" has low identifier Shannon entropy '
+          '${entropy.toStringAsFixed(3)} with ${fn.nodeCount} nodes (threshold: ${minEntropy.toStringAsFixed(3)}).',
       evidence: {
         'identifier_entropy': entropy.toStringAsFixed(3),
         'node_count': '${fn.nodeCount}',

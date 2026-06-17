@@ -14,10 +14,49 @@ vetro:
 
   # Configuración de reglas
   rules:
-    tight_coupling:
+    semantic_duplication:
+      enabled: false
+
+    copy_mutate:
+      enabled: false
+
+    low_cohesion:
+      enabled: false
+
+    eigenvector_centrality:
+      enabled: false
+
+    low_entropy:
       enabled: true
-      max_coupling: 0.25
-      severity: info
+      severity: warning
+      thresholds:
+        min_entropy: 1.8
+        min_nodes: 50.0
+        min_identifier_entropy: 1.4
+
+    halstead_complexity:
+      enabled: false
+
+    cognitive_complexity:
+      enabled: true
+      severity: warning
+      thresholds:
+        max_cognitive_complexity: 40.0
+
+    cyclomatic_complexity:
+      enabled: true
+      severity: warning
+      thresholds:
+        max_complexity: 25.0
+
+    local_clustering_coefficient:
+      enabled: false
+
+    tight_coupling:
+      enabled: false
+
+    intent_gap:
+      enabled: false
 
     boundary_violation:
       enabled: true

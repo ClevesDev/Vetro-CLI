@@ -7,6 +7,7 @@ import 'package:vetro/analyzers/dart/adapters/dart_cohesion.dart';
 import 'package:vetro/analyzers/dart/adapters/dart_complexity.dart';
 import 'package:vetro/analyzers/dart/adapters/dart_entropy.dart';
 import 'package:vetro/analyzers/dart/adapters/dart_similarity.dart';
+import 'package:vetro/analyzers/dart/adapters/dart_halstead.dart';
 import 'package:vetro/core/metrics/entropy.dart';
 import 'package:vetro/core/models/context.dart';
 
@@ -120,6 +121,8 @@ final class DartAdapter {
 
     final intentRatio = commentIntentRatio(commentText);
 
+    final halstead = halsteadMetrics(node);
+
     return FunctionContext(
       name: displayName,
       startLine: startLoc.lineNumber,
@@ -132,6 +135,7 @@ final class DartAdapter {
       commentIntentRatio: intentRatio,
       shannonEntropy: shannon,
       identifierEntropy: ident,
+      halsteadStats: halstead,
     );
   }
 }

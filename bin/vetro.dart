@@ -13,7 +13,22 @@ import 'package:vetro/core/report/ansi.dart';
 import 'package:vetro/vetro.dart';
 
 Future<void> main(List<String> arguments) async {
+  final initParser = ArgParser()
+    ..addFlag(
+      'force',
+      abbr: 'f',
+      negatable: false,
+      help: 'Overwrite existing vetro.yaml if it exists.',
+    )
+    ..addFlag(
+      'help',
+      abbr: 'h',
+      negatable: false,
+      help: 'Show help for init command.',
+    );
+
   final parser = ArgParser()
+    ..addCommand('init', initParser)
     ..addFlag(
       'help',
       abbr: 'h',
@@ -72,11 +87,32 @@ Future<void> main(List<String> arguments) async {
     exit(1);
   }
 
+  if (argResults.command?.name == 'init') {
+    final initResults = argResults.command!;
+    if (initResults['help'] as bool) {
+      print('Vetro — Initialize Configuration');
+      print('Usage: vetro init [options] [project_path]');
+      print('');
+      print(initParser.usage);
+      exit(0);
+    }
+    
+    var targetPath = Directory.current.path;
+    if (initResults.rest.isNotEmpty) {
+      targetPath = initResults.rest.first;
+    }
+    await _handleInit(targetPath, force: initResults['force'] as bool);
+    exit(0);
+  }
+
   if (argResults['help'] as bool) {
     print('Vetro — AI Code Debt Scanner');
     print('Usage: vetro [options] <project_path>');
+    print('       vetro init [options] [project_path]');
     print('');
     print(parser.usage);
+    print('Commands:');
+    print('  init       Initialize a new vetro.yaml configuration file.');
     exit(0);
   }
 
@@ -278,4 +314,94 @@ Future<AnalysisLanguage> _detectLanguage(String projectPath) async {
     return AnalysisLanguage.typescript;
   }
   return AnalysisLanguage.dart;
+}
+
+Future<void> _handleInit(String targetPath, {required bool force}) async {
+  final targetDir = Directory(targetPath);
+  if (!targetDir.existsSync()) {
+    stderr.writeln(Ansi.red('Error: Directory does not exist at "$targetPath"'));
+    exit(1);
+  }
+
+  final absoluteTargetPath = p.normalize(targetDir.absolute.path);
+  final yamlFile = File(p.join(absoluteTargetPath, 'vetro.yaml'));
+
+  if (yamlFile.existsSync() && !force) {
+    stderr.writeln(Ansi.red('Error: vetro.yaml already exists at "$absoluteTargetPath".'));
+    stderr.writeln('Use --force (or -f) to overwrite.');
+    exit(1);
+  }
+
+  print('Initializing Vetro configuration...');
+  final language = await _detectLanguage(absoluteTargetPath);
+  print('Detected dominant language: ${language.name.toUpperCase()}');
+
+  final yamlContent = switch (language) {
+    AnalysisLanguage.dart => '''
+vetro:
+  version: 1
+
+  # Files to include in the analysis
+  include:
+    - lib/**/*.dart
+
+  # Files to exclude from the analysis
+  exclude:
+    - "**/*.g.dart"
+    - "**/*.freezed.dart"
+    - "**/*.mocks.dart"
+''',
+    AnalysisLanguage.typescript => '''
+vetro:
+  version: 1
+
+  # Files to include in the analysis
+  include:
+    - src/**/*.ts
+    - src/**/*.tsx
+    - lib/**/*.ts
+    - lib/**/*.tsx
+
+  # Files to exclude from the analysis
+  exclude:
+    - "**/node_modules/**"
+    - "**/*.d.ts"
+''',
+    AnalysisLanguage.python => '''
+vetro:
+  version: 1
+
+  # Files to include in the analysis
+  include:
+    - "**/*.py"
+
+  # Files to exclude from the analysis
+  exclude:
+    - "**/venv/**"
+    - "**/.venv/**"
+    - "**/__pycache__/**"
+''',
+    _ => '''
+vetro:
+  version: 1
+
+  # Files to include in the analysis
+  include:
+    - lib/**/*.dart
+
+  # Files to exclude from the analysis
+  exclude:
+    - "**/*.g.dart"
+    - "**/*.freezed.dart"
+    - "**/*.mocks.dart"
+''',
+  };
+
+  try {
+    yamlFile.writeAsStringSync(yamlContent);
+    print(Ansi.green('Created vetro.yaml successfully at ${yamlFile.path}'));
+  } catch (e) {
+    stderr.writeln(Ansi.red('Error: Failed to write vetro.yaml. Error: $e'));
+    exit(1);
+  }
 }

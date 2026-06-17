@@ -2,6 +2,8 @@
 /// across different programming languages for Vetro rules.
 library;
 
+import 'package:vetro/core/metrics/halstead.dart';
+
 /// Represents the context of an individual function or method.
 final class FunctionContext {
   final String name;
@@ -30,6 +32,9 @@ final class FunctionContext {
   /// User-defined identifier Shannon entropy.
   final double identifierEntropy;
 
+  /// Halstead software metrics.
+  final HalsteadStats halsteadStats;
+
   const FunctionContext({
     required this.name,
     required this.startLine,
@@ -42,6 +47,7 @@ final class FunctionContext {
     required this.commentIntentRatio,
     required this.shannonEntropy,
     required this.identifierEntropy,
+    required this.halsteadStats,
   });
 }
 

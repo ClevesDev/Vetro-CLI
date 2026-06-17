@@ -2,6 +2,7 @@ import 'dart:math' as math;
 import 'package:path/path.dart' as p;
 import 'package:vetro/core/models/context.dart';
 import 'package:vetro/core/models/py_node.dart';
+import 'package:vetro/analyzers/python/adapters/python_halstead.dart';
 
 final class PythonAdapter {
   final Set<String> allFiles;
@@ -156,6 +157,9 @@ final class PythonAdapter {
     final hasIntent = _hasIntentComment(fnNode, comments);
     final intentRatio = hasIntent ? 1.0 : 0.0;
 
+    // Precalculate Halstead stats.
+    final halstead = computePyHalstead(rawTokens);
+
     final lines = fnSource.split('\n');
     final endLine = fnNode.line + lines.length - 1;
 
@@ -171,6 +175,7 @@ final class PythonAdapter {
       commentIntentRatio: intentRatio,
       shannonEntropy: shannon,
       identifierEntropy: ident,
+      halsteadStats: halstead,
     );
   }
 

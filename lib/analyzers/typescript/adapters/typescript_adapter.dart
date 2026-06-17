@@ -2,6 +2,7 @@ import 'dart:math' as math;
 import 'package:path/path.dart' as p;
 import 'package:vetro/core/models/context.dart';
 import 'package:vetro/core/models/ts_node.dart';
+import 'package:vetro/analyzers/typescript/adapters/typescript_halstead.dart';
 
 final class TsAdapter {
   final Set<String> allFiles;
@@ -60,6 +61,7 @@ final class TsAdapter {
           'FunctionExpression',
           'ArrowFunctionExpression',
           'ObjectMethod',
+          'ClassMethod',
         }.contains(node.type));
 
     for (final fn in functionNodes) {
@@ -141,6 +143,9 @@ final class TsAdapter {
     final hasIntent = _hasIntentComment(fnNode, comments);
     final intentRatio = hasIntent ? 1.0 : 0.0;
 
+    // Precalculate Halstead stats.
+    final halstead = computeTsHalstead(rawTokens);
+
     // Estimate endLine
     // Since we don't have direct endLine from Babel easily, we can find line count of source:
     final lines = fnSource.split('\n');
@@ -158,6 +163,7 @@ final class TsAdapter {
       commentIntentRatio: intentRatio,
       shannonEntropy: shannon,
       identifierEntropy: ident,
+      halsteadStats: halstead,
     );
   }
 

@@ -110,4 +110,20 @@ abstract class AnalysisRule {
     Map<String, FileContext> contexts,
     ImportGraph graph,
   ) async => const [];
+
+  /// Helper to iterate through all top-level functions and class methods
+  /// defined in the given [context].
+  ///
+  /// This utility is important because it prevents duplicate loop boilerplates
+  /// across different analysis rules, reducing copy-mutate code debt.
+  void forEachFunction(FileContext context, void Function(FunctionContext fn) action) {
+    for (final fn in context.functions) {
+      action(fn);
+    }
+    for (final cl in context.classes) {
+      for (final fn in cl.methods) {
+        action(fn);
+      }
+    }
+  }
 }

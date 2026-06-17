@@ -22,6 +22,7 @@ import 'package:vetro/core/rules/rule.dart';
 import 'package:vetro/core/rules/cyclomatic_complexity_rule.dart' as core_rules;
 import 'package:vetro/core/rules/low_entropy_rule.dart' as core_rules;
 import 'package:vetro/core/rules/intent_gap_rule.dart' as core_rules;
+import 'package:vetro/core/rules/halstead_complexity_rule.dart' as core_rules;
 
 /// TypeScript analyzer orchestrator for Vetro.
 ///
@@ -89,11 +90,18 @@ final class TypeScriptAnalyzer extends BaseAnalyzer<TsNode> {
     if (intentConfig.enabled) {
       rules.add(core_rules.IntentGapRule(config: intentConfig));
     }
+    final halsteadConfig = config.ruleConfig('halstead_complexity');
+    if (halsteadConfig.enabled) {
+      rules.add(core_rules.HalsteadComplexityRule(config: halsteadConfig));
+    }
 
     // Load remaining TS rules
     final tsRules = _createTsRules(config);
     for (final rule in tsRules) {
-      if (rule.id == 'cyclomatic_complexity' || rule.id == 'low_entropy' || rule.id == 'intent_gap') {
+      if (rule.id == 'cyclomatic_complexity' || 
+          rule.id == 'low_entropy' || 
+          rule.id == 'intent_gap' || 
+          rule.id == 'halstead_complexity') {
         continue;
       }
       rules.add(TsLegacyRuleAdapter(rule));

@@ -16,6 +16,7 @@ export 'analyzers/dart/adapters/dart_entropy.dart';
 export 'analyzers/dart/adapters/dart_halstead.dart';
 export 'analyzers/dart/adapters/dart_cohesion.dart';
 export 'core/metrics/entropy.dart';
+export 'core/metrics/halstead.dart';
 export 'core/metrics/similarity.dart';
 export 'core/models/config.dart';
 export 'core/models/finding.dart';

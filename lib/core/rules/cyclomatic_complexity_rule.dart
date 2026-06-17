@@ -18,29 +18,21 @@ final class CyclomaticComplexityRule extends AnalysisRule {
 
   @override
   List<Finding> analyzeFile(FileContext context) {
+    // Note: We retrieve the threshold from configuration.
+    // This is important because different teams have different tolerances for complexity.
     final maxCC =
         config.threshold('max_complexity', defaultValue: 15.0).toInt();
     final findings = <Finding>[];
 
-    // Check top-level functions
-    for (final fn in context.functions) {
+    // Note: We use forEachFunction because it abstracts the traversal of both
+    // top-level functions and class methods, which avoids copy-paste loop debt.
+    forEachFunction(context, (fn) {
       if (fn.cyclomaticComplexity > maxCC) {
         findings.add(
           _buildFinding(context.filePath, fn, maxCC),
         );
       }
-    }
-
-    // Check class methods
-    for (final cl in context.classes) {
-      for (final fn in cl.methods) {
-        if (fn.cyclomaticComplexity > maxCC) {
-          findings.add(
-            _buildFinding(context.filePath, fn, maxCC),
-          );
-        }
-      }
-    }
+    });
 
     return findings;
   }

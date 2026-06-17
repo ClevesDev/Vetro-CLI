@@ -2,7 +2,7 @@ import 'package:analyzer/dart/analysis/utilities.dart';
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:test/test.dart';
 import 'package:vetro/analyzers/dart/rules/eigenvector_centrality_rule.dart';
-import 'package:vetro/analyzers/dart/rules/halstead_complexity_rule.dart';
+import 'package:vetro/core/rules/halstead_complexity_rule.dart';
 import 'package:vetro/analyzers/dart/rules/low_cohesion_rule.dart';
 import 'package:vetro/analyzers/dart/rules/low_entropy_rule.dart';
 import 'package:vetro/core/metrics/cohesion.dart';
@@ -12,6 +12,7 @@ import 'package:vetro/core/metrics/halstead.dart';
 import 'package:vetro/analyzers/dart/adapters/dart_cohesion.dart';
 import 'package:vetro/analyzers/dart/adapters/dart_entropy.dart';
 import 'package:vetro/analyzers/dart/adapters/dart_halstead.dart';
+import 'package:vetro/analyzers/dart/adapters/dart_adapter.dart';
 import 'package:vetro/core/models/config.dart';
 import 'package:vetro/core/models/finding.dart';
 
@@ -54,7 +55,8 @@ void main() {
         }
       ''';
       final unit = parseString(content: source).unit;
-      final findings = rule.analyze(unit, 'test.dart', source);
+      final context = const DartAdapter().adapt(unit, 'test.dart', source);
+      final findings = rule.analyzeFile(context);
 
       expect(findings, hasLength(1));
       expect(findings.first.ruleId, equals('halstead_complexity'));
@@ -73,7 +75,8 @@ void main() {
         void simple() {}
       ''';
       final unit = parseString(content: source).unit;
-      final findings = rule.analyze(unit, 'test.dart', source);
+      final context = const DartAdapter().adapt(unit, 'test.dart', source);
+      final findings = rule.analyzeFile(context);
 
       expect(findings, isEmpty);
     });

@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 import 'dart:isolate';
+import 'dart:math' as math;
 import 'package:path/path.dart' as p;
 import 'package:vetro/analyzers/python/rules/py_circular_dependency_rule.dart';
 import 'package:vetro/analyzers/python/rules/py_cognitive_complexity_rule.dart';
@@ -19,6 +20,7 @@ import 'package:vetro/core/rules/rule.dart';
 import 'package:vetro/core/rules/cyclomatic_complexity_rule.dart' as core_rules;
 import 'package:vetro/core/rules/low_entropy_rule.dart' as core_rules;
 import 'package:vetro/core/rules/intent_gap_rule.dart' as core_rules;
+import 'package:vetro/core/rules/halstead_complexity_rule.dart' as core_rules;
 
 /// Python analyzer orchestrator for Vetro.
 ///
@@ -36,36 +38,77 @@ final class PythonAnalyzer extends BaseAnalyzer<PyNode> {
   Future<Map<String, PyNode>> parseFiles(List<File> files, VetroConfig config) async {
     _allFiles = files.map((f) => p.normalize(f.path)).toSet();
 
+    if (files.isEmpty) return const {};
+
     final pythonExec = await _findPythonExecutable();
     final parserScript = await _findParserScript();
-    final parsed = <String, PyNode>{};
 
-    const batchSize = 8;
-    for (var i = 0; i < files.length; i += batchSize) {
-      final end = i + batchSize > files.length ? files.length : i + batchSize;
-      final batch = files.sublist(i, end);
-
-      await Future.wait(batch.map((file) async {
+    // If the number of files is small, parse sequentially to avoid isolate overhead
+    if (files.length < 4) {
+      final parsed = <String, PyNode>{};
+      for (final file in files) {
         final absolutePath = p.normalize(file.path);
         try {
           final result = await Process.run(pythonExec, [parserScript, absolutePath]);
           if (result.exitCode != 0) {
             throw Exception(result.stderr.toString());
           }
-
           final jsonAst = jsonDecode(result.stdout.toString()) as Map<String, dynamic>;
           final astRoot = jsonAst['ast'] as Map<String, dynamic>;
-          
-          // Re-embed comments into the AST root raw map
           astRoot['comments'] = jsonAst['comments'];
-
           parsed[absolutePath] = PyNode.fromJson(astRoot);
-        } catch (_) {
-          // Handled as parse errors by BaseAnalyzer
-        }
-      }));
+        } catch (_) {}
+      }
+      return parsed;
+    }
+
+    // Otherwise, split files among workers and parse in parallel
+    final numWorkers = math.min(Platform.numberOfProcessors, files.length);
+    final chunks = List.generate(numWorkers, (_) => <String>[]);
+    for (var i = 0; i < files.length; i++) {
+      chunks[i % numWorkers].add(p.normalize(files[i].path));
+    }
+
+    final futures = <Future<Map<String, Map<String, dynamic>>>>[];
+    for (var k = 0; k < numWorkers; k++) {
+      final chunk = chunks[k];
+      futures.add(
+        Isolate.run(() => _parseFileChunk(
+          filePaths: chunk,
+          pythonExec: pythonExec,
+          parserScript: parserScript,
+        )),
+      );
+    }
+
+    final results = await Future.wait(futures);
+    final parsed = <String, PyNode>{};
+    for (final res in results) {
+      for (final entry in res.entries) {
+        parsed[entry.key] = PyNode.fromJson(entry.value);
+      }
     }
     return parsed;
+  }
+
+  static Future<Map<String, Map<String, dynamic>>> _parseFileChunk({
+    required List<String> filePaths,
+    required String pythonExec,
+    required String parserScript,
+  }) async {
+    final result = <String, Map<String, dynamic>>{};
+    for (final filePath in filePaths) {
+      try {
+        final procResult = await Process.run(pythonExec, [parserScript, filePath]);
+        if (procResult.exitCode == 0) {
+          final jsonAst = jsonDecode(procResult.stdout.toString()) as Map<String, dynamic>;
+          final astRoot = jsonAst['ast'] as Map<String, dynamic>;
+          astRoot['comments'] = jsonAst['comments'];
+          result[filePath] = astRoot;
+        }
+      } catch (_) {}
+    }
+    return result;
   }
 
   @override
@@ -91,11 +134,18 @@ final class PythonAnalyzer extends BaseAnalyzer<PyNode> {
     if (intentConfig.enabled) {
       rules.add(core_rules.IntentGapRule(config: intentConfig));
     }
+    final halsteadConfig = config.ruleConfig('halstead_complexity');
+    if (halsteadConfig.enabled) {
+      rules.add(core_rules.HalsteadComplexityRule(config: halsteadConfig));
+    }
 
     // Load remaining Python rules
     final pyRules = _createPyRules(config);
     for (final rule in pyRules) {
-      if (rule.id == 'cyclomatic_complexity' || rule.id == 'low_entropy' || rule.id == 'intent_gap') {
+      if (rule.id == 'cyclomatic_complexity' ||
+          rule.id == 'low_entropy' ||
+          rule.id == 'intent_gap' ||
+          rule.id == 'halstead_complexity') {
         continue;
       }
       rules.add(PyLegacyRuleAdapter(rule));

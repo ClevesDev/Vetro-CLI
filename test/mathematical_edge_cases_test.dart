@@ -498,4 +498,35 @@ void main() {
       expect(higherOperands.effort, greaterThan(base.effort));
     });
   });
+
+  group('Advanced Algebraic Properties — Bipartite PageRank & Information Bounds', () {
+    test('Bipartite Graph: PageRank scores alternate if damping is 1.0 (no damping)', () {
+      final graph = DependencyGraph();
+      graph.addEdge('A', 'B');
+      graph.addEdge('B', 'A');
+
+      final centrality = graph.eigenvectorCentrality(dampingFactor: 0.85);
+      expect(centrality['A'], closeTo(centrality['B']!, 1e-6));
+    });
+
+    test('Shannon Entropy of Perfect Normal Distribution vs Skewed Distribution', () {
+      final seqUniform = ['a', 'b', 'c', 'd'];
+      final seqSkewed = ['a', 'a', 'a', 'b'];
+
+      final hUniform = shannonEntropyFromSequence(seqUniform);
+      final hSkewed = shannonEntropyFromSequence(seqSkewed);
+
+      expect(hUniform, equals(2.0));
+      expect(hSkewed, lessThan(hUniform));
+    });
+
+    test('LCS Similarity bounds: 0.0 <= lcsSimilarity <= 1.0', () {
+      final seqA = ['x', 'y', 'z'];
+      final seqB = ['a', 'b', 'c', 'd'];
+
+      final sim = lcsSimilarity(seqA, seqB);
+      expect(sim, greaterThanOrEqualTo(0.0));
+      expect(sim, lessThanOrEqualTo(1.0));
+    });
+  });
 }

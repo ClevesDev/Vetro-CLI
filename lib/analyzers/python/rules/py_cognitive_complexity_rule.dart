@@ -1,6 +1,7 @@
 import 'package:vetro/analyzers/python/rules/py_rule.dart';
 import 'package:vetro/core/models/finding.dart';
 import 'package:vetro/core/models/py_node.dart';
+import 'package:vetro/core/models/context.dart';
 import 'package:vetro/analyzers/python/adapters/python_adapter.dart';
 
 /// Rule: Cognitive Complexity for Python.
@@ -37,12 +38,30 @@ final class PyCognitiveComplexityRule extends PyRule {
     for (final fn in functionNodes) {
       // We can reuse the adapter's implementation
       final context = adapter.adapt(root, filePath, source);
-      final fnContext = context.functions.firstWhere(
-        (f) => f.name == fn.raw['name'] || f.startLine == fn.line,
-        orElse: () => context.classes
-            .expand((c) => c.methods)
-            .firstWhere((f) => f.name.endsWith('.${fn.raw['name']}') || f.startLine == fn.line),
-      );
+      
+      FunctionContext? fnContext;
+      for (final f in context.functions) {
+        if (f.name == fn.raw['name'] || f.startLine == fn.line) {
+          fnContext = f;
+          break;
+        }
+      }
+      
+      if (fnContext == null) {
+        for (final c in context.classes) {
+          for (final m in c.methods) {
+            if (m.name.endsWith('.${fn.raw['name']}') || m.startLine == fn.line) {
+              fnContext = m;
+              break;
+            }
+          }
+          if (fnContext != null) break;
+        }
+      }
+
+      if (fnContext == null) {
+        continue;
+      }
 
       final cc = fnContext.cognitiveComplexity;
       if (cc > maxCognitive) {

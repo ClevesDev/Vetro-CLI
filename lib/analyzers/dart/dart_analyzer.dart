@@ -22,7 +22,6 @@ import 'package:vetro/analyzers/dart/rules/copy_mutate_rule.dart';
 import 'package:vetro/analyzers/dart/rules/cyclomatic_complexity_rule.dart';
 import 'package:vetro/analyzers/dart/rules/eigenvector_centrality_rule.dart';
 import 'package:vetro/analyzers/dart/rules/fragile_test_rule.dart';
-import 'package:vetro/analyzers/dart/rules/halstead_complexity_rule.dart';
 import 'package:vetro/analyzers/dart/rules/intent_gap_rule.dart';
 import 'package:vetro/analyzers/dart/rules/low_cohesion_rule.dart';
 import 'package:vetro/analyzers/dart/rules/low_entropy_rule.dart';
@@ -35,6 +34,7 @@ import 'package:vetro/analyzers/dart/rules/tight_coupling_rule.dart';
 import 'package:vetro/core/rules/cyclomatic_complexity_rule.dart' as core_rules;
 import 'package:vetro/core/rules/low_entropy_rule.dart' as core_rules;
 import 'package:vetro/core/rules/intent_gap_rule.dart' as core_rules;
+import 'package:vetro/core/rules/halstead_complexity_rule.dart' as core_rules;
 
 import 'ast_utils.dart' as ast_utils;
 
@@ -88,11 +88,18 @@ final class DartAnalyzer extends BaseAnalyzer<CompilationUnit> {
     if (intentConfig.enabled) {
       rules.add(core_rules.IntentGapRule(config: intentConfig));
     }
+    final halsteadConfig = config.ruleConfig('halstead_complexity');
+    if (halsteadConfig.enabled) {
+      rules.add(core_rules.HalsteadComplexityRule(config: halsteadConfig));
+    }
 
     // Load remaining rules from the registry
     final legacyRules = RuleRegistry.instance.createRules(config);
     for (final rule in legacyRules) {
-      if (rule.id == 'cyclomatic_complexity' || rule.id == 'low_entropy' || rule.id == 'intent_gap') {
+      if (rule.id == 'cyclomatic_complexity' ||
+          rule.id == 'low_entropy' ||
+          rule.id == 'intent_gap' ||
+          rule.id == 'halstead_complexity') {
         continue;
       }
       rules.add(LegacyRuleAdapter(rule));
@@ -151,12 +158,6 @@ final class DartAnalyzer extends BaseAnalyzer<CompilationUnit> {
       registry.register(
         'tight_coupling',
         (config) => TightCouplingRule(config: config),
-      );
-    }
-    if (!registry.isRegistered('halstead_complexity')) {
-      registry.register(
-        'halstead_complexity',
-        (config) => HalsteadComplexityRule(config: config),
       );
     }
     if (!registry.isRegistered('low_entropy')) {

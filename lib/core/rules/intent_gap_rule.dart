@@ -18,25 +18,19 @@ final class IntentGapRule extends AnalysisRule {
 
   @override
   List<Finding> analyzeFile(FileContext context) {
+    // Note: We retrieve the minimum complexity threshold to qualify for checking.
+    // This is important because simple helper functions do not need detailed intent comments.
     final minCC =
         config.threshold('min_complexity', defaultValue: 5.0).toInt();
     final findings = <Finding>[];
 
-    // Check top-level functions
-    for (final fn in context.functions) {
+    // Note: We use forEachFunction because it abstracts function/method traversal
+    // and prevents copy-paste loop debt across unified rules.
+    forEachFunction(context, (fn) {
       if (fn.cyclomaticComplexity >= minCC && fn.commentIntentRatio == 0.0) {
         findings.add(_buildFinding(context.filePath, fn, fn.cyclomaticComplexity));
       }
-    }
-
-    // Check class methods
-    for (final cl in context.classes) {
-      for (final fn in cl.methods) {
-        if (fn.cyclomaticComplexity >= minCC && fn.commentIntentRatio == 0.0) {
-          findings.add(_buildFinding(context.filePath, fn, fn.cyclomaticComplexity));
-        }
-      }
-    }
+    });
 
     return findings;
   }
