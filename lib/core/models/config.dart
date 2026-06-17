@@ -265,12 +265,14 @@ final class RuleConfig {
 enum OutputFormat {
   terminal,
   json,
-  markdown;
+  markdown,
+  prompt;
 
   /// Parses a string to an OutputFormat, defaulting to [terminal].
   static OutputFormat fromString(String value) => switch (value) {
         'json' => OutputFormat.json,
         'markdown' || 'md' => OutputFormat.markdown,
+        'prompt' => OutputFormat.prompt,
         _ => OutputFormat.terminal,
       };
 }
