@@ -82,7 +82,7 @@ vetro init
 
 ## What It Detects
 
-| Rule | What | Math |
+| Rule | What | Math / AST Heuristic |
 |---|---|---|
 | 🧟 Semantic Duplication | Functions that do the same thing with different names | AST cosine similarity ≥ 80% |
 | 🔄 Copy-Mutate | Near-identical code blocks with minor variations | Token similarity ≥ 70% |
@@ -93,12 +93,19 @@ vetro init
 | 🧠 Halstead Complexity | Functions requiring high cognitive effort | Halstead effort ≥ 50,000 |
 | 🧠 Cognitive Complexity | Functions hard to understand (Campbell's metric) | Branching/nesting level analysis ≥ 15 |
 | 📉 Shannon Entropy | Flat, highly repetitive boilerplate or structures | AST node type entropy < 1.8 |
-| 🕸️ Eigenvector Centrality | Global import bottlenecks in dependency graph | PageRank centrality score ≥ 0.40 |
+| 🕸️ Centrality Bottleneck | Global import bottlenecks in dependency graph | PageRank centrality score ≥ 0.40 |
 | 🧲 Local Clustering | Chaotic import bridge files in the import graph | Local Clustering Coefficient < 0.15 |
 | 🧲 Low Cohesion | Classes violating Single Responsibility Principle | Pairwise method identifier similarity < 15% |
 | 🔗 Circular Dependency | Import dependency cycles between files | DFS cycle detection |
 | 🕸️ Tight Coupling | Highly interconnected files | (fanIn + fanOut) / totalNodes ≥ 25% |
 | 🛡️ Boundary Violation | Clean Architecture layering rules violations | Layer flow analysis |
+| 📱 UI Media Query | Inefficient MediaQuery usage in modern Flutter | MediaQuery.of(context) used on Flutter ≥ 3.10.0 |
+| 🏦 Business in UI | Repositories, HTTP clients or `await` inside build | Flags business classes or async waits in rendering methods |
+| 📐 Misplaced Constraints | Expanded/Flexible placed outside Flex containers | Node verification parent != Row/Column/Flex |
+| 🚫 Unreleased Controllers | Unreleased controllers (e.g., TextEditingController) | Field declared in State but no `.dispose()` in `dispose()` |
+| 🎨 Hardcoded UI Tokens | Raw Color/TextStyle inline instantiations in build | Constructor calls of Color/TextStyle in build method |
+| ⚡ setState in Complex Build | setState calls in large, complex rendering trees | setState inside build method with cyclomatic complexity ≥ 12 |
+| 💎 Missing const Widget | Static widgets initialized dynamically | Candidate widgets (e.g. SizedBox, Text) with constant arguments |
 
 ## Configuration
 
