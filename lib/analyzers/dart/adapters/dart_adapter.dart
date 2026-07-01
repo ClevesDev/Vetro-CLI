@@ -10,13 +10,14 @@ import 'package:vetro/analyzers/dart/adapters/dart_similarity.dart';
 import 'package:vetro/analyzers/dart/adapters/dart_halstead.dart';
 import 'package:vetro/core/metrics/entropy.dart';
 import 'package:vetro/core/models/context.dart';
+import 'package:vetro/core/models/project_context.dart';
 
 /// Adapter that translates Dart compilation units (AST) into unified FileContexts.
 final class DartAdapter {
   const DartAdapter();
 
   /// Maps a parsed Dart AST [unit] to a language-agnostic [FileContext].
-  FileContext adapt(CompilationUnit unit, String filePath, String source) {
+  FileContext adapt(CompilationUnit unit, String filePath, String source, ProjectContext projectContext) {
     final functions = <FunctionContext>[];
     final classes = <ClassContext>[];
     final imports = <ImportEdge>[];
@@ -82,6 +83,7 @@ final class DartAdapter {
       functions: functions,
       classes: classes,
       imports: imports,
+      projectContext: projectContext,
       nativeAst: unit,
     );
   }

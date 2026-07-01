@@ -66,3 +66,15 @@ vetro:
         - analyzers
         - cli
         - bin
+
+    performance_media_query:
+      enabled: true
+      severity: warning
+
+    business_logic_in_ui:
+      enabled: true
+      severity: error
+
+    misplaced_layout_constraints:
+      enabled: true
+      severity: error

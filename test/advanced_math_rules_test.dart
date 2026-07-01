@@ -13,6 +13,7 @@ import 'package:vetro/analyzers/dart/adapters/dart_cohesion.dart';
 import 'package:vetro/analyzers/dart/adapters/dart_entropy.dart';
 import 'package:vetro/analyzers/dart/adapters/dart_halstead.dart';
 import 'package:vetro/analyzers/dart/adapters/dart_adapter.dart';
+import 'package:vetro/core/models/project_context.dart';
 import 'package:vetro/core/models/config.dart';
 import 'package:vetro/core/models/finding.dart';
 
@@ -55,7 +56,7 @@ void main() {
         }
       ''';
       final unit = parseString(content: source).unit;
-      final context = const DartAdapter().adapt(unit, 'test.dart', source);
+      final context = const DartAdapter().adapt(unit, 'test.dart', source, const ProjectContext.empty(projectPath: '.'));
       final findings = rule.analyzeFile(context);
 
       expect(findings, hasLength(1));
@@ -75,7 +76,7 @@ void main() {
         void simple() {}
       ''';
       final unit = parseString(content: source).unit;
-      final context = const DartAdapter().adapt(unit, 'test.dart', source);
+      final context = const DartAdapter().adapt(unit, 'test.dart', source, const ProjectContext.empty(projectPath: '.'));
       final findings = rule.analyzeFile(context);
 
       expect(findings, isEmpty);

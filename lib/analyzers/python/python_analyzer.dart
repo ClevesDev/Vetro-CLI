@@ -13,6 +13,7 @@ import 'package:vetro/analyzers/python/adapters/python_adapter.dart';
 import 'package:vetro/core/models/base_analyzer.dart';
 import 'package:vetro/core/models/config.dart';
 import 'package:vetro/core/models/context.dart';
+import 'package:vetro/core/models/project_context.dart';
 import 'package:vetro/core/models/finding.dart';
 import 'package:vetro/core/models/py_node.dart';
 import 'package:vetro/core/rules/rule.dart';
@@ -112,9 +113,9 @@ final class PythonAnalyzer extends BaseAnalyzer<PyNode> {
   }
 
   @override
-  FileContext adaptToContext(PyNode ast, String filePath, String source) {
+  FileContext adaptToContext(PyNode ast, String filePath, String source, ProjectContext projectContext) {
     final adapter = PythonAdapter(allFiles: _allFiles);
-    return adapter.adapt(ast, filePath, source);
+    return adapter.adapt(ast, filePath, source, projectContext);
   }
 
   @override

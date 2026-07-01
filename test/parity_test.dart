@@ -4,6 +4,7 @@ import 'package:vetro/analyzers/dart/adapters/dart_adapter.dart';
 import 'package:vetro/analyzers/python/adapters/python_adapter.dart';
 import 'package:vetro/analyzers/typescript/adapters/typescript_adapter.dart';
 import 'package:vetro/core/models/py_node.dart';
+import 'package:vetro/core/models/project_context.dart';
 import 'package:vetro/core/models/ts_node.dart';
 
 TsNode makeMockNode({
@@ -70,7 +71,7 @@ void main() {
       
       final dartResult = parseString(content: dartSource);
       const dartAdapter = DartAdapter();
-      final dartContext = dartAdapter.adapt(dartResult.unit, 'test.dart', dartSource);
+      final dartContext = dartAdapter.adapt(dartResult.unit, 'test.dart', dartSource, const ProjectContext.empty(projectPath: '.'));
       
       expect(dartContext.functions, hasLength(1));
       final dartFn = dartContext.functions.first;
@@ -122,7 +123,7 @@ function myFunction(x) {
       );
 
       const tsAdapter = TsAdapter(allFiles: {});
-      final tsContext = tsAdapter.adapt(tsRoot, 'test.ts', tsSource);
+      final tsContext = tsAdapter.adapt(tsRoot, 'test.ts', tsSource, const ProjectContext.empty(projectPath: '.'));
       
       expect(tsContext.functions, hasLength(1));
       final tsFnCtx = tsContext.functions.first;
@@ -167,7 +168,7 @@ def myFunction(x):
       );
 
       const pyAdapter = PythonAdapter(allFiles: {});
-      final pyContext = pyAdapter.adapt(pyRoot, 'test.py', pySource);
+      final pyContext = pyAdapter.adapt(pyRoot, 'test.py', pySource, const ProjectContext.empty(projectPath: '.'));
 
       expect(pyContext.functions, hasLength(1));
       final pyFnCtx = pyContext.functions.first;

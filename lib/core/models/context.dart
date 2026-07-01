@@ -3,6 +3,7 @@
 library;
 
 import 'package:vetro/core/metrics/halstead.dart';
+import 'package:vetro/core/models/project_context.dart';
 
 /// Represents the context of an individual function or method.
 final class FunctionContext {
@@ -102,6 +103,9 @@ final class FileContext {
   /// Imports declared in this file.
   final List<ImportEdge> imports;
 
+  /// The global project SDK context (Dart & Flutter versions).
+  final ProjectContext projectContext;
+
   /// Opaque payload to temporarily store the native AST (e.g. CompilationUnit or TsNode)
   /// during incremental migration phases. Will be removed once all rules are migrated.
   final Object? nativeAst;
@@ -112,6 +116,7 @@ final class FileContext {
     required this.functions,
     required this.classes,
     required this.imports,
+    required this.projectContext,
     this.nativeAst,
   });
 }

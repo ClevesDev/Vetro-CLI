@@ -15,6 +15,7 @@ import 'package:vetro/analyzers/typescript/adapters/typescript_adapter.dart';
 import 'package:vetro/core/models/base_analyzer.dart';
 import 'package:vetro/core/models/config.dart';
 import 'package:vetro/core/models/context.dart';
+import 'package:vetro/core/models/project_context.dart';
 import 'package:vetro/core/models/finding.dart';
 import 'package:vetro/core/models/ts_node.dart';
 import 'package:vetro/core/rules/rule.dart';
@@ -68,9 +69,9 @@ final class TypeScriptAnalyzer extends BaseAnalyzer<TsNode> {
   }
 
   @override
-  FileContext adaptToContext(TsNode ast, String filePath, String source) {
+  FileContext adaptToContext(TsNode ast, String filePath, String source, ProjectContext projectContext) {
     final adapter = TsAdapter(allFiles: _allFiles);
-    return adapter.adapt(ast, filePath, source);
+    return adapter.adapt(ast, filePath, source, projectContext);
   }
 
   @override

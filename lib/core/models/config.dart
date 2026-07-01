@@ -204,6 +204,35 @@ final class VetroConfig {
             severity: Severity.warning,
             thresholds: {'min_clustering': 0.15, 'min_connections': 4.0},
           ),
+          'performance_media_query': const RuleConfig(
+            enabled: true,
+            severity: Severity.warning,
+          ),
+          'business_logic_in_ui': const RuleConfig(
+            enabled: true,
+            severity: Severity.error,
+          ),
+          'misplaced_layout_constraints': const RuleConfig(
+            enabled: true,
+            severity: Severity.error,
+          ),
+          'unreleased_controllers': const RuleConfig(
+            enabled: true,
+            severity: Severity.error,
+          ),
+          'hardcoded_ui_tokens': const RuleConfig(
+            enabled: true,
+            severity: Severity.warning,
+          ),
+          'setState_in_complex_builds': const RuleConfig(
+            enabled: true,
+            severity: Severity.warning,
+            thresholds: {'max_build_complexity': 12.0},
+          ),
+          'missing_const_constructors': const RuleConfig(
+            enabled: true,
+            severity: Severity.warning,
+          ),
         },
       );
 

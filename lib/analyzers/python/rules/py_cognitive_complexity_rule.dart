@@ -2,6 +2,7 @@ import 'package:vetro/analyzers/python/rules/py_rule.dart';
 import 'package:vetro/core/models/finding.dart';
 import 'package:vetro/core/models/py_node.dart';
 import 'package:vetro/core/models/context.dart';
+import 'package:vetro/core/models/project_context.dart';
 import 'package:vetro/analyzers/python/adapters/python_adapter.dart';
 
 /// Rule: Cognitive Complexity for Python.
@@ -37,7 +38,7 @@ final class PyCognitiveComplexityRule extends PyRule {
 
     for (final fn in functionNodes) {
       // We can reuse the adapter's implementation
-      final context = adapter.adapt(root, filePath, source);
+      final context = adapter.adapt(root, filePath, source, const ProjectContext.empty(projectPath: '.'));
       
       FunctionContext? fnContext;
       for (final f in context.functions) {

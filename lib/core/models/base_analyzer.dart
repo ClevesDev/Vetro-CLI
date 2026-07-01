@@ -5,6 +5,7 @@ import 'package:path/path.dart' as p;
 import 'package:vetro/core/models/config.dart';
 import 'package:vetro/core/models/finding.dart';
 import 'package:vetro/core/models/context.dart';
+import 'package:vetro/core/models/project_context.dart';
 import 'package:vetro/core/rules/rule.dart';
 
 /// Base class that coordinates the analysis pipeline.
@@ -25,7 +26,7 @@ abstract class BaseAnalyzer<AST> {
   Future<Map<String, AST>> parseFiles(List<File> files, VetroConfig config);
 
   /// Hook implemented by subclasses to map a parsed AST to a unified [FileContext].
-  FileContext adaptToContext(AST ast, String filePath, String source);
+  FileContext adaptToContext(AST ast, String filePath, String source, ProjectContext projectContext);
 
   /// Hook implemented by subclasses to load rules for this analyzer.
   List<AnalysisRule> loadRules(VetroConfig config);
@@ -36,6 +37,9 @@ abstract class BaseAnalyzer<AST> {
 
     // Step 1: Discover files.
     final files = await discoverFiles(projectPath, config);
+
+    // Resolve the project SDK and environment context.
+    final projectContext = await ProjectContext.resolve(projectPath);
 
     // Step 2: Parse files (using the subclass hook).
     final asts = <String, AST>{};
@@ -85,7 +89,7 @@ abstract class BaseAnalyzer<AST> {
     final contexts = <String, FileContext>{};
     for (final entry in asts.entries) {
       final filePath = entry.key;
-      contexts[filePath] = adaptToContext(entry.value, filePath, sources[filePath]!);
+      contexts[filePath] = adaptToContext(entry.value, filePath, sources[filePath]!, projectContext);
     }
 
     // Step 4: Load and Partition Rules.

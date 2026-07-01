@@ -12,6 +12,7 @@ import 'package:vetro/analyzers/dart/adapters/dart_adapter.dart';
 import 'package:vetro/core/models/base_analyzer.dart';
 import 'package:vetro/core/models/config.dart';
 import 'package:vetro/core/models/context.dart';
+import 'package:vetro/core/models/project_context.dart';
 import 'package:vetro/core/models/finding.dart';
 import 'package:vetro/core/rules/rule.dart';
 import 'package:vetro/core/rules/rule_registry.dart';
@@ -31,6 +32,13 @@ import 'package:vetro/analyzers/dart/rules/boundary_violation_rule.dart';
 import 'package:vetro/analyzers/dart/rules/cognitive_complexity_rule.dart';
 import 'package:vetro/analyzers/dart/rules/local_clustering_coefficient_rule.dart';
 import 'package:vetro/analyzers/dart/rules/tight_coupling_rule.dart';
+import 'package:vetro/analyzers/dart/rules/performance_media_query_rule.dart';
+import 'package:vetro/analyzers/dart/rules/business_logic_in_ui_rule.dart';
+import 'package:vetro/analyzers/dart/rules/misplaced_layout_constraints_rule.dart';
+import 'package:vetro/analyzers/dart/rules/unreleased_controllers_rule.dart';
+import 'package:vetro/analyzers/dart/rules/hardcoded_ui_tokens_rule.dart';
+import 'package:vetro/analyzers/dart/rules/set_state_in_complex_builds_rule.dart';
+import 'package:vetro/analyzers/dart/rules/missing_const_constructors_rule.dart';
 import 'package:vetro/core/rules/cyclomatic_complexity_rule.dart' as core_rules;
 import 'package:vetro/core/rules/low_entropy_rule.dart' as core_rules;
 import 'package:vetro/core/rules/intent_gap_rule.dart' as core_rules;
@@ -64,9 +72,9 @@ final class DartAnalyzer extends BaseAnalyzer<CompilationUnit> {
   }
 
   @override
-  FileContext adaptToContext(CompilationUnit ast, String filePath, String source) {
+  FileContext adaptToContext(CompilationUnit ast, String filePath, String source, ProjectContext projectContext) {
     const adapter = DartAdapter();
-    return adapter.adapt(ast, filePath, source);
+    return adapter.adapt(ast, filePath, source, projectContext);
   }
 
 
@@ -93,13 +101,50 @@ final class DartAnalyzer extends BaseAnalyzer<CompilationUnit> {
       rules.add(core_rules.HalsteadComplexityRule(config: halsteadConfig));
     }
 
+    // Load Flutter UI rules
+    final mediaQueryConfig = config.ruleConfig('performance_media_query');
+    if (mediaQueryConfig.enabled) {
+      rules.add(PerformanceMediaQueryRule(config: mediaQueryConfig));
+    }
+    final businessLogicConfig = config.ruleConfig('business_logic_in_ui');
+    if (businessLogicConfig.enabled) {
+      rules.add(BusinessLogicInUiRule(config: businessLogicConfig));
+    }
+    final layoutConstraintsConfig = config.ruleConfig('misplaced_layout_constraints');
+    if (layoutConstraintsConfig.enabled) {
+      rules.add(MisplacedLayoutConstraintsRule(config: layoutConstraintsConfig));
+    }
+    final unreleasedControllersConfig = config.ruleConfig('unreleased_controllers');
+    if (unreleasedControllersConfig.enabled) {
+      rules.add(UnreleasedControllersRule(config: unreleasedControllersConfig));
+    }
+    final hardcodedUiTokensConfig = config.ruleConfig('hardcoded_ui_tokens');
+    if (hardcodedUiTokensConfig.enabled) {
+      rules.add(HardcodedUiTokensRule(config: hardcodedUiTokensConfig));
+    }
+    final setStateComplexConfig = config.ruleConfig('setState_in_complex_builds');
+    if (setStateComplexConfig.enabled) {
+      rules.add(SetStateInComplexBuildsRule(config: setStateComplexConfig));
+    }
+    final missingConstConfig = config.ruleConfig('missing_const_constructors');
+    if (missingConstConfig.enabled) {
+      rules.add(MissingConstConstructorsRule(config: missingConstConfig));
+    }
+
     // Load remaining rules from the registry
     final legacyRules = RuleRegistry.instance.createRules(config);
     for (final rule in legacyRules) {
       if (rule.id == 'cyclomatic_complexity' ||
           rule.id == 'low_entropy' ||
           rule.id == 'intent_gap' ||
-          rule.id == 'halstead_complexity') {
+          rule.id == 'halstead_complexity' ||
+          rule.id == 'performance_media_query' ||
+          rule.id == 'business_logic_in_ui' ||
+          rule.id == 'misplaced_layout_constraints' ||
+          rule.id == 'unreleased_controllers' ||
+          rule.id == 'hardcoded_ui_tokens' ||
+          rule.id == 'setState_in_complex_builds' ||
+          rule.id == 'missing_const_constructors') {
         continue;
       }
       rules.add(LegacyRuleAdapter(rule));

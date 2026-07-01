@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 import 'package:path/path.dart' as p;
 import 'package:vetro/core/models/context.dart';
+import 'package:vetro/core/models/project_context.dart';
 import 'package:vetro/core/models/ts_node.dart';
 import 'package:vetro/analyzers/typescript/adapters/typescript_halstead.dart';
 
@@ -9,7 +10,7 @@ final class TsAdapter {
 
   const TsAdapter({required this.allFiles});
 
-  FileContext adapt(TsNode root, String filePath, String source) {
+  FileContext adapt(TsNode root, String filePath, String source, ProjectContext projectContext) {
     final functions = <FunctionContext>[];
     final classes = <ClassContext>[];
     final imports = <ImportEdge>[];
@@ -105,6 +106,7 @@ final class TsAdapter {
       functions: functions,
       classes: classes,
       imports: imports,
+      projectContext: projectContext,
       nativeAst: root,
     );
   }

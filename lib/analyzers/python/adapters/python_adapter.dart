@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 import 'package:path/path.dart' as p;
 import 'package:vetro/core/models/context.dart';
+import 'package:vetro/core/models/project_context.dart';
 import 'package:vetro/core/models/py_node.dart';
 import 'package:vetro/analyzers/python/adapters/python_halstead.dart';
 
@@ -9,7 +10,7 @@ final class PythonAdapter {
 
   const PythonAdapter({required this.allFiles});
 
-  FileContext adapt(PyNode root, String filePath, String source) {
+  FileContext adapt(PyNode root, String filePath, String source, ProjectContext projectContext) {
     final functions = <FunctionContext>[];
     final classes = <ClassContext>[];
     final imports = <ImportEdge>[];
@@ -126,6 +127,7 @@ final class PythonAdapter {
       functions: functions,
       classes: classes,
       imports: imports,
+      projectContext: projectContext,
       nativeAst: root,
     );
   }

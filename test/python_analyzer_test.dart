@@ -2,6 +2,7 @@ import 'package:test/test.dart';
 import 'package:vetro/core/models/config.dart';
 import 'package:vetro/core/models/finding.dart';
 import 'package:vetro/core/models/py_node.dart';
+import 'package:vetro/core/models/project_context.dart';
 import 'package:vetro/analyzers/python/rules/py_semantic_duplication_rule.dart';
 import 'package:vetro/analyzers/python/adapters/python_adapter.dart';
 
@@ -110,7 +111,7 @@ void main() {
       );
 
       final adapter = const PythonAdapter(allFiles: {});
-      final context = adapter.adapt(root, 'test.py', '');
+      final context = adapter.adapt(root, 'test.py', '', const ProjectContext.empty(projectPath: '.'));
 
       // outer_func should be extracted, inner_func should NOT be extracted.
       expect(context.functions, hasLength(1));
