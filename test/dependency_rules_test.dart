@@ -9,9 +9,9 @@ import 'package:vetro/core/models/config.dart';
 void main() {
   group('Circular Dependency Rule', () {
     test('detects cycles between files', () async {
-      final sourceA = "import 'b.dart';";
-      final sourceB = "import 'c.dart';";
-      final sourceC = "import 'a.dart';";
+      const sourceA = "import 'b.dart';";
+      const sourceB = "import 'c.dart';";
+      const sourceC = "import 'a.dart';";
 
       final unitA = parseString(content: sourceA).unit;
       final unitB = parseString(content: sourceB).unit;
@@ -22,33 +22,28 @@ void main() {
       final pathB = p.join(root, 'lib', 'b.dart');
       final pathC = p.join(root, 'lib', 'c.dart');
 
-      final units = {
-        pathA: unitA,
-        pathB: unitB,
-        pathC: unitC,
-      };
-      final sources = {
-        pathA: sourceA,
-        pathB: sourceB,
-        pathC: sourceC,
-      };
+      final units = {pathA: unitA, pathB: unitB, pathC: unitC};
+      final sources = {pathA: sourceA, pathB: sourceB, pathC: sourceC};
 
       const rule = CircularDependencyRule(config: RuleConfig(enabled: true));
       final findings = await rule.analyzeProject(units, sources);
 
       expect(findings, isNotEmpty);
       expect(findings.first.ruleId, equals('circular_dependency'));
-      expect(findings.first.message, contains('lib/a.dart -> lib/b.dart -> lib/c.dart -> lib/a.dart'));
+      expect(
+        findings.first.message,
+        contains('lib/a.dart -> lib/b.dart -> lib/c.dart -> lib/a.dart'),
+      );
     });
   });
 
   group('Tight Coupling Rule', () {
     test('flags files with coupling ratio above threshold', () async {
       // Create a star topology where center.dart imports everything, and everything imports center.dart.
-      final sourceCenter = "import 'a.dart'; import 'b.dart'; import 'c.dart';";
-      final sourceA = "import 'center.dart';";
-      final sourceB = "import 'center.dart';";
-      final sourceC = "import 'center.dart';";
+      const sourceCenter = "import 'a.dart'; import 'b.dart'; import 'c.dart';";
+      const sourceA = "import 'center.dart';";
+      const sourceB = "import 'center.dart';";
+      const sourceC = "import 'center.dart';";
 
       final unitCenter = parseString(content: sourceCenter).unit;
       final unitA = parseString(content: sourceA).unit;
@@ -75,10 +70,9 @@ void main() {
       };
 
       // totalNodes = 4. coupling(center) = (fanIn: 3 + fanOut: 3) / 4 = 1.5. Threshold: 0.50.
-      const rule = TightCouplingRule(config: RuleConfig(
-        enabled: true,
-        thresholds: {'max_coupling': 0.5},
-      ));
+      const rule = TightCouplingRule(
+        config: RuleConfig(enabled: true, thresholds: {'max_coupling': 0.5}),
+      );
       final findings = await rule.analyzeProject(units, sources);
 
       final centerFindings = findings.where((f) => f.filePath == pathCenter);

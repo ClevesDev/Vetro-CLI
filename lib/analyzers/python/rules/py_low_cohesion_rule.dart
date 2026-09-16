@@ -18,25 +18,20 @@ final class PyLowCohesionRule extends PyRule {
       'Flags classes whose average method identifier cosine similarity falls below the threshold.';
 
   @override
-  List<Finding> analyze(
-    PyNode root,
-    String filePath,
-    String source,
-  ) {
-    final minCohesion =
-        config.threshold('min_cohesion', defaultValue: 0.15);
-    final minMethods =
-        config.threshold('min_methods', defaultValue: 3.0).toInt();
+  List<Finding> analyze(PyNode root, String filePath, String source) {
+    final minCohesion = config.threshold('min_cohesion', defaultValue: 0.15);
+    final minMethods = config
+        .threshold('min_methods', defaultValue: 3.0)
+        .toInt();
     final findings = <Finding>[];
 
     final classNodes = root.descendentNodes((node) => node.type == 'ClassDef');
 
     for (final cls in classNodes) {
       // Extract all methods
-      final methods = cls.descendentNodes((node) => const {
-            'FunctionDef',
-            'AsyncFunctionDef',
-          }.contains(node.type));
+      final methods = cls.descendentNodes(
+        (node) => const {'FunctionDef', 'AsyncFunctionDef'}.contains(node.type),
+      );
 
       // Filter out double underscore internal methods except __init__ if needed, or analyze all.
       // In Python, it is standard to analyze all defined methods.
@@ -51,7 +46,8 @@ final class PyLowCohesionRule extends PyRule {
               severity: severity,
               filePath: filePath,
               line: cls.line,
-              message: 'Class "$className" has low cohesion: '
+              message:
+                  'Class "$className" has low cohesion: '
                   '${(cohesion * 100).toStringAsFixed(1)}% '
                   '(threshold: ${(minCohesion * 100).toStringAsFixed(1)}%).',
               evidence: {
@@ -90,7 +86,9 @@ final class PyLowCohesionRule extends PyRule {
         final intersectionSize = vocabA.intersection(vocabB).length;
         final denominator = math.sqrt(vocabA.length * vocabB.length);
 
-        final similarity = denominator == 0 ? 0.0 : intersectionSize / denominator;
+        final similarity = denominator == 0
+            ? 0.0
+            : intersectionSize / denominator;
         sumSimilarity += similarity;
         countPairs++;
       }
@@ -103,11 +101,43 @@ final class PyLowCohesionRule extends PyRule {
   Set<String> _extractMethodIdentifiers(PyNode methodNode) {
     final identifiers = <String>{};
     const stopWords = {
-      'False', 'None', 'True', 'and', 'as', 'assert', 'async', 'await',
-      'break', 'class', 'continue', 'def', 'del', 'elif', 'else', 'except',
-      'finally', 'for', 'from', 'global', 'if', 'import', 'in', 'is', 'lambda',
-      'nonlocal', 'not', 'or', 'pass', 'raise', 'return', 'try', 'while',
-      'with', 'yield', 'self', 'cls'
+      'False',
+      'None',
+      'True',
+      'and',
+      'as',
+      'assert',
+      'async',
+      'await',
+      'break',
+      'class',
+      'continue',
+      'def',
+      'del',
+      'elif',
+      'else',
+      'except',
+      'finally',
+      'for',
+      'from',
+      'global',
+      'if',
+      'import',
+      'in',
+      'is',
+      'lambda',
+      'nonlocal',
+      'not',
+      'or',
+      'pass',
+      'raise',
+      'return',
+      'try',
+      'while',
+      'with',
+      'yield',
+      'self',
+      'cls',
     };
 
     void collect(PyNode n) {

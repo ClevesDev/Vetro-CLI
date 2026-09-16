@@ -20,23 +20,22 @@ final class TsCognitiveComplexityRule extends TsRule {
       'Flags TypeScript functions whose cognitive complexity exceeds the threshold.';
 
   @override
-  List<Finding> analyze(
-    TsNode root,
-    String filePath,
-    String source,
-  ) {
-    final maxCognitive =
-        config.threshold('max_cognitive_complexity', defaultValue: 15.0).toInt();
+  List<Finding> analyze(TsNode root, String filePath, String source) {
+    final maxCognitive = config
+        .threshold('max_cognitive_complexity', defaultValue: 15.0)
+        .toInt();
     final findings = <Finding>[];
 
     // Find all function-like nodes.
-    final functionNodes = root.descendentNodes((node) => const {
-          'FunctionDeclaration',
-          'FunctionExpression',
-          'ArrowFunctionExpression',
-          'ClassMethod',
-          'ObjectMethod',
-        }.contains(node.type));
+    final functionNodes = root.descendentNodes(
+      (node) => const {
+        'FunctionDeclaration',
+        'FunctionExpression',
+        'ArrowFunctionExpression',
+        'ClassMethod',
+        'ObjectMethod',
+      }.contains(node.type),
+    );
 
     for (final fn in functionNodes) {
       final cc = _computeCognitiveComplexity(fn);
@@ -49,7 +48,8 @@ final class TsCognitiveComplexityRule extends TsRule {
             severity: severity,
             filePath: filePath,
             line: fn.line,
-            message: 'Function "$fnName" has cognitive complexity $cc '
+            message:
+                'Function "$fnName" has cognitive complexity $cc '
                 '(threshold: $maxCognitive).',
             evidence: {
               'cognitive_complexity': '$cc',
@@ -66,7 +66,12 @@ final class TsCognitiveComplexityRule extends TsRule {
   int _computeCognitiveComplexity(TsNode fnNode) {
     var complexity = 0;
 
-    void visit(TsNode node, TsNode? parent, int nestingLevel, String? parentLogicalOp) {
+    void visit(
+      TsNode node,
+      TsNode? parent,
+      int nestingLevel,
+      String? parentLogicalOp,
+    ) {
       // Do not recurse into nested functions (they will be analyzed separately)
       if (node != fnNode &&
           const {
@@ -83,7 +88,8 @@ final class TsCognitiveComplexityRule extends TsRule {
       var currentLogicalOp = parentLogicalOp;
 
       if (node.type == 'IfStatement') {
-        final isElseIf = parent != null &&
+        final isElseIf =
+            parent != null &&
             parent.type == 'IfStatement' &&
             parent.raw['alternate'] is Map &&
             node.start == (parent.raw['alternate'] as Map)['start'];
@@ -95,13 +101,18 @@ final class TsCognitiveComplexityRule extends TsRule {
         }
         currentNesting = nestingLevel + 1;
         currentLogicalOp = null;
-      } else if (const {'ForStatement', 'ForInStatement', 'ForOfStatement'}
-          .contains(node.type)) {
+      } else if (const {
+        'ForStatement',
+        'ForInStatement',
+        'ForOfStatement',
+      }.contains(node.type)) {
         complexity += 1 + nestingLevel;
         currentNesting = nestingLevel + 1;
         currentLogicalOp = null;
-      } else if (const {'WhileStatement', 'DoWhileStatement'}
-          .contains(node.type)) {
+      } else if (const {
+        'WhileStatement',
+        'DoWhileStatement',
+      }.contains(node.type)) {
         complexity += 1 + nestingLevel;
         currentNesting = nestingLevel + 1;
         currentLogicalOp = null;
@@ -134,7 +145,8 @@ final class TsCognitiveComplexityRule extends TsRule {
 
     // Find the body/block of the function
     final bodyNode = fnNode.children.firstWhere(
-      (child) => const {'BlockStatement', 'ClassBody'}.contains(child.type) ||
+      (child) =>
+          const {'BlockStatement', 'ClassBody'}.contains(child.type) ||
           fnNode.type == 'ArrowFunctionExpression',
       orElse: () => fnNode,
     );
@@ -156,9 +168,13 @@ final class TsCognitiveComplexityRule extends TsRule {
       }
     }
 
-    final declarator = root.descendentNodes((node) =>
-        node.type == 'VariableDeclarator' &&
-        node.children.any((c) => c.start == fnNode.start && c.end == fnNode.end));
+    final declarator = root.descendentNodes(
+      (node) =>
+          node.type == 'VariableDeclarator' &&
+          node.children.any(
+            (c) => c.start == fnNode.start && c.end == fnNode.end,
+          ),
+    );
 
     if (declarator.isNotEmpty) {
       final idMap = declarator.first.raw['id'];

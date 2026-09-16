@@ -19,15 +19,13 @@ abstract class Reporter {
 
   /// Extracts the last path segment as the project name.
   String extractProjectName(String projectPath) {
-    final segments = projectPath.split('/').where(
-      (s) => s.isNotEmpty,
-    );
+    final segments = projectPath.split('/').where((s) => s.isNotEmpty);
     return segments.isEmpty ? projectPath : segments.last;
   }
 
   /// Formats an integer with comma-separated thousands.
   String formatNumber(int n) => n.toString().replaceAllMapped(
-        RegExp(r'(\d)(?=(\d{3})+$)'),
-        (m) => '${m[1]},',
-      );
+    RegExp(r'(\d)(?=(\d{3})+$)'),
+    (m) => '${m[1]},',
+  );
 }

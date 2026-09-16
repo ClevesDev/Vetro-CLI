@@ -46,12 +46,10 @@ final class MissingConstConstructorsRule extends AnalysisRule {
             severity: severity,
             filePath: context.filePath,
             line: line,
-            message: 'Use a "const" constructor when instantiating static widget or token "$widgetName". '
+            message:
+                'Use a "const" constructor when instantiating static widget or token "$widgetName". '
                 'This allows Flutter to cache the widget instance and optimize build/render cycles.',
-            evidence: {
-              'expression': node.toString(),
-              'widget': widgetName,
-            },
+            evidence: {'expression': node.toString(), 'widget': widgetName},
           ),
         );
       },
@@ -63,9 +61,8 @@ final class MissingConstConstructorsRule extends AnalysisRule {
 }
 
 class _BuildMethodVisitor extends RecursiveAstVisitor<void> {
-  final void Function(AstNode node, String widgetName) onViolation;
-
   _BuildMethodVisitor({required this.onViolation});
+  final void Function(AstNode node, String widgetName) onViolation;
 
   @override
   void visitMethodDeclaration(MethodDeclaration node) {
@@ -80,9 +77,8 @@ class _BuildMethodVisitor extends RecursiveAstVisitor<void> {
 }
 
 class _BuildBodyVisitor extends RecursiveAstVisitor<void> {
-  final void Function(AstNode node, String widgetName) onViolation;
-
   _BuildBodyVisitor({required this.onViolation});
+  final void Function(AstNode node, String widgetName) onViolation;
 
   static const _candidateConstClasses = {
     'SizedBox',
@@ -103,13 +99,14 @@ class _BuildBodyVisitor extends RecursiveAstVisitor<void> {
 
     if (expr is PrefixedIdentifier) {
       final prefix = expr.prefix.name;
-      return prefix.isNotEmpty && RegExp(r'^[A-Z]').hasMatch(prefix.substring(0, 1));
+      return prefix.isNotEmpty &&
+          RegExp('^[A-Z]').hasMatch(prefix.substring(0, 1));
     }
 
     if (expr is PropertyAccess) {
       final targetStr = expr.realTarget.toString();
       return targetStr.isNotEmpty &&
-          RegExp(r'^[A-Z]').hasMatch(targetStr.substring(0, 1)) &&
+          RegExp('^[A-Z]').hasMatch(targetStr.substring(0, 1)) &&
           !targetStr.contains('(');
     }
 
@@ -124,7 +121,7 @@ class _BuildBodyVisitor extends RecursiveAstVisitor<void> {
     if (expr is MethodInvocation) {
       final target = expr.target;
       final methodName = expr.methodName.name;
-      
+
       if (target == null) {
         // Constructor invocation without new (e.g. Text('Hello'))
         if (_candidateConstClasses.contains(methodName)) {
@@ -140,8 +137,9 @@ class _BuildBodyVisitor extends RecursiveAstVisitor<void> {
       } else {
         // Named static class constructor/factory (e.g. EdgeInsets.all(8.0))
         final targetStr = target.toString();
-        final isStaticClass = targetStr.isNotEmpty &&
-            RegExp(r'^[A-Z]').hasMatch(targetStr.substring(0, 1)) &&
+        final isStaticClass =
+            targetStr.isNotEmpty &&
+            RegExp('^[A-Z]').hasMatch(targetStr.substring(0, 1)) &&
             !targetStr.contains('(');
 
         if (isStaticClass) {
@@ -165,7 +163,11 @@ class _BuildBodyVisitor extends RecursiveAstVisitor<void> {
     return false;
   }
 
-  void _checkConstPossibility(AstNode node, String typeName, ArgumentList argumentList) {
+  void _checkConstPossibility(
+    AstNode node,
+    String typeName,
+    ArgumentList argumentList,
+  ) {
     if (_candidateConstClasses.contains(typeName)) {
       // Check if all arguments are syntactically constant
       var allArgsConstant = true;
@@ -179,13 +181,15 @@ class _BuildBodyVisitor extends RecursiveAstVisitor<void> {
       if (allArgsConstant) {
         // Also check if any parent in the tree is already marked as const
         var hasConstParent = false;
-        AstNode? parent = node.parent;
+        var parent = node.parent;
         while (parent != null) {
           if (parent is InstanceCreationExpression && parent.isConst) {
             hasConstParent = true;
             break;
           }
-          if (parent is MethodDeclaration) break; // Don't go beyond build method boundary
+          if (parent is MethodDeclaration) {
+            break; // Don't go beyond build method boundary
+          }
           parent = parent.parent;
         }
 
@@ -219,8 +223,9 @@ class _BuildBodyVisitor extends RecursiveAstVisitor<void> {
     } else {
       // Named constructor call without new (e.g. EdgeInsets.all(8.0))
       final targetStr = target.toString();
-      final isStaticClass = targetStr.isNotEmpty &&
-          RegExp(r'^[A-Z]').hasMatch(targetStr.substring(0, 1)) &&
+      final isStaticClass =
+          targetStr.isNotEmpty &&
+          RegExp('^[A-Z]').hasMatch(targetStr.substring(0, 1)) &&
           !targetStr.contains('(');
 
       if (isStaticClass) {

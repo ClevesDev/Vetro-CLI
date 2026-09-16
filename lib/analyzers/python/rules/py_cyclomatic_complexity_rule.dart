@@ -12,8 +12,10 @@ final class PyCyclomaticComplexityRule extends PyRule {
   String get name => 'Cyclomatic Complexity (Python)';
 
   @override
-  String get description => 'Legacy Cyclomatic Complexity placeholder for Python.';
+  String get description =>
+      'Legacy Cyclomatic Complexity placeholder for Python.';
 
   @override
-  List<Finding> analyze(PyNode root, String filePath, String source) => const [];
+  List<Finding> analyze(PyNode root, String filePath, String source) =>
+      const [];
 }

@@ -36,8 +36,9 @@ final class SetStateInComplexBuildsRule extends AnalysisRule {
     final unit = context.nativeAst as CompilationUnit?;
     if (unit == null) return const [];
 
-    final maxBuildCC =
-        config.threshold('max_build_complexity', defaultValue: 12.0).toInt();
+    final maxBuildCC = config
+        .threshold('max_build_complexity', defaultValue: 12.0)
+        .toInt();
 
     final findings = <Finding>[];
     final visitor = _SetStateComplexityVisitor(
@@ -51,7 +52,8 @@ final class SetStateInComplexBuildsRule extends AnalysisRule {
             severity: severity,
             filePath: context.filePath,
             line: line,
-            message: 'Class uses "setState()" but its "build" method has a high cyclomatic complexity of $cc (threshold: $maxBuildCC). '
+            message:
+                'Class uses "setState()" but its "build" method has a high cyclomatic complexity of $cc (threshold: $maxBuildCC). '
                 'Decompose this complex widget tree into smaller stateless/stateful sub-widgets to isolate rebuilding and optimize rendering performance.',
             evidence: {
               'build_complexity': '$cc',
@@ -69,13 +71,9 @@ final class SetStateInComplexBuildsRule extends AnalysisRule {
 }
 
 class _SetStateComplexityVisitor extends RecursiveAstVisitor<void> {
+  _SetStateComplexityVisitor({required this.maxCC, required this.onViolation});
   final int maxCC;
   final void Function(ClassDeclaration node, int cc) onViolation;
-
-  _SetStateComplexityVisitor({
-    required this.maxCC,
-    required this.onViolation,
-  });
 
   @override
   void visitClassDeclaration(ClassDeclaration node) {
@@ -86,7 +84,8 @@ class _SetStateComplexityVisitor extends RecursiveAstVisitor<void> {
     }
 
     final superclass = extendsClause.superclass.toString();
-    final isStateClass = superclass.startsWith('State') || superclass.contains('State<');
+    final isStateClass =
+        superclass.startsWith('State') || superclass.contains('State<');
 
     if (!isStateClass) {
       super.visitClassDeclaration(node);
@@ -105,12 +104,12 @@ class _SetStateComplexityVisitor extends RecursiveAstVisitor<void> {
       }
     }
 
-    if (buildMethod == null || buildMethod.body == null) {
+    if (buildMethod == null) {
       super.visitClassDeclaration(node);
       return;
     }
 
-    final cc = cyclomaticComplexity(buildMethod.body!);
+    final cc = cyclomaticComplexity(buildMethod.body);
     if (cc < maxCC) {
       super.visitClassDeclaration(node);
       return;
@@ -146,9 +145,8 @@ class _SetStateComplexityVisitor extends RecursiveAstVisitor<void> {
 }
 
 class _SetStateSearcher extends RecursiveAstVisitor<void> {
-  final void Function() onSetStateFound;
-
   _SetStateSearcher({required this.onSetStateFound});
+  final void Function() onSetStateFound;
 
   @override
   void visitMethodInvocation(MethodInvocation node) {

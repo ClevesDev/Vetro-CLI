@@ -9,7 +9,10 @@ final class GitDiffParser {
   ///
   /// If [baseRef] is specified, it compares the working tree against that reference.
   /// If [baseRef] is null, it combines staged (`--cached`) and unstaged local changes compared to HEAD.
-  Future<Map<String, Set<int>>> getModifiedLines(String targetPath, [String? baseRef]) async {
+  Future<Map<String, Set<int>>> getModifiedLines(
+    String targetPath, [
+    String? baseRef,
+  ]) async {
     final modified = <String, Set<int>>{};
 
     if (baseRef != null && baseRef.isNotEmpty) {
@@ -30,7 +33,11 @@ final class GitDiffParser {
   Future<String> _runGitDiff(String targetPath, List<String> extraArgs) async {
     try {
       final args = ['diff', '-U0', ...extraArgs];
-      final result = await Process.run('git', args, workingDirectory: targetPath);
+      final result = await Process.run(
+        'git',
+        args,
+        workingDirectory: targetPath,
+      );
       if (result.exitCode != 0) {
         // If not a git repo or git fails, return empty
         return '';
@@ -41,7 +48,11 @@ final class GitDiffParser {
     }
   }
 
-  void parseDiffOutput(String diffOutput, String targetPath, Map<String, Set<int>> result) {
+  void parseDiffOutput(
+    String diffOutput,
+    String targetPath,
+    Map<String, Set<int>> result,
+  ) {
     if (diffOutput.isEmpty) return;
 
     final lines = diffOutput.split('\n');
@@ -68,7 +79,7 @@ final class GitDiffParser {
 
         final rangeContent = newRange.substring(1); // remove '+'
         int startLine;
-        int lineCount = 1;
+        var lineCount = 1;
 
         if (rangeContent.contains(',')) {
           final split = rangeContent.split(',');

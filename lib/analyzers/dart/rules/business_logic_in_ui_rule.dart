@@ -45,10 +45,7 @@ final class BusinessLogicInUiRule extends AnalysisRule {
             filePath: context.filePath,
             line: line,
             message: message,
-            evidence: {
-              'expression': node.toString(),
-              'violation_type': type,
-            },
+            evidence: {'expression': node.toString(), 'violation_type': type},
           ),
         );
       },
@@ -60,9 +57,8 @@ final class BusinessLogicInUiRule extends AnalysisRule {
 }
 
 class _BuildMethodLogicVisitor extends RecursiveAstVisitor<void> {
-  final void Function(AstNode node, String message, String type) onViolation;
-
   _BuildMethodLogicVisitor({required this.onViolation});
+  final void Function(AstNode node, String message, String type) onViolation;
 
   @override
   void visitMethodDeclaration(MethodDeclaration node) {
@@ -77,9 +73,8 @@ class _BuildMethodLogicVisitor extends RecursiveAstVisitor<void> {
 }
 
 class _BuildBodyVisitor extends RecursiveAstVisitor<void> {
-  final void Function(AstNode node, String message, String type) onViolation;
-
   _BuildBodyVisitor({required this.onViolation});
+  final void Function(AstNode node, String message, String type) onViolation;
 
   static const _uiControllerExceptions = {
     'DefaultTabController',
@@ -100,7 +95,7 @@ class _BuildBodyVisitor extends RecursiveAstVisitor<void> {
 
     // Must start with an uppercase letter from A to Z (ignore private _ prefix)
     final firstChar = clean.substring(0, 1);
-    if (!RegExp(r'^[A-Z]').hasMatch(firstChar)) return false;
+    if (!RegExp('^[A-Z]').hasMatch(firstChar)) return false;
 
     // Ignore native Flutter UI controllers
     if (_uiControllerExceptions.contains(clean)) return false;
@@ -123,7 +118,7 @@ class _BuildBodyVisitor extends RecursiveAstVisitor<void> {
       onViolation(
         node,
         'Avoid instantiating business services, blocs, or controllers ("$typeName") directly inside the build method. '
-        'This leads to high coupling and redundant instantiation during widget rebuilds.',
+            'This leads to high coupling and redundant instantiation during widget rebuilds.',
         'business_instance_creation',
       );
     }
@@ -135,7 +130,7 @@ class _BuildBodyVisitor extends RecursiveAstVisitor<void> {
     onViolation(
       node,
       'Avoid using "await" expressions inside the build method. UI build methods must be pure, synchronous, and fast. '
-      'Use FutureBuilder, StreamBuilder, or state management classes to handle asynchronous values.',
+          'Use FutureBuilder, StreamBuilder, or state management classes to handle asynchronous values.',
       'await_in_build',
     );
     super.visitAwaitExpression(node);
@@ -159,7 +154,7 @@ class _BuildBodyVisitor extends RecursiveAstVisitor<void> {
       onViolation(
         node,
         'Avoid instantiating business services, blocs, or controllers ("$suspectedClassName") directly inside the build method. '
-        'This leads to high coupling and redundant instantiation during widget rebuilds.',
+            'This leads to high coupling and redundant instantiation during widget rebuilds.',
         'business_instance_creation',
       );
     }

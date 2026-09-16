@@ -20,10 +20,9 @@ import 'dart:io';
 import 'dart:isolate';
 
 import 'package:analyzer/dart/ast/ast.dart';
-
+import 'package:vetro/analyzers/dart/adapters/dart_similarity.dart';
 import 'package:vetro/analyzers/dart/ast_utils.dart';
 import 'package:vetro/core/metrics/similarity.dart';
-import 'package:vetro/analyzers/dart/adapters/dart_similarity.dart';
 import 'package:vetro/core/models/finding.dart';
 import 'package:vetro/core/rules/rule.dart';
 
@@ -57,8 +56,7 @@ final class SemanticDuplicationRule extends CrossFileRule {
     Map<String, CompilationUnit> units,
     Map<String, String> sources,
   ) async {
-    final threshold =
-        config.threshold('similarity', defaultValue: 0.80);
+    final threshold = config.threshold('similarity', defaultValue: 0.80);
 
     // Collect, pre-filter, and cache all function/method bodies across the project.
     final cachedBodies = <_BodyAnalysisCache>[];
@@ -156,7 +154,8 @@ final class SemanticDuplicationRule extends CrossFileRule {
               severity: severity,
               filePath: a.info.filePath,
               line: a.info.line,
-              message: 'Function "${a.info.name}" is $percentage% semantically '
+              message:
+                  'Function "${a.info.name}" is $percentage% semantically '
                   'similar to "${b.info.name}" at ${b.info.filePath}:${b.info.line}.',
               evidence: {
                 'similarity': '$percentage%',
@@ -174,7 +173,9 @@ final class SemanticDuplicationRule extends CrossFileRule {
   }
 
   /// Parallel comparison worker.
-  static List<Finding> _compareSemanticDuplicationChunk(Map<String, dynamic> args) {
+  static List<Finding> _compareSemanticDuplicationChunk(
+    Map<String, dynamic> args,
+  ) {
     final cachedBodies = args['cachedBodies'] as List<_BodyAnalysisCache>;
     final threshold = args['threshold'] as double;
     final workerId = args['workerId'] as int;
@@ -221,7 +222,8 @@ final class SemanticDuplicationRule extends CrossFileRule {
               severity: severity,
               filePath: a.info.filePath,
               line: a.info.line,
-              message: 'Function "${a.info.name}" is $percentage% semantically '
+              message:
+                  'Function "${a.info.name}" is $percentage% semantically '
                   'similar to "${b.info.name}" at ${b.info.filePath}:${b.info.line}.',
               evidence: {
                 'similarity': '$percentage%',
@@ -241,10 +243,8 @@ final class SemanticDuplicationRule extends CrossFileRule {
 
 /// Helper container holding precomputed properties of a function body for fast comparison.
 final class _BodyAnalysisCache {
+  const _BodyAnalysisCache(this.info, this.astTokens, this.astHash);
   final FunctionBodyInfo info;
   final List<String> astTokens;
   final String astHash;
-
-  const _BodyAnalysisCache(this.info, this.astTokens, this.astHash);
 }
-

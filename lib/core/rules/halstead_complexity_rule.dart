@@ -27,9 +27,7 @@ final class HalsteadComplexityRule extends AnalysisRule {
     // top-level functions and class methods, preventing duplicated loops.
     forEachFunction(context, (fn) {
       if (fn.halsteadStats.effort > maxEffort) {
-        findings.add(
-          _buildFinding(context.filePath, fn, maxEffort),
-        );
+        findings.add(_buildFinding(context.filePath, fn, maxEffort));
       }
     });
 
@@ -44,7 +42,8 @@ final class HalsteadComplexityRule extends AnalysisRule {
       severity: severity,
       filePath: filePath,
       line: fn.startLine,
-      message: 'Function "${fn.name}" has Halstead effort ${stats.effort.toStringAsFixed(1)} '
+      message:
+          'Function "${fn.name}" has Halstead effort ${stats.effort.toStringAsFixed(1)} '
           '(threshold: ${maxEffort.toStringAsFixed(1)}).',
       evidence: {
         'halstead_effort': stats.effort.toStringAsFixed(1),

@@ -55,7 +55,12 @@ final class CircularDependencyRule extends CrossFileRule {
       final unit = entry.value;
 
       for (final importUri in extractImports(unit)) {
-        final resolvedPath = resolveImport(importUri, filePath, projectRoot, packageName);
+        final resolvedPath = resolveImport(
+          importUri,
+          filePath,
+          projectRoot,
+          packageName,
+        );
         // We only add internal dependencies that are part of the scanned files
         // to avoid tracing external package graphs.
         if (resolvedPath != null && units.containsKey(resolvedPath)) {
@@ -76,7 +81,9 @@ final class CircularDependencyRule extends CrossFileRule {
       if (reported.contains(key)) continue;
       reported.add(key);
 
-      final relativeCycle = canon.map((path) => p.relative(path, from: projectRoot)).toList();
+      final relativeCycle = canon
+          .map((path) => p.relative(path, from: projectRoot))
+          .toList();
       final pathStr = relativeCycle.join(' -> ');
 
       findings.add(

@@ -1,6 +1,6 @@
 import 'package:analyzer/dart/ast/ast.dart';
-import 'package:vetro/analyzers/dart/ast_utils.dart';
 import 'package:vetro/analyzers/dart/adapters/dart_cohesion.dart';
+import 'package:vetro/analyzers/dart/ast_utils.dart';
 import 'package:vetro/core/models/finding.dart';
 import 'package:vetro/core/rules/rule.dart';
 
@@ -19,15 +19,11 @@ final class LowCohesionRule extends Rule {
       'Flags classes whose average method identifier cosine similarity falls below the threshold.';
 
   @override
-  List<Finding> analyze(
-    CompilationUnit unit,
-    String filePath,
-    String source,
-  ) {
-    final minCohesion =
-        config.threshold('min_cohesion', defaultValue: 0.15);
-    final minMethods =
-        config.threshold('min_methods', defaultValue: 3.0).toInt();
+  List<Finding> analyze(CompilationUnit unit, String filePath, String source) {
+    final minCohesion = config.threshold('min_cohesion', defaultValue: 0.15);
+    final minMethods = config
+        .threshold('min_methods', defaultValue: 3.0)
+        .toInt();
     final findings = <Finding>[];
 
     for (final cls in extractClasses(unit)) {
@@ -67,7 +63,8 @@ final class LowCohesionRule extends Rule {
       severity: severity,
       filePath: filePath,
       line: line,
-      message: 'Class "$name" has low cohesion: '
+      message:
+          'Class "$name" has low cohesion: '
           '${(cohesion * 100).toStringAsFixed(1)}% '
           '(threshold: ${(minCohesion * 100).toStringAsFixed(1)}%).',
       evidence: {

@@ -1,6 +1,7 @@
 import 'dart:io';
-import 'package:test/test.dart';
+
 import 'package:path/path.dart' as p;
+import 'package:test/test.dart';
 import 'package:vetro/core/models/finding.dart';
 import 'package:vetro/core/report/prompt_reporter.dart';
 
@@ -43,7 +44,12 @@ void example() {
 
       final output = reporter.format(report);
       expect(output, contains('🤖 Vetro AI Remedy Prompts'));
-      expect(output, contains('No se encontraron hallazgos de deuda. ¡El código está impecable!'));
+      expect(
+        output,
+        contains(
+          'No se encontraron hallazgos de deuda. ¡El código está impecable!',
+        ),
+      );
     });
 
     test('generates remedy prompt with snippet and instructions', () {
@@ -77,22 +83,40 @@ void example() {
       expect(output, contains('Remedio #1: Cognitive Complexity'));
       expect(output, contains('**Ubicación:** `source.dart:7`'));
       expect(output, contains('**Severidad:** `WARNING`'));
-      expect(output, contains('Function has cognitive complexity of 12 (threshold is 10)'));
-      
+      expect(
+        output,
+        contains('Function has cognitive complexity of 12 (threshold is 10)'),
+      );
+
       // Code Context snippet checking
       expect(output, contains('### Código de Contexto:'));
       expect(output, contains('👉 7:   print(\'Line 6\'); // This is line 7'));
       expect(output, contains('   2:   print(\'Line 1\');')); // context lines
-      
+
       // Evidence checking
       expect(output, contains('### Evidencia Métrica:'));
       expect(output, contains('- **complexity**: `12`'));
       expect(output, contains('- **threshold**: `10`'));
 
       // Prompt / Instructions checking
-      expect(output, contains('### 📋 Prompt / Instrucciones de Refactorización para la IA:'));
-      expect(output, contains('Actúa como un ingeniero de software experto en refactorización de código limpio.'));
-      expect(output, contains('Reduce el anidamiento de control. Utiliza guardias y retornos tempranos (early returns).'));
+      expect(
+        output,
+        contains(
+          '### 📋 Prompt / Instrucciones de Refactorización para la IA:',
+        ),
+      );
+      expect(
+        output,
+        contains(
+          'Actúa como un ingeniero de software experto en refactorización de código limpio.',
+        ),
+      );
+      expect(
+        output,
+        contains(
+          'Reduce el anidamiento de control. Utiliza guardias y retornos tempranos (early returns).',
+        ),
+      );
     });
 
     test('handles missing file gracefully without failing', () {
@@ -126,7 +150,12 @@ void example() {
       expect(output, contains('**Ubicación:** `does_not_exist.dart:15`'));
       // No snippet should be present because the file doesn't exist
       expect(output, isNot(contains('### Código de Contexto:')));
-      expect(output, contains('Añade un comentario de docstring descriptivo que responda a: ¿por qué se tomó esta decisión de diseño'));
+      expect(
+        output,
+        contains(
+          'Añade un comentario de docstring descriptivo que responda a: ¿por qué se tomó esta decisión de diseño',
+        ),
+      );
     });
   });
 }

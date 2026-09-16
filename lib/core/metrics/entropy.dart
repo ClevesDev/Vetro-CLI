@@ -5,9 +5,18 @@ double commentIntentRatio(String source) {
   final lines = source.split('\n');
   var commentCount = 0;
   var intentCount = 0;
-  final intentKeywords = const {
-    'why', 'because', 'reason', 'purpose', 'intent',
-    'rationale', 'note', 'important', 'hack', 'workaround', 'todo'
+  const intentKeywords = {
+    'why',
+    'because',
+    'reason',
+    'purpose',
+    'intent',
+    'rationale',
+    'note',
+    'important',
+    'hack',
+    'workaround',
+    'todo',
   };
 
   for (final line in lines) {

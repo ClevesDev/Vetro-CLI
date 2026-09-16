@@ -9,42 +9,39 @@ import 'dart:io';
 import 'package:analyzer/dart/analysis/utilities.dart';
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:vetro/analyzers/dart/adapters/dart_adapter.dart';
-import 'package:vetro/core/models/base_analyzer.dart';
-import 'package:vetro/core/models/config.dart';
-import 'package:vetro/core/models/context.dart';
-import 'package:vetro/core/models/project_context.dart';
-import 'package:vetro/core/models/finding.dart';
-import 'package:vetro/core/rules/rule.dart';
-import 'package:vetro/core/rules/rule_registry.dart';
-
+import 'package:vetro/analyzers/dart/rules/boundary_violation_rule.dart';
+import 'package:vetro/analyzers/dart/rules/business_logic_in_ui_rule.dart';
 // Import all legacy rules to register them
 import 'package:vetro/analyzers/dart/rules/circular_dependency_rule.dart';
+import 'package:vetro/analyzers/dart/rules/cognitive_complexity_rule.dart';
 import 'package:vetro/analyzers/dart/rules/copy_mutate_rule.dart';
 import 'package:vetro/analyzers/dart/rules/cyclomatic_complexity_rule.dart';
 import 'package:vetro/analyzers/dart/rules/eigenvector_centrality_rule.dart';
 import 'package:vetro/analyzers/dart/rules/fragile_test_rule.dart';
+import 'package:vetro/analyzers/dart/rules/hardcoded_ui_tokens_rule.dart';
 import 'package:vetro/analyzers/dart/rules/intent_gap_rule.dart';
+import 'package:vetro/analyzers/dart/rules/local_clustering_coefficient_rule.dart';
 import 'package:vetro/analyzers/dart/rules/low_cohesion_rule.dart';
 import 'package:vetro/analyzers/dart/rules/low_entropy_rule.dart';
-import 'package:vetro/analyzers/dart/rules/orphaned_abstraction_rule.dart';
-import 'package:vetro/analyzers/dart/rules/semantic_duplication_rule.dart';
-import 'package:vetro/analyzers/dart/rules/boundary_violation_rule.dart';
-import 'package:vetro/analyzers/dart/rules/cognitive_complexity_rule.dart';
-import 'package:vetro/analyzers/dart/rules/local_clustering_coefficient_rule.dart';
-import 'package:vetro/analyzers/dart/rules/tight_coupling_rule.dart';
-import 'package:vetro/analyzers/dart/rules/performance_media_query_rule.dart';
-import 'package:vetro/analyzers/dart/rules/business_logic_in_ui_rule.dart';
 import 'package:vetro/analyzers/dart/rules/misplaced_layout_constraints_rule.dart';
-import 'package:vetro/analyzers/dart/rules/unreleased_controllers_rule.dart';
-import 'package:vetro/analyzers/dart/rules/hardcoded_ui_tokens_rule.dart';
-import 'package:vetro/analyzers/dart/rules/set_state_in_complex_builds_rule.dart';
 import 'package:vetro/analyzers/dart/rules/missing_const_constructors_rule.dart';
+import 'package:vetro/analyzers/dart/rules/orphaned_abstraction_rule.dart';
+import 'package:vetro/analyzers/dart/rules/performance_media_query_rule.dart';
+import 'package:vetro/analyzers/dart/rules/semantic_duplication_rule.dart';
+import 'package:vetro/analyzers/dart/rules/set_state_in_complex_builds_rule.dart';
+import 'package:vetro/analyzers/dart/rules/tight_coupling_rule.dart';
+import 'package:vetro/analyzers/dart/rules/unreleased_controllers_rule.dart';
+import 'package:vetro/core/models/base_analyzer.dart';
+import 'package:vetro/core/models/config.dart';
+import 'package:vetro/core/models/context.dart';
+import 'package:vetro/core/models/finding.dart';
+import 'package:vetro/core/models/project_context.dart';
 import 'package:vetro/core/rules/cyclomatic_complexity_rule.dart' as core_rules;
-import 'package:vetro/core/rules/low_entropy_rule.dart' as core_rules;
-import 'package:vetro/core/rules/intent_gap_rule.dart' as core_rules;
 import 'package:vetro/core/rules/halstead_complexity_rule.dart' as core_rules;
-
-import 'ast_utils.dart' as ast_utils;
+import 'package:vetro/core/rules/intent_gap_rule.dart' as core_rules;
+import 'package:vetro/core/rules/low_entropy_rule.dart' as core_rules;
+import 'package:vetro/core/rules/rule.dart';
+import 'package:vetro/core/rules/rule_registry.dart';
 
 /// Analyzes Dart projects for AI-generated code debt.
 final class DartAnalyzer extends BaseAnalyzer<CompilationUnit> {
@@ -57,7 +54,10 @@ final class DartAnalyzer extends BaseAnalyzer<CompilationUnit> {
   List<String> get supportedExtensions => const ['.dart'];
 
   @override
-  Future<Map<String, CompilationUnit>> parseFiles(List<File> files, VetroConfig config) async {
+  Future<Map<String, CompilationUnit>> parseFiles(
+    List<File> files,
+    VetroConfig config,
+  ) async {
     final parsed = <String, CompilationUnit>{};
     for (final file in files) {
       try {
@@ -72,12 +72,15 @@ final class DartAnalyzer extends BaseAnalyzer<CompilationUnit> {
   }
 
   @override
-  FileContext adaptToContext(CompilationUnit ast, String filePath, String source, ProjectContext projectContext) {
+  FileContext adaptToContext(
+    CompilationUnit ast,
+    String filePath,
+    String source,
+    ProjectContext projectContext,
+  ) {
     const adapter = DartAdapter();
     return adapter.adapt(ast, filePath, source, projectContext);
   }
-
-
 
   @override
   List<AnalysisRule> loadRules(VetroConfig config) {
@@ -110,11 +113,17 @@ final class DartAnalyzer extends BaseAnalyzer<CompilationUnit> {
     if (businessLogicConfig.enabled) {
       rules.add(BusinessLogicInUiRule(config: businessLogicConfig));
     }
-    final layoutConstraintsConfig = config.ruleConfig('misplaced_layout_constraints');
+    final layoutConstraintsConfig = config.ruleConfig(
+      'misplaced_layout_constraints',
+    );
     if (layoutConstraintsConfig.enabled) {
-      rules.add(MisplacedLayoutConstraintsRule(config: layoutConstraintsConfig));
+      rules.add(
+        MisplacedLayoutConstraintsRule(config: layoutConstraintsConfig),
+      );
     }
-    final unreleasedControllersConfig = config.ruleConfig('unreleased_controllers');
+    final unreleasedControllersConfig = config.ruleConfig(
+      'unreleased_controllers',
+    );
     if (unreleasedControllersConfig.enabled) {
       rules.add(UnreleasedControllersRule(config: unreleasedControllersConfig));
     }
@@ -122,7 +131,9 @@ final class DartAnalyzer extends BaseAnalyzer<CompilationUnit> {
     if (hardcodedUiTokensConfig.enabled) {
       rules.add(HardcodedUiTokensRule(config: hardcodedUiTokensConfig));
     }
-    final setStateComplexConfig = config.ruleConfig('setState_in_complex_builds');
+    final setStateComplexConfig = config.ruleConfig(
+      'setState_in_complex_builds',
+    );
     if (setStateComplexConfig.enabled) {
       rules.add(SetStateInComplexBuildsRule(config: setStateComplexConfig));
     }
@@ -246,9 +257,8 @@ final class DartAnalyzer extends BaseAnalyzer<CompilationUnit> {
 
 /// A wrapper that adapts the legacy [Rule] or [CrossFileRule] to the new [AnalysisRule] interface.
 final class LegacyRuleAdapter extends AnalysisRule {
-  final Rule legacyRule;
-
   LegacyRuleAdapter(this.legacyRule) : super(config: legacyRule.config);
+  final Rule legacyRule;
 
   @override
   String get id => legacyRule.id;
@@ -277,7 +287,9 @@ final class LegacyRuleAdapter extends AnalysisRule {
     if (legacyRule is! CrossFileRule) return const [];
     final crossRule = legacyRule as CrossFileRule;
 
-    final units = contexts.map((k, v) => MapEntry(k, v.nativeAst as CompilationUnit));
+    final units = contexts.map(
+      (k, v) => MapEntry(k, v.nativeAst as CompilationUnit),
+    );
     final sources = contexts.map((k, v) => MapEntry(k, v.sourceCode));
 
     return crossRule.analyzeProject(units, sources);

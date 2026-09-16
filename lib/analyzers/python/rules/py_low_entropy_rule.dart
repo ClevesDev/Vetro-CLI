@@ -15,5 +15,6 @@ final class PyLowEntropyRule extends PyRule {
   String get description => 'Legacy Low Entropy placeholder for Python.';
 
   @override
-  List<Finding> analyze(PyNode root, String filePath, String source) => const [];
+  List<Finding> analyze(PyNode root, String filePath, String source) =>
+      const [];
 }

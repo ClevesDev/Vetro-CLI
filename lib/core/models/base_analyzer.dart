@@ -1,10 +1,11 @@
 import 'dart:io';
+
 import 'package:glob/glob.dart';
 import 'package:glob/list_local_fs.dart';
 import 'package:path/path.dart' as p;
 import 'package:vetro/core/models/config.dart';
-import 'package:vetro/core/models/finding.dart';
 import 'package:vetro/core/models/context.dart';
+import 'package:vetro/core/models/finding.dart';
 import 'package:vetro/core/models/project_context.dart';
 import 'package:vetro/core/rules/rule.dart';
 
@@ -26,7 +27,12 @@ abstract class BaseAnalyzer<AST> {
   Future<Map<String, AST>> parseFiles(List<File> files, VetroConfig config);
 
   /// Hook implemented by subclasses to map a parsed AST to a unified [FileContext].
-  FileContext adaptToContext(AST ast, String filePath, String source, ProjectContext projectContext);
+  FileContext adaptToContext(
+    AST ast,
+    String filePath,
+    String source,
+    ProjectContext projectContext,
+  );
 
   /// Hook implemented by subclasses to load rules for this analyzer.
   List<AnalysisRule> loadRules(VetroConfig config);
@@ -54,7 +60,9 @@ abstract class BaseAnalyzer<AST> {
         final source = await file.readAsString();
         if (config.autoExcludeGenerated && isGeneratedCode(source)) {
           if (config.verbose) {
-            print('Skipping auto-generated file: ${p.relative(absolutePath, from: projectPath)}');
+            stdout.writeln(
+              'Skipping auto-generated file: ${p.relative(absolutePath, from: projectPath)}',
+            );
           }
           continue;
         }
@@ -75,9 +83,10 @@ abstract class BaseAnalyzer<AST> {
             severity: Severity.error,
             filePath: absolutePath,
             line: 1,
-            message: 'Failed to parse file "$relativePath" due to a syntax or compilation error: $e',
+            message:
+                'Failed to parse file "$relativePath" due to a syntax or compilation error: $e',
             evidence: {'error': e.toString()},
-          )
+          ),
         ];
         if (!sources.containsKey(absolutePath)) {
           sources[absolutePath] = '';
@@ -89,7 +98,12 @@ abstract class BaseAnalyzer<AST> {
     final contexts = <String, FileContext>{};
     for (final entry in asts.entries) {
       final filePath = entry.key;
-      contexts[filePath] = adaptToContext(entry.value, filePath, sources[filePath]!, projectContext);
+      contexts[filePath] = adaptToContext(
+        entry.value,
+        filePath,
+        sources[filePath]!,
+        projectContext,
+      );
     }
 
     // Step 4: Load and Partition Rules.
@@ -175,7 +189,9 @@ abstract class BaseAnalyzer<AST> {
           final extClean = ext.startsWith('.') ? ext.substring(1) : ext;
           return '$prefix$extClean';
         } else {
-          final extensionsJoined = supportedExtensions.map((e) => e.startsWith('.') ? e.substring(1) : e).join(',');
+          final extensionsJoined = supportedExtensions
+              .map((e) => e.startsWith('.') ? e.substring(1) : e)
+              .join(',');
           return '$prefix{$extensionsJoined}';
         }
       }
@@ -186,7 +202,9 @@ abstract class BaseAnalyzer<AST> {
       final glob = Glob(pattern);
       await for (final entity in glob.list(root: projectPath)) {
         if (entity is File) {
-          final isSupported = supportedExtensions.any((ext) => entity.path.endsWith(ext));
+          final isSupported = supportedExtensions.any(
+            (ext) => entity.path.endsWith(ext),
+          );
           if (isSupported) {
             included.add(p.normalize(entity.path));
           }
@@ -198,9 +216,7 @@ abstract class BaseAnalyzer<AST> {
     final files = <File>[];
     for (final path in included) {
       final relativePath = p.relative(path, from: projectPath);
-      final excluded = excludeGlobs.any(
-        (glob) => glob.matches(relativePath),
-      );
+      final excluded = excludeGlobs.any((glob) => glob.matches(relativePath));
       if (!excluded) {
         files.add(File(path));
       }

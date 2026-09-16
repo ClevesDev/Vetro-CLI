@@ -32,28 +32,24 @@ final class Ansi {
   // ── Color methods ──────────────────────────────────────────────
 
   /// Wraps [text] in red ANSI escape codes.
-  static String red(String text) =>
-      enabled ? '$_redCode$text$_reset' : text;
+  static String red(String text) => enabled ? '$_redCode$text$_reset' : text;
 
   /// Wraps [text] in yellow ANSI escape codes.
   static String yellow(String text) =>
       enabled ? '$_yellowCode$text$_reset' : text;
 
   /// Wraps [text] in cyan ANSI escape codes.
-  static String cyan(String text) =>
-      enabled ? '$_cyanCode$text$_reset' : text;
+  static String cyan(String text) => enabled ? '$_cyanCode$text$_reset' : text;
 
   /// Wraps [text] in green ANSI escape codes.
   static String green(String text) =>
       enabled ? '$_greenCode$text$_reset' : text;
 
   /// Wraps [text] in bold ANSI escape codes.
-  static String bold(String text) =>
-      enabled ? '$_boldCode$text$_reset' : text;
+  static String bold(String text) => enabled ? '$_boldCode$text$_reset' : text;
 
   /// Wraps [text] in dim ANSI escape codes.
-  static String dim(String text) =>
-      enabled ? '$_dimCode$text$_reset' : text;
+  static String dim(String text) => enabled ? '$_dimCode$text$_reset' : text;
 
   // ── Semantic helpers ───────────────────────────────────────────
 
@@ -74,11 +70,7 @@ final class Ansi {
   /// [width] controls the total number of bar characters (default 20).
   ///
   /// Example output: `████████░░░░░░░░░░░░`
-  static String progressBar(
-    int value,
-    int max, {
-    int width = 20,
-  }) {
+  static String progressBar(int value, int max, {int width = 20}) {
     if (max <= 0) return '░' * width;
 
     final filled = ((value / max) * width).clamp(0, width).round();

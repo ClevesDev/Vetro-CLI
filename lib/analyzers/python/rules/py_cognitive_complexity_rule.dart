@@ -1,9 +1,9 @@
-import 'package:vetro/analyzers/python/rules/py_rule.dart';
-import 'package:vetro/core/models/finding.dart';
-import 'package:vetro/core/models/py_node.dart';
-import 'package:vetro/core/models/context.dart';
-import 'package:vetro/core/models/project_context.dart';
 import 'package:vetro/analyzers/python/adapters/python_adapter.dart';
+import 'package:vetro/analyzers/python/rules/py_rule.dart';
+import 'package:vetro/core/models/context.dart';
+import 'package:vetro/core/models/finding.dart';
+import 'package:vetro/core/models/project_context.dart';
+import 'package:vetro/core/models/py_node.dart';
 
 /// Rule: Cognitive Complexity for Python.
 final class PyCognitiveComplexityRule extends PyRule {
@@ -20,26 +20,27 @@ final class PyCognitiveComplexityRule extends PyRule {
       'Flags Python functions whose cognitive complexity exceeds the threshold.';
 
   @override
-  List<Finding> analyze(
-    PyNode root,
-    String filePath,
-    String source,
-  ) {
-    final maxCognitive =
-        config.threshold('max_cognitive_complexity', defaultValue: 15.0).toInt();
+  List<Finding> analyze(PyNode root, String filePath, String source) {
+    final maxCognitive = config
+        .threshold('max_cognitive_complexity', defaultValue: 15.0)
+        .toInt();
     final findings = <Finding>[];
 
-    final functionNodes = root.descendentNodes((node) => const {
-          'FunctionDef',
-          'AsyncFunctionDef',
-        }.contains(node.type));
+    final functionNodes = root.descendentNodes(
+      (node) => const {'FunctionDef', 'AsyncFunctionDef'}.contains(node.type),
+    );
 
-    final adapter = PythonAdapter(allFiles: {});
+    const adapter = PythonAdapter(allFiles: {});
 
     for (final fn in functionNodes) {
       // We can reuse the adapter's implementation
-      final context = adapter.adapt(root, filePath, source, const ProjectContext.empty(projectPath: '.'));
-      
+      final context = adapter.adapt(
+        root,
+        filePath,
+        source,
+        const ProjectContext.empty(projectPath: '.'),
+      );
+
       FunctionContext? fnContext;
       for (final f in context.functions) {
         if (f.name == fn.raw['name'] || f.startLine == fn.line) {
@@ -47,11 +48,12 @@ final class PyCognitiveComplexityRule extends PyRule {
           break;
         }
       }
-      
+
       if (fnContext == null) {
         for (final c in context.classes) {
           for (final m in c.methods) {
-            if (m.name.endsWith('.${fn.raw['name']}') || m.startLine == fn.line) {
+            if (m.name.endsWith('.${fn.raw['name']}') ||
+                m.startLine == fn.line) {
               fnContext = m;
               break;
             }
@@ -74,7 +76,8 @@ final class PyCognitiveComplexityRule extends PyRule {
             severity: severity,
             filePath: filePath,
             line: fn.line,
-            message: 'Function "$fnName" has cognitive complexity $cc '
+            message:
+                'Function "$fnName" has cognitive complexity $cc '
                 '(threshold: $maxCognitive).',
             evidence: {
               'cognitive_complexity': '$cc',

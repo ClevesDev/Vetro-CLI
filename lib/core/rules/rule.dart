@@ -43,11 +43,7 @@ abstract class Rule {
   /// [unit] is the parsed AST of the file.
   /// [filePath] is the absolute path to the file (for reporting).
   /// [source] is the raw source code of the file.
-  List<Finding> analyze(
-    CompilationUnit unit,
-    String filePath,
-    String source,
-  );
+  List<Finding> analyze(CompilationUnit unit, String filePath, String source);
 }
 
 /// A rule that needs cross-file context to operate.
@@ -70,11 +66,7 @@ abstract class CrossFileRule extends Rule {
   /// Single-file analysis — cross-file rules may return empty here
   /// and do all work in [analyzeProject].
   @override
-  List<Finding> analyze(
-    CompilationUnit unit,
-    String filePath,
-    String source,
-  ) =>
+  List<Finding> analyze(CompilationUnit unit, String filePath, String source) =>
       const [];
 }
 
@@ -116,7 +108,10 @@ abstract class AnalysisRule {
   ///
   /// This utility is important because it prevents duplicate loop boilerplates
   /// across different analysis rules, reducing copy-mutate code debt.
-  void forEachFunction(FileContext context, void Function(FunctionContext fn) action) {
+  void forEachFunction(
+    FileContext context,
+    void Function(FunctionContext fn) action,
+  ) {
     for (final fn in context.functions) {
       action(fn);
     }

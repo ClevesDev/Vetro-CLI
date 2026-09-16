@@ -60,7 +60,9 @@ final class TsCircularDependencyRule extends TsCrossFileRule {
       if (reported.contains(key)) continue;
       reported.add(key);
 
-      final relativeCycle = canon.map((path) => p.relative(path, from: projectRoot)).toList();
+      final relativeCycle = canon
+          .map((path) => p.relative(path, from: projectRoot))
+          .toList();
       final pathStr = relativeCycle.join(' -> ');
 
       findings.add(
@@ -132,10 +134,12 @@ final class TsCircularDependencyRule extends TsCrossFileRule {
 
   List<String> _extractImports(TsNode rootNode) {
     final imports = <String>[];
-    final importDeclarations = rootNode.descendentNodes((node) =>
-        node.type == 'ImportDeclaration' ||
-        node.type == 'ExportNamedDeclaration' ||
-        node.type == 'ExportAllDeclaration');
+    final importDeclarations = rootNode.descendentNodes(
+      (node) =>
+          node.type == 'ImportDeclaration' ||
+          node.type == 'ExportNamedDeclaration' ||
+          node.type == 'ExportAllDeclaration',
+    );
 
     for (final decl in importDeclarations) {
       final sourceMap = decl.raw['source'];
@@ -146,7 +150,11 @@ final class TsCircularDependencyRule extends TsCrossFileRule {
     return imports;
   }
 
-  String? _resolveImport(String importUri, String filePath, Set<String> allFiles) {
+  String? _resolveImport(
+    String importUri,
+    String filePath,
+    Set<String> allFiles,
+  ) {
     if (!importUri.startsWith('.') && !importUri.startsWith('/')) {
       return null;
     }

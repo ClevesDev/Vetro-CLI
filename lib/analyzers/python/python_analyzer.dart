@@ -2,26 +2,26 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:isolate';
 import 'dart:math' as math;
+
 import 'package:path/path.dart' as p;
+import 'package:vetro/analyzers/python/adapters/python_adapter.dart';
 import 'package:vetro/analyzers/python/rules/py_circular_dependency_rule.dart';
 import 'package:vetro/analyzers/python/rules/py_cognitive_complexity_rule.dart';
 import 'package:vetro/analyzers/python/rules/py_low_cohesion_rule.dart';
 import 'package:vetro/analyzers/python/rules/py_rule.dart';
 import 'package:vetro/analyzers/python/rules/py_semantic_duplication_rule.dart';
 import 'package:vetro/analyzers/python/rules/py_tight_coupling_rule.dart';
-import 'package:vetro/analyzers/python/adapters/python_adapter.dart';
 import 'package:vetro/core/models/base_analyzer.dart';
 import 'package:vetro/core/models/config.dart';
 import 'package:vetro/core/models/context.dart';
-import 'package:vetro/core/models/project_context.dart';
 import 'package:vetro/core/models/finding.dart';
+import 'package:vetro/core/models/project_context.dart';
 import 'package:vetro/core/models/py_node.dart';
-import 'package:vetro/core/rules/rule.dart';
-
 import 'package:vetro/core/rules/cyclomatic_complexity_rule.dart' as core_rules;
-import 'package:vetro/core/rules/low_entropy_rule.dart' as core_rules;
-import 'package:vetro/core/rules/intent_gap_rule.dart' as core_rules;
 import 'package:vetro/core/rules/halstead_complexity_rule.dart' as core_rules;
+import 'package:vetro/core/rules/intent_gap_rule.dart' as core_rules;
+import 'package:vetro/core/rules/low_entropy_rule.dart' as core_rules;
+import 'package:vetro/core/rules/rule.dart';
 
 /// Python analyzer orchestrator for Vetro.
 ///
@@ -36,7 +36,10 @@ final class PythonAnalyzer extends BaseAnalyzer<PyNode> {
   List<String> get supportedExtensions => const ['.py'];
 
   @override
-  Future<Map<String, PyNode>> parseFiles(List<File> files, VetroConfig config) async {
+  Future<Map<String, PyNode>> parseFiles(
+    List<File> files,
+    VetroConfig config,
+  ) async {
     _allFiles = files.map((f) => p.normalize(f.path)).toSet();
 
     if (files.isEmpty) return const {};
@@ -50,11 +53,15 @@ final class PythonAnalyzer extends BaseAnalyzer<PyNode> {
       for (final file in files) {
         final absolutePath = p.normalize(file.path);
         try {
-          final result = await Process.run(pythonExec, [parserScript, absolutePath]);
+          final result = await Process.run(pythonExec, [
+            parserScript,
+            absolutePath,
+          ]);
           if (result.exitCode != 0) {
             throw Exception(result.stderr.toString());
           }
-          final jsonAst = jsonDecode(result.stdout.toString()) as Map<String, dynamic>;
+          final jsonAst =
+              jsonDecode(result.stdout.toString()) as Map<String, dynamic>;
           final astRoot = jsonAst['ast'] as Map<String, dynamic>;
           astRoot['comments'] = jsonAst['comments'];
           parsed[absolutePath] = PyNode.fromJson(astRoot);
@@ -74,11 +81,13 @@ final class PythonAnalyzer extends BaseAnalyzer<PyNode> {
     for (var k = 0; k < numWorkers; k++) {
       final chunk = chunks[k];
       futures.add(
-        Isolate.run(() => _parseFileChunk(
-          filePaths: chunk,
-          pythonExec: pythonExec,
-          parserScript: parserScript,
-        )),
+        Isolate.run(
+          () => _parseFileChunk(
+            filePaths: chunk,
+            pythonExec: pythonExec,
+            parserScript: parserScript,
+          ),
+        ),
       );
     }
 
@@ -100,9 +109,13 @@ final class PythonAnalyzer extends BaseAnalyzer<PyNode> {
     final result = <String, Map<String, dynamic>>{};
     for (final filePath in filePaths) {
       try {
-        final procResult = await Process.run(pythonExec, [parserScript, filePath]);
+        final procResult = await Process.run(pythonExec, [
+          parserScript,
+          filePath,
+        ]);
         if (procResult.exitCode == 0) {
-          final jsonAst = jsonDecode(procResult.stdout.toString()) as Map<String, dynamic>;
+          final jsonAst =
+              jsonDecode(procResult.stdout.toString()) as Map<String, dynamic>;
           final astRoot = jsonAst['ast'] as Map<String, dynamic>;
           astRoot['comments'] = jsonAst['comments'];
           result[filePath] = astRoot;
@@ -113,7 +126,12 @@ final class PythonAnalyzer extends BaseAnalyzer<PyNode> {
   }
 
   @override
-  FileContext adaptToContext(PyNode ast, String filePath, String source, ProjectContext projectContext) {
+  FileContext adaptToContext(
+    PyNode ast,
+    String filePath,
+    String source,
+    ProjectContext projectContext,
+  ) {
     final adapter = PythonAdapter(allFiles: _allFiles);
     return adapter.adapt(ast, filePath, source, projectContext);
   }
@@ -195,7 +213,9 @@ final class PythonAnalyzer extends BaseAnalyzer<PyNode> {
 
   /// Locates the py_parser.py script path.
   Future<String> _findParserScript() async {
-    final packageUri = Uri.parse('package:vetro/analyzers/python/parser/py_parser.py');
+    final packageUri = Uri.parse(
+      'package:vetro/analyzers/python/parser/py_parser.py',
+    );
     final resolved = await Isolate.resolvePackageUri(packageUri);
     if (resolved != null && resolved.isScheme('file')) {
       return resolved.toFilePath();
@@ -206,7 +226,14 @@ final class PythonAnalyzer extends BaseAnalyzer<PyNode> {
       final scriptPath = Platform.script.toFilePath();
       var dir = p.dirname(scriptPath);
       while (dir != p.separator && dir.isNotEmpty) {
-        final localPath = p.join(dir, 'lib', 'analyzers', 'python', 'parser', 'py_parser.py');
+        final localPath = p.join(
+          dir,
+          'lib',
+          'analyzers',
+          'python',
+          'parser',
+          'py_parser.py',
+        );
         if (File(localPath).existsSync()) {
           return localPath;
         }
@@ -218,20 +245,28 @@ final class PythonAnalyzer extends BaseAnalyzer<PyNode> {
 
     // Default package structure fallback
     final projectDir = Directory.current.path;
-    final fallbackPath = p.join(projectDir, 'lib', 'analyzers', 'python', 'parser', 'py_parser.py');
+    final fallbackPath = p.join(
+      projectDir,
+      'lib',
+      'analyzers',
+      'python',
+      'parser',
+      'py_parser.py',
+    );
     if (File(fallbackPath).existsSync()) {
       return fallbackPath;
     }
 
-    throw StateError('Cannot locate py_parser.py helper script. Ensure Vetro is installed correctly.');
+    throw StateError(
+      'Cannot locate py_parser.py helper script. Ensure Vetro is installed correctly.',
+    );
   }
 }
 
 /// A wrapper that adapts the legacy [PyRule] or [PyCrossFileRule] to the new [AnalysisRule] interface.
 final class PyLegacyRuleAdapter extends AnalysisRule {
-  final PyRule legacyRule;
-
   PyLegacyRuleAdapter(this.legacyRule) : super(config: legacyRule.config);
+  final PyRule legacyRule;
 
   @override
   String get id => legacyRule.id;

@@ -20,12 +20,12 @@ final class LowEntropyRule extends AnalysisRule {
   List<Finding> analyzeFile(FileContext context) {
     // Note: We retrieve thresholds from configuration.
     // This is important because different languages and projects have different entropy baselines.
-    final minEntropy =
-        config.threshold('min_entropy', defaultValue: 1.8);
-    final minIdentEntropy =
-        config.threshold('min_identifier_entropy', defaultValue: 2.0);
-    final minNodes =
-        config.threshold('min_nodes', defaultValue: 30.0).toInt();
+    final minEntropy = config.threshold('min_entropy', defaultValue: 1.8);
+    final minIdentEntropy = config.threshold(
+      'min_identifier_entropy',
+      defaultValue: 2.0,
+    );
+    final minNodes = config.threshold('min_nodes', defaultValue: 30.0).toInt();
     final findings = <Finding>[];
 
     // Note: We use forEachFunction because it abstracts function/method traversal
@@ -69,7 +69,8 @@ final class LowEntropyRule extends AnalysisRule {
       severity: severity,
       filePath: filePath,
       line: fn.startLine,
-      message: 'Function "${fn.name}" has low AST node Shannon entropy '
+      message:
+          'Function "${fn.name}" has low AST node Shannon entropy '
           '${entropy.toStringAsFixed(3)} with ${fn.nodeCount} nodes (threshold: ${minEntropy.toStringAsFixed(3)}).',
       evidence: {
         'shannon_entropy': entropy.toStringAsFixed(3),
@@ -91,7 +92,8 @@ final class LowEntropyRule extends AnalysisRule {
       severity: severity,
       filePath: filePath,
       line: fn.startLine,
-      message: 'Function "${fn.name}" has low identifier Shannon entropy '
+      message:
+          'Function "${fn.name}" has low identifier Shannon entropy '
           '${entropy.toStringAsFixed(3)} with ${fn.nodeCount} nodes (threshold: ${minEntropy.toStringAsFixed(3)}).',
       evidence: {
         'identifier_entropy': entropy.toStringAsFixed(3),

@@ -21,30 +21,31 @@ final class TsLowEntropyRule extends TsRule {
       'Flags complex or long TypeScript functions whose AST node type entropy is abnormally low.';
 
   @override
-  List<Finding> analyze(
-    TsNode root,
-    String filePath,
-    String source,
-  ) {
+  List<Finding> analyze(TsNode root, String filePath, String source) {
     final minEntropy = config.threshold('min_entropy', defaultValue: 1.8);
-    final minIdentEntropy =
-        config.threshold('min_identifier_entropy', defaultValue: 2.0);
+    final minIdentEntropy = config.threshold(
+      'min_identifier_entropy',
+      defaultValue: 2.0,
+    );
     final minNodes = config.threshold('min_nodes', defaultValue: 30.0).toInt();
     final findings = <Finding>[];
 
     // Find all function-like nodes.
-    final functionNodes = root.descendentNodes((node) => const {
-          'FunctionDeclaration',
-          'FunctionExpression',
-          'ArrowFunctionExpression',
-          'ClassMethod',
-          'ObjectMethod',
-        }.contains(node.type));
+    final functionNodes = root.descendentNodes(
+      (node) => const {
+        'FunctionDeclaration',
+        'FunctionExpression',
+        'ArrowFunctionExpression',
+        'ClassMethod',
+        'ObjectMethod',
+      }.contains(node.type),
+    );
 
     for (final fn in functionNodes) {
       // Find the body node
       final bodyNode = fn.children.firstWhere(
-        (child) => const {'BlockStatement', 'ClassBody'}.contains(child.type) ||
+        (child) =>
+            const {'BlockStatement', 'ClassBody'}.contains(child.type) ||
             fn.type == 'ArrowFunctionExpression',
         orElse: () => fn,
       );
@@ -61,7 +62,8 @@ final class TsLowEntropyRule extends TsRule {
               severity: severity,
               filePath: filePath,
               line: fn.line,
-              message: 'Function "$fnName" has Shannon entropy ${h.toStringAsFixed(3)} '
+              message:
+                  'Function "$fnName" has Shannon entropy ${h.toStringAsFixed(3)} '
                   'with $totalNodes nodes (threshold: ${minEntropy.toStringAsFixed(3)}).',
               evidence: {
                 'shannon_entropy': h.toStringAsFixed(3),
@@ -81,7 +83,8 @@ final class TsLowEntropyRule extends TsRule {
                 severity: severity,
                 filePath: filePath,
                 line: fn.line,
-                message: 'Function "$fnName" has low identifier Shannon entropy ${hIdent.toStringAsFixed(3)} '
+                message:
+                    'Function "$fnName" has low identifier Shannon entropy ${hIdent.toStringAsFixed(3)} '
                     'with $totalNodes nodes (threshold: ${minIdentEntropy.toStringAsFixed(3)}).',
                 evidence: {
                   'identifier_entropy': hIdent.toStringAsFixed(3),
@@ -134,15 +137,66 @@ final class TsLowEntropyRule extends TsRule {
     var total = 0;
 
     const keywords = {
-      'break', 'case', 'catch', 'class', 'const', 'continue', 'debugger',
-      'default', 'delete', 'do', 'else', 'export', 'extends', 'false',
-      'finally', 'for', 'function', 'if', 'import', 'in', 'instanceof',
-      'new', 'null', 'return', 'super', 'switch', 'this', 'throw', 'true',
-      'try', 'typeof', 'var', 'void', 'while', 'with', 'yield',
-      'let', 'package', 'private', 'protected', 'public', 'static',
-      'any', 'boolean', 'constructor', 'declare', 'get', 'module',
-      'require', 'number', 'readonly', 'set', 'string', 'symbol',
-      'type', 'from', 'of', 'as', 'keyof', 'is'
+      'break',
+      'case',
+      'catch',
+      'class',
+      'const',
+      'continue',
+      'debugger',
+      'default',
+      'delete',
+      'do',
+      'else',
+      'export',
+      'extends',
+      'false',
+      'finally',
+      'for',
+      'function',
+      'if',
+      'import',
+      'in',
+      'instanceof',
+      'new',
+      'null',
+      'return',
+      'super',
+      'switch',
+      'this',
+      'throw',
+      'true',
+      'try',
+      'typeof',
+      'var',
+      'void',
+      'while',
+      'with',
+      'yield',
+      'let',
+      'package',
+      'private',
+      'protected',
+      'public',
+      'static',
+      'any',
+      'boolean',
+      'constructor',
+      'declare',
+      'get',
+      'module',
+      'require',
+      'number',
+      'readonly',
+      'set',
+      'string',
+      'symbol',
+      'type',
+      'from',
+      'of',
+      'as',
+      'keyof',
+      'is',
     };
 
     void count(TsNode n) {
@@ -182,9 +236,13 @@ final class TsLowEntropyRule extends TsRule {
       }
     }
 
-    final declarator = root.descendentNodes((node) =>
-        node.type == 'VariableDeclarator' &&
-        node.children.any((c) => c.start == fnNode.start && c.end == fnNode.end));
+    final declarator = root.descendentNodes(
+      (node) =>
+          node.type == 'VariableDeclarator' &&
+          node.children.any(
+            (c) => c.start == fnNode.start && c.end == fnNode.end,
+          ),
+    );
 
     if (declarator.isNotEmpty) {
       final idMap = declarator.first.raw['id'];

@@ -1,7 +1,6 @@
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:path/path.dart' as p;
 import 'package:vetro/analyzers/dart/ast_utils.dart';
-import 'package:vetro/core/models/config.dart';
 import 'package:vetro/core/models/finding.dart';
 import 'package:vetro/core/rules/rule.dart';
 
@@ -39,7 +38,7 @@ final class BoundaryViolationRule extends CrossFileRule {
 
     // Retrieve configured layers list.
     final dynamic layersOpt = config.options['layers'];
-    final List<String> layers = layersOpt is List
+    final layers = layersOpt is List
         ? layersOpt.map((e) => e.toString()).toList()
         : const ['domain', 'application', 'infrastructure', 'presentation'];
 
@@ -59,11 +58,19 @@ final class BoundaryViolationRule extends CrossFileRule {
         final importUri = directive.uri.stringValue;
         if (importUri == null) continue;
 
-        final resolvedPath =
-            resolveImport(importUri, filePath, projectRoot, packageName);
+        final resolvedPath = resolveImport(
+          importUri,
+          filePath,
+          projectRoot,
+          packageName,
+        );
         if (resolvedPath == null || !units.containsKey(resolvedPath)) continue;
 
-        final targetLayerIndex = _getLayerIndex(resolvedPath, layers, projectRoot);
+        final targetLayerIndex = _getLayerIndex(
+          resolvedPath,
+          layers,
+          projectRoot,
+        );
         // Skip if target file is not part of any defined layer.
         if (targetLayerIndex == null) continue;
 
@@ -80,7 +87,8 @@ final class BoundaryViolationRule extends CrossFileRule {
               severity: severity,
               filePath: filePath,
               line: line,
-              message: 'Boundary violation: Layer "${layers[sourceLayerIndex]}" '
+              message:
+                  'Boundary violation: Layer "${layers[sourceLayerIndex]}" '
                   '(innermost) cannot import outer layer "${layers[targetLayerIndex]}" '
                   '(imported file: "$targetRelative").',
               evidence: {
@@ -100,7 +108,11 @@ final class BoundaryViolationRule extends CrossFileRule {
   }
 
   /// Returns the index of the layer that [filePath] belongs to, or null if unlayered.
-  int? _getLayerIndex(String filePath, List<String> layers, String projectRoot) {
+  int? _getLayerIndex(
+    String filePath,
+    List<String> layers,
+    String projectRoot,
+  ) {
     final relativePath = p.relative(filePath, from: projectRoot);
     final segments = p.split(p.normalize(relativePath));
 

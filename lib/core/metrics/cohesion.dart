@@ -15,7 +15,9 @@ double averagePairwiseVocabularySimilarity(List<Set<String>> vocabularies) {
       final intersectionSize = vocabA.intersection(vocabB).length;
       final denominator = math.sqrt(vocabA.length * vocabB.length);
 
-      final similarity = denominator == 0 ? 0.0 : intersectionSize / denominator;
+      final similarity = denominator == 0
+          ? 0.0
+          : intersectionSize / denominator;
       sumSimilarity += similarity;
       countPairs++;
     }

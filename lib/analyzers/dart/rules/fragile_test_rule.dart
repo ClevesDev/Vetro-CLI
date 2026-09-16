@@ -44,16 +44,11 @@ final class FragileTestRule extends Rule {
       'indicating fragile tests coupled to implementation details.';
 
   @override
-  List<Finding> analyze(
-    CompilationUnit unit,
-    String filePath,
-    String source,
-  ) {
+  List<Finding> analyze(CompilationUnit unit, String filePath, String source) {
     // Only analyze test files.
     if (!isTestFile(filePath)) return const [];
 
-    final maxMocks =
-        config.threshold('max_mocks', defaultValue: 3.0).toInt();
+    final maxMocks = config.threshold('max_mocks', defaultValue: 3.0).toInt();
     final findings = <Finding>[];
 
     // We use extractDeclarations because both top-level test helper functions
@@ -101,8 +96,7 @@ final class FragileTestRule extends Rule {
     final stats = _MockStats.fromNode(node);
 
     if (stats.mockCount > maxMocks) {
-      final line =
-          unit.lineInfo.getLocation(declarationNode.offset).lineNumber;
+      final line = unit.lineInfo.getLocation(declarationNode.offset).lineNumber;
       _reportMockLimitExceeded(
         ruleId: id,
         ruleName: this.name,
@@ -187,9 +181,7 @@ final class _MockUsageVisitor extends RecursiveAstVisitor<void> {
   }
 
   @override
-  void visitFunctionExpressionInvocation(
-    FunctionExpressionInvocation node,
-  ) {
+  void visitFunctionExpressionInvocation(FunctionExpressionInvocation node) {
     // Handle top-level function calls like verify(...).
     final function = node.function;
     if (function is SimpleIdentifier) {
@@ -291,7 +283,8 @@ void _reportMockLimitExceeded({
       severity: severity,
       filePath: filePath,
       line: line,
-      message: '$entityType "$entityName" uses ${stats.mockCount} mocks/fakes '
+      message:
+          '$entityType "$entityName" uses ${stats.mockCount} mocks/fakes '
           '(threshold: $maxMocks). Consider testing real behavior.',
       evidence: {
         'mock_count': '${stats.mockCount}',

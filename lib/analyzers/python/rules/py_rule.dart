@@ -22,11 +22,7 @@ abstract class PyRule {
   Severity get severity => config.severity;
 
   /// Analyze a single file's Python AST and return findings.
-  List<Finding> analyze(
-    PyNode root,
-    String filePath,
-    String source,
-  );
+  List<Finding> analyze(PyNode root, String filePath, String source);
 }
 
 /// A Python rule that needs cross-file context to operate.
@@ -40,10 +36,6 @@ abstract class PyCrossFileRule extends PyRule {
   );
 
   @override
-  List<Finding> analyze(
-    PyNode root,
-    String filePath,
-    String source,
-  ) =>
+  List<Finding> analyze(PyNode root, String filePath, String source) =>
       const [];
 }

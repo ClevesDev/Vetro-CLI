@@ -22,11 +22,7 @@ abstract class TsRule {
   Severity get severity => config.severity;
 
   /// Analyze a single file's TypeScript AST and return findings.
-  List<Finding> analyze(
-    TsNode root,
-    String filePath,
-    String source,
-  );
+  List<Finding> analyze(TsNode root, String filePath, String source);
 }
 
 /// A TypeScript rule that needs cross-file context to operate.
@@ -40,10 +36,6 @@ abstract class TsCrossFileRule extends TsRule {
   );
 
   @override
-  List<Finding> analyze(
-    TsNode root,
-    String filePath,
-    String source,
-  ) =>
+  List<Finding> analyze(TsNode root, String filePath, String source) =>
       const [];
 }

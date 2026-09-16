@@ -116,7 +116,10 @@ final class TsNode {
     return result;
   }
 
-  void _collectDescendents(bool Function(TsNode) predicate, List<TsNode> collector) {
+  void _collectDescendents(
+    bool Function(TsNode) predicate,
+    List<TsNode> collector,
+  ) {
     if (predicate(this)) {
       collector.add(this);
     }

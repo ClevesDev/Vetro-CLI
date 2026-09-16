@@ -50,7 +50,8 @@ final class PerformanceMediaQueryRule extends AnalysisRule {
             severity: severity,
             filePath: context.filePath,
             line: line,
-            message: 'Use "MediaQuery.sizeOf(context)" instead of "MediaQuery.of(context).size" to prevent unnecessary widget rebuilds when other MediaQuery properties change.',
+            message:
+                'Use "MediaQuery.sizeOf(context)" instead of "MediaQuery.of(context).size" to prevent unnecessary widget rebuilds when other MediaQuery properties change.',
             evidence: {
               'expression': node.toString(),
               'flutter_version': flutterVersion.toString(),
@@ -66,9 +67,8 @@ final class PerformanceMediaQueryRule extends AnalysisRule {
 }
 
 class _MediaQueryVisitor extends RecursiveAstVisitor<void> {
-  final void Function(AstNode node) onFinding;
-
   _MediaQueryVisitor({required this.onFinding});
+  final void Function(AstNode node) onFinding;
 
   @override
   void visitPropertyAccess(PropertyAccess node) {
@@ -96,7 +96,9 @@ class _MediaQueryVisitor extends RecursiveAstVisitor<void> {
     if (node is MethodInvocation) {
       final method = node.methodName.name;
       final target = node.target;
-      if (method == 'of' && target is SimpleIdentifier && target.name == 'MediaQuery') {
+      if (method == 'of' &&
+          target is SimpleIdentifier &&
+          target.name == 'MediaQuery') {
         return true;
       }
     }

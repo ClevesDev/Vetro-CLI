@@ -67,10 +67,7 @@ int lineCount(String source) {
 ///
 /// Useful for cross-file comparison rules that need to iterate
 /// all callable bodies in a project.
-List<FunctionBodyInfo> extractAllBodies(
-  CompilationUnit unit,
-  String filePath,
-) {
+List<FunctionBodyInfo> extractAllBodies(CompilationUnit unit, String filePath) {
   final visitor = _BodyExtractorVisitor(filePath);
   unit.accept(visitor);
   return visitor.bodies;
@@ -132,8 +129,9 @@ final class _BodyExtractorVisitor extends RecursiveAstVisitor<void> {
     final className = node.parent is ClassDeclaration
         ? (node.parent! as ClassDeclaration).name.lexeme
         : '';
-    final qualifiedName =
-        className.isEmpty ? node.name.lexeme : '$className.${node.name.lexeme}';
+    final qualifiedName = className.isEmpty
+        ? node.name.lexeme
+        : '$className.${node.name.lexeme}';
     bodies.add(
       FunctionBodyInfo(
         name: qualifiedName,
@@ -247,7 +245,7 @@ final class DeclarationInfo {
 /// iterate over both functions and methods identically.
 List<DeclarationInfo> extractDeclarations(CompilationUnit unit) {
   final declarations = <DeclarationInfo>[];
-  
+
   // Check top-level functions
   for (final fn in extractTopLevelFunctions(unit)) {
     declarations.add(
@@ -298,7 +296,10 @@ String? getPackageName(String projectRoot) {
     final pubspec = File(p.join(projectRoot, 'pubspec.yaml'));
     if (pubspec.existsSync()) {
       final content = pubspec.readAsStringSync();
-      final match = RegExp(r'^name:\s*([a-zA-Z0-9_]+)', multiLine: true).firstMatch(content);
+      final match = RegExp(
+        r'^name:\s*([a-zA-Z0-9_]+)',
+        multiLine: true,
+      ).firstMatch(content);
       return match?.group(1);
     }
   } catch (_) {}

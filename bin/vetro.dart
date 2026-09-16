@@ -9,9 +9,9 @@ import 'dart:io';
 
 import 'package:args/args.dart';
 import 'package:path/path.dart' as p;
+import 'package:vetro/cli/git_diff_parser.dart';
 import 'package:vetro/core/report/ansi.dart';
 import 'package:vetro/vetro.dart';
-import 'package:vetro/cli/git_diff_parser.dart';
 
 Future<void> main(List<String> arguments) async {
   final initParser = ArgParser()
@@ -69,14 +69,16 @@ Future<void> main(List<String> arguments) async {
       'fail-on-severity',
       allowed: ['error', 'warning', 'info', 'none'],
       defaultsTo: 'none',
-      help: 'Exit with non-zero code if findings equal or exceed this severity.',
+      help:
+          'Exit with non-zero code if findings equal or exceed this severity.',
     )
     ..addOption(
       'language',
       abbr: 'l',
       allowed: ['dart', 'typescript', 'python', 'auto'],
       defaultsTo: 'auto',
-      help: 'Force a specific programming language analyzer or let it auto-detect.',
+      help:
+          'Force a specific programming language analyzer or let it auto-detect.',
     );
 
   parser
@@ -120,14 +122,16 @@ Future<void> main(List<String> arguments) async {
       'fail-on-severity',
       allowed: ['error', 'warning', 'info', 'none'],
       defaultsTo: 'none',
-      help: 'Exit with non-zero code if findings equal or exceed this severity.',
+      help:
+          'Exit with non-zero code if findings equal or exceed this severity.',
     )
     ..addOption(
       'language',
       abbr: 'l',
       allowed: ['dart', 'typescript', 'python', 'auto'],
       defaultsTo: 'auto',
-      help: 'Force a specific programming language analyzer or let it auto-detect.',
+      help:
+          'Force a specific programming language analyzer or let it auto-detect.',
     );
 
   ArgResults argResults;
@@ -149,7 +153,7 @@ Future<void> main(List<String> arguments) async {
       print(initParser.usage);
       exit(0);
     }
-    
+
     var targetPath = Directory.current.path;
     if (initResults.rest.isNotEmpty) {
       targetPath = initResults.rest.first;
@@ -194,7 +198,9 @@ Future<void> main(List<String> arguments) async {
 
   final targetDir = Directory(targetPath);
   if (!targetDir.existsSync()) {
-    stderr.writeln(Ansi.red('Error: Directory does not exist at "$targetPath"'));
+    stderr.writeln(
+      Ansi.red('Error: Directory does not exist at "$targetPath"'),
+    );
     exit(1);
   }
 
@@ -214,9 +220,15 @@ Future<void> main(List<String> arguments) async {
       config = VetroConfig.fromYaml(content);
     } catch (e) {
       if (useColor) {
-        stderr.writeln(Ansi.yellow('Warning: Failed to parse vetro.yaml, using defaults. Error: $e'));
+        stderr.writeln(
+          Ansi.yellow(
+            'Warning: Failed to parse vetro.yaml, using defaults. Error: $e',
+          ),
+        );
       } else {
-        stderr.writeln('Warning: Failed to parse vetro.yaml, using defaults. Error: $e');
+        stderr.writeln(
+          'Warning: Failed to parse vetro.yaml, using defaults. Error: $e',
+        );
       }
     }
   }
@@ -296,7 +308,9 @@ Future<void> main(List<String> arguments) async {
         print(Ansi.green('Report written to: $outputPath'));
       }
     } catch (e) {
-      stderr.writeln(Ansi.red('Error: Failed to write output to "$outputPath". Error: $e'));
+      stderr.writeln(
+        Ansi.red('Error: Failed to write output to "$outputPath". Error: $e'),
+      );
       exit(1);
     }
   } else {
@@ -316,9 +330,11 @@ Future<void> main(List<String> arguments) async {
 
     if (triggerFindings.isNotEmpty) {
       if (config.outputFormat == OutputFormat.terminal) {
-        stderr.writeln(Ansi.red(
-          'Build failed: Found ${triggerFindings.length} issues at or above severity "$failSeverityStr".',
-        ));
+        stderr.writeln(
+          Ansi.red(
+            'Build failed: Found ${triggerFindings.length} issues at or above severity "$failSeverityStr".',
+          ),
+        );
       }
       exit(1);
     }
@@ -390,7 +406,9 @@ Future<AnalysisLanguage> _detectLanguage(String projectPath) async {
 Future<void> _handleInit(String targetPath, {required bool force}) async {
   final targetDir = Directory(targetPath);
   if (!targetDir.existsSync()) {
-    stderr.writeln(Ansi.red('Error: Directory does not exist at "$targetPath"'));
+    stderr.writeln(
+      Ansi.red('Error: Directory does not exist at "$targetPath"'),
+    );
     exit(1);
   }
 
@@ -398,7 +416,9 @@ Future<void> _handleInit(String targetPath, {required bool force}) async {
   final yamlFile = File(p.join(absoluteTargetPath, 'vetro.yaml'));
 
   if (yamlFile.existsSync() && !force) {
-    stderr.writeln(Ansi.red('Error: vetro.yaml already exists at "$absoluteTargetPath".'));
+    stderr.writeln(
+      Ansi.red('Error: vetro.yaml already exists at "$absoluteTargetPath".'),
+    );
     stderr.writeln('Use --force (or -f) to overwrite.');
     exit(1);
   }
@@ -408,7 +428,8 @@ Future<void> _handleInit(String targetPath, {required bool force}) async {
   print('Detected dominant language: ${language.name.toUpperCase()}');
 
   final yamlContent = switch (language) {
-    AnalysisLanguage.dart => '''
+    AnalysisLanguage.dart =>
+      '''
 vetro:
   version: 1
 
@@ -422,7 +443,8 @@ vetro:
     - "**/*.freezed.dart"
     - "**/*.mocks.dart"
 ''',
-    AnalysisLanguage.typescript => '''
+    AnalysisLanguage.typescript =>
+      '''
 vetro:
   version: 1
 
@@ -438,7 +460,8 @@ vetro:
     - "**/node_modules/**"
     - "**/*.d.ts"
 ''',
-    AnalysisLanguage.python => '''
+    AnalysisLanguage.python =>
+      '''
 vetro:
   version: 1
 
@@ -452,7 +475,8 @@ vetro:
     - "**/.venv/**"
     - "**/__pycache__/**"
 ''',
-    _ => '''
+    _ =>
+      '''
 vetro:
   version: 1
 
@@ -485,21 +509,33 @@ Future<void> _handleDiff(String? baseRef, ArgResults argResults) async {
   final useColor = argResults['color'] as bool;
   Ansi.enabled = useColor;
 
-  final isGitRepo = Directory(p.join(absoluteTargetPath, '.git')).existsSync() ||
-      await Process.run('git', ['rev-parse', '--is-inside-work-tree'], workingDirectory: absoluteTargetPath)
-          .then((res) => res.exitCode == 0)
-          .catchError((_) => false);
+  final isGitRepo =
+      Directory(p.join(absoluteTargetPath, '.git')).existsSync() ||
+      await Process.run(
+        'git',
+        ['rev-parse', '--is-inside-work-tree'],
+        workingDirectory: absoluteTargetPath,
+      ).then((res) => res.exitCode == 0).catchError((_) => false);
 
   if (!isGitRepo) {
-    stderr.writeln(Ansi.red('Error: Target path is not a git repository, or git is not installed.'));
+    stderr.writeln(
+      Ansi.red(
+        'Error: Target path is not a git repository, or git is not installed.',
+      ),
+    );
     exit(1);
   }
 
-  final diffParser = GitDiffParser();
-  final modifiedLinesByFile = await diffParser.getModifiedLines(absoluteTargetPath, baseRef);
+  const diffParser = GitDiffParser();
+  final modifiedLinesByFile = await diffParser.getModifiedLines(
+    absoluteTargetPath,
+    baseRef,
+  );
 
   if (argResults['verbose'] as bool) {
-    print(Ansi.dim('Modified files in diff: ${modifiedLinesByFile.keys.length}'));
+    print(
+      Ansi.dim('Modified files in diff: ${modifiedLinesByFile.keys.length}'),
+    );
     for (final entry in modifiedLinesByFile.entries) {
       print(Ansi.dim('  ${entry.key}: lines ${entry.value}'));
     }
@@ -513,7 +549,9 @@ Future<void> _handleDiff(String? baseRef, ArgResults argResults) async {
       final content = yamlFile.readAsStringSync();
       config = VetroConfig.fromYaml(content);
     } catch (e) {
-      stderr.writeln(Ansi.yellow('Warning: Failed to parse vetro.yaml, using defaults.'));
+      stderr.writeln(
+        Ansi.yellow('Warning: Failed to parse vetro.yaml, using defaults.'),
+      );
     }
   }
 
@@ -566,13 +604,17 @@ Future<void> _handleDiff(String? baseRef, ArgResults argResults) async {
     final modifiedLines = modifiedLinesByFile[normPath];
     if (modifiedLines == null) continue;
 
-    final filteredFindings = fileReport.findings.where((f) => modifiedLines.contains(f.line)).toList();
-    filteredFileReports.add(FileReport(
-      filePath: fileReport.filePath,
-      findings: filteredFindings,
-      lineCount: fileReport.lineCount,
-      analysisTimeMs: fileReport.analysisTimeMs,
-    ));
+    final filteredFindings = fileReport.findings
+        .where((f) => modifiedLines.contains(f.line))
+        .toList();
+    filteredFileReports.add(
+      FileReport(
+        filePath: fileReport.filePath,
+        findings: filteredFindings,
+        lineCount: fileReport.lineCount,
+        analysisTimeMs: fileReport.analysisTimeMs,
+      ),
+    );
   }
 
   final diffReport = ProjectReport(
@@ -597,7 +639,9 @@ Future<void> _handleDiff(String? baseRef, ArgResults argResults) async {
       final outputFile = File(outputPath);
       outputFile.writeAsStringSync(formattedOutput);
     } catch (e) {
-      stderr.writeln(Ansi.red('Error: Failed to write output to "$outputPath". Error: $e'));
+      stderr.writeln(
+        Ansi.red('Error: Failed to write output to "$outputPath". Error: $e'),
+      );
       exit(1);
     }
   } else {

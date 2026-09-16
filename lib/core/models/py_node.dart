@@ -124,7 +124,10 @@ final class PyNode {
     return result;
   }
 
-  void _collectDescendents(bool Function(PyNode) predicate, List<PyNode> collector) {
+  void _collectDescendents(
+    bool Function(PyNode) predicate,
+    List<PyNode> collector,
+  ) {
     if (predicate(this)) {
       collector.add(this);
     }

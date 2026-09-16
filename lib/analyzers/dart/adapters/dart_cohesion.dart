@@ -32,8 +32,22 @@ final class IdentifierCollector extends RecursiveAstVisitor<void> {
 
   bool isKeyword(String name) {
     return const {
-      'void', 'int', 'double', 'num', 'String', 'bool', 'List', 'Map', 'Set',
-      'dynamic', 'var', 'final', 'const', 'true', 'false', 'null'
+      'void',
+      'int',
+      'double',
+      'num',
+      'String',
+      'bool',
+      'List',
+      'Map',
+      'Set',
+      'dynamic',
+      'var',
+      'final',
+      'const',
+      'true',
+      'false',
+      'null',
     }.contains(name);
   }
 }

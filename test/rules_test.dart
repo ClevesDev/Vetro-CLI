@@ -13,9 +13,9 @@ void main() {
         severity: Severity.warning,
         thresholds: {'max_complexity': 2.0},
       );
-      final rule = CyclomaticComplexityRule(config: config);
+      const rule = CyclomaticComplexityRule(config: config);
 
-      final source = '''
+      const source = '''
         void complexFunction(int a, int b) {
           if (a > 0) {
             if (b > 0) {
@@ -38,9 +38,9 @@ void main() {
         severity: Severity.warning,
         thresholds: {'max_complexity': 10.0},
       );
-      final rule = CyclomaticComplexityRule(config: config);
+      const rule = CyclomaticComplexityRule(config: config);
 
-      final source = '''
+      const source = '''
         void simple() {
           print('hello');
         }
@@ -59,9 +59,9 @@ void main() {
         severity: Severity.info,
         thresholds: {'min_complexity': 2.0},
       );
-      final rule = IntentGapRule(config: config);
+      const rule = IntentGapRule(config: config);
 
-      final source = '''
+      const source = '''
         void complexNoComment(int a) {
           if (a > 0) {
             print('positive');
@@ -81,9 +81,9 @@ void main() {
         severity: Severity.info,
         thresholds: {'min_complexity': 2.0},
       );
-      final rule = IntentGapRule(config: config);
+      const rule = IntentGapRule(config: config);
 
-      final source = '''
+      const source = '''
         // This is necessary because we need to handle positive numbers differently.
         void complexWithComment(int a) {
           if (a > 0) {

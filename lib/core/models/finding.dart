@@ -78,8 +78,7 @@ final class Finding {
   final Map<String, String> evidence;
 
   @override
-  String toString() =>
-      '[$severity] $filePath:$line — $ruleName: $message';
+  String toString() => '[$severity] $filePath:$line — $ruleName: $message';
 }
 
 /// Analysis results for a single file.
@@ -140,8 +139,7 @@ final class ProjectReport {
   int get fileCount => fileReports.length;
 
   /// Total lines of code analyzed.
-  int get totalLines =>
-      fileReports.fold(0, (sum, r) => sum + r.lineCount);
+  int get totalLines => fileReports.fold(0, (sum, r) => sum + r.lineCount);
 
   /// Count of findings by severity.
   int countBySeverity(Severity severity) =>
