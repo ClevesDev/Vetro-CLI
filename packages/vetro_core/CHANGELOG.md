@@ -13,5 +13,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Computation safety guards: `Result.guard` and `Result.guardAsync` for intercepting unhandled exceptions.
 - **`Failure` base contract**: Extensible root class for all application and domain failures.
 - **`StandardFailure` sealed hierarchy**: Built-in infrastructure failures (`NetworkFailure`, `ServerFailure`, `ValidationFailure`, `NotFoundFailure`, `UnexpectedFailure`).
-- Value equality and deterministic order-independent hashing across all result and failure types.
-- Complete unit test suite with 100% coverage on functional primitives.
+- **`CompositeErrorMapper`**: Supervisor delegation registry for decoupled UI error translation.
+- **`FeatureErrorMapper` & `BaseFeatureErrorMapper<F>`**: Feature-isolated contracts mapping failures without monolithic switch statements.
+- **`StandardErrorMapper`**: Default baseline translation for all standard infrastructure failures.
+- **`UserMessage`**: Sanitized, UI-ready value object with title, message, error codes, and action labels.
+- Comprehensive unit test suite with 100% coverage on functional and presentation primitives.

@@ -88,7 +88,31 @@ While Dart and Flutter represent Vetro's flagship target, the core metrics engin
 
 ---
 
-## 5. Architectural Invariants
+## 5. Modular Error Presentation Architecture
+
+In conventional Flutter applications, error mapping tends to degenerate into a monolithic 1000-line switch statement, violating the Single Responsibility and Open/Closed Principles:
+
+```text
+❌ Monolithic Anti-Pattern:
+Presentation Layer ───> MonolithicErrorMapper (1000+ lines, imports all feature models)
+```
+
+Vetro's `CompositeErrorMapper` implements the **Supervisor / Delegation Pattern**:
+1. **Feature Isolation**: Each feature package or folder owns a dedicated `FeatureErrorMapper` (or `BaseFeatureErrorMapper<F>`) that only knows its local domain failures.
+2. **Dynamic Delegation**: The `CompositeErrorMapper` queries registered mappers in priority order. When an error occurs, only the owning feature mapper translates it.
+3. **Safe Fallbacks**: If no feature mapper matches or if an unexpected runtime exception escapes, a baseline `StandardErrorMapper` and fallback handler ensure the user never sees raw crash stack traces.
+
+```text
+✅ Vetro Supervisor Architecture:
+Presentation Layer ───> CompositeErrorMapper
+                              ├──> AuthErrorMapper (Feature)
+                              ├──> CheckoutErrorMapper (Feature)
+                              └──> StandardErrorMapper (Baseline Fallback)
+```
+
+---
+
+## 6. Architectural Invariants
 
 1. **Zero-Leakage Policy**: Vetro is a universal developer tool. No domain-specific business logic, client identifiers, or private filesystem paths may ever be committed to this repository.
 2. **Deterministic Analysis**: All rules must produce identical results across operating systems, path separators, and execution environments.
