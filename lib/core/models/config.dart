@@ -229,6 +229,14 @@ final class VetroConfig {
         enabled: true,
         severity: Severity.warning,
       ),
+      'empty_catch': RuleConfig(
+        enabled: true,
+        severity: Severity.warning,
+      ),
+      'unchecked_boundary': RuleConfig(
+        enabled: true,
+        severity: Severity.warning,
+      ),
     },
   );
 

@@ -147,7 +147,23 @@ Presentation Layer ───> CompositeErrorMapper
 
 ---
 
-## 6. Architectural Invariants
+## 6. AST Error Handling & Debt Detection Rules
+
+To prevent error swallowing and boundary leaks, Vetro's AST Visitor enforces two core rules:
+
+### `empty_catch` (`EmptyCatchRule`)
+- **Target Node**: `CatchClause`
+- **Detection**: Flags empty catch blocks (`catch (e) {}`, `catch (_) {}`) or catch bodies that do not contain logging, a `rethrow`, a `throw`, or a delegating error mapper call.
+- **Goal**: Ensures zero silent exception swallowing across all layers.
+
+### `unchecked_boundary` (`UncheckedBoundaryRule`)
+- **Target Node**: Presentation classes (`*Controller`, `*Notifier`, `*ViewModel`, `*Bloc`, `*Cubit`, or code inside `presentation/`).
+- **Detection**: Flags methods capturing generic `Exception`, `Error`, or untyped `catch (e)` without mapping them to a domain `Failure` or calling an error mapper (`CompositeErrorMapper` / `FeatureErrorMapper`).
+- **Goal**: Guarantees raw infrastructure crashes are never exposed unformatted to presentation state or the UI.
+
+---
+
+## 7. Architectural Invariants
 
 1. **Zero-Leakage Policy**: Vetro is a universal developer tool. No domain-specific business logic, client identifiers, or private filesystem paths may ever be committed to this repository.
 2. **Deterministic Analysis**: All rules must produce identical results across operating systems, path separators, and execution environments.

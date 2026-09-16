@@ -197,6 +197,18 @@ final class PromptReporter extends Reporter {
             '- Prueba el comportamiento observable de la interfaz pública (caja negra) en lugar de verificar interacciones internas de métodos privados.\n'
             '- Reduce el número de mocks e intenta usar stubs o datos reales en el test.',
 
+      'empty_catch' =>
+        '- Nunca tragues excepciones en silencio sin registrar log, re-lanzar o mapear.\n'
+            '- Si la operación puede fallar previsiblemente, refactorízala para devolver Result<T, Failure>.\n'
+            '- Si el fallo es irrecuperable, registra el error con un logger estructurado o propágalo usando rethrow;\n'
+            '- Si es una operación de limpieza donde el fallo es intencional, añade un comentario de intención que justifique la decisión.',
+
+      'unchecked_boundary' =>
+        '- Las capas de presentación y controladores no deben capturar ni exponer excepciones crudas (Exception/Error).\n'
+            '- Refactoriza la llamada subyacente para retornar un Result<T, FeatureFailure> desde la capa de dominio o infraestructura.\n'
+            '- Utiliza FeatureErrorMapper o CompositeErrorMapper para traducir el fallo a un UserMessage sanitizado antes de reflejarlo en la UI.\n'
+            '- Evita inyectar stack traces o detalles internos de infraestructura directamente en el estado de la vista.',
+
       _ =>
         '- Inspecciona el código afectado y simplifica su diseño.\n'
             '- Asegúrate de seguir principios de código limpio (Clean Code), SOLID, y de única responsabilidad.',
