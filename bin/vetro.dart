@@ -49,6 +49,11 @@ Future<void> main(List<String> arguments) async {
       abbr: 'o',
       help: 'Write report output to the specified file path.',
     )
+    ..addFlag(
+      'export-remedies',
+      negatable: false,
+      help: 'Export AI remediation prompts to .vetro/remedies.md.',
+    )
     ..addMultiOption(
       'exclude',
       abbr: 'e',
@@ -101,6 +106,11 @@ Future<void> main(List<String> arguments) async {
       'output',
       abbr: 'o',
       help: 'Write report output to the specified file path.',
+    )
+    ..addFlag(
+      'export-remedies',
+      negatable: false,
+      help: 'Export AI remediation prompts to .vetro/remedies.md.',
     )
     ..addMultiOption(
       'exclude',
@@ -315,6 +325,30 @@ Future<void> main(List<String> arguments) async {
     }
   } else {
     print(formattedOutput);
+  }
+
+  // Export remedies if flag was passed
+  final exportRemedies = argResults['export-remedies'] as bool? ?? false;
+  if (exportRemedies) {
+    try {
+      final remediesFile = File(
+        p.join(absoluteTargetPath, '.vetro', 'remedies.md'),
+      );
+      remediesFile.parent.createSync(recursive: true);
+      const promptReporter = PromptReporter();
+      remediesFile.writeAsStringSync(promptReporter.format(report));
+      if (config.verbose || config.outputFormat == OutputFormat.terminal) {
+        print(
+          Ansi.green('AI remedy prompts exported to: ${remediesFile.path}'),
+        );
+      }
+    } catch (e) {
+      stderr.writeln(
+        Ansi.yellow(
+          'Warning: Failed to export remedies to .vetro/remedies.md: $e',
+        ),
+      );
+    }
   }
 
   // Handle fail-on-severity exit code.
@@ -646,6 +680,30 @@ Future<void> _handleDiff(String? baseRef, ArgResults argResults) async {
     }
   } else {
     print(formattedOutput);
+  }
+
+  // Export remedies if flag was passed
+  final exportRemedies = argResults['export-remedies'] as bool? ?? false;
+  if (exportRemedies) {
+    try {
+      final remediesFile = File(
+        p.join(absoluteTargetPath, '.vetro', 'remedies.md'),
+      );
+      remediesFile.parent.createSync(recursive: true);
+      const promptReporter = PromptReporter();
+      remediesFile.writeAsStringSync(promptReporter.format(diffReport));
+      if (config.verbose || config.outputFormat == OutputFormat.terminal) {
+        print(
+          Ansi.green('AI remedy prompts exported to: ${remediesFile.path}'),
+        );
+      }
+    } catch (e) {
+      stderr.writeln(
+        Ansi.yellow(
+          'Warning: Failed to export remedies to .vetro/remedies.md: $e',
+        ),
+      );
+    }
   }
 
   final failSeverityStr = argResults['fail-on-severity'] as String;

@@ -157,5 +157,144 @@ void example() {
         ),
       );
     });
+
+    test('sorts remedies in topological order of architectural impact', () {
+      final fileReport = FileReport(
+        filePath: tempFile.path,
+        findings: [
+          Finding(
+            ruleId: 'cognitive_complexity',
+            ruleName: 'Cognitive Complexity',
+            severity: Severity.warning,
+            filePath: tempFile.path,
+            line: 5,
+            message: 'High cognitive complexity',
+          ),
+          Finding(
+            ruleId: 'boundary_violation',
+            ruleName: 'Boundary Violation',
+            severity: Severity.error,
+            filePath: tempFile.path,
+            line: 2,
+            message: 'Domain importing presentation',
+          ),
+          Finding(
+            ruleId: 'empty_catch',
+            ruleName: 'Empty Catch Block',
+            severity: Severity.warning,
+            filePath: tempFile.path,
+            line: 8,
+            message: 'Silent catch block',
+          ),
+          Finding(
+            ruleId: 'unchecked_boundary',
+            ruleName: 'Unchecked Boundary',
+            severity: Severity.error,
+            filePath: tempFile.path,
+            line: 4,
+            message: 'Controller catching raw Exception',
+          ),
+        ],
+        lineCount: 30,
+        analysisTimeMs: 10,
+      );
+
+      final report = ProjectReport(
+        projectPath: tempDir.path,
+        fileReports: [fileReport],
+        totalAnalysisTimeMs: 20,
+        analyzedAt: DateTime(2026, 6, 17, 12, 0, 0),
+      );
+
+      final output = reporter.format(report);
+
+      // Topological priority order:
+      // 1. boundary_violation (Level 1)
+      // 2. unchecked_boundary (Level 2)
+      // 3. empty_catch (Level 3)
+      // 4. cognitive_complexity (Level 4)
+      final posBoundary = output.indexOf('Remedio #1: Boundary Violation');
+      final posUnchecked = output.indexOf('Remedio #2: Unchecked Boundary');
+      final posEmptyCatch = output.indexOf('Remedio #3: Empty Catch Block');
+      final posCognitive = output.indexOf('Remedio #4: Cognitive Complexity');
+
+      expect(posBoundary, isNot(-1));
+      expect(posUnchecked, isNot(-1));
+      expect(posEmptyCatch, isNot(-1));
+      expect(posCognitive, isNot(-1));
+
+      expect(posBoundary < posUnchecked, isTrue);
+      expect(posUnchecked < posEmptyCatch, isTrue);
+      expect(posEmptyCatch < posCognitive, isTrue);
+    });
+
+    test('generates complete 3-phase template with enclosing method scope', () {
+      const enclosingMethod = '''
+Future<void> fetchUser() async {
+  try {
+    await api.call();
+  } catch (e) {}
+}''';
+
+      final finding = Finding(
+        ruleId: 'empty_catch',
+        ruleName: 'Empty or Silent Catch Block',
+        severity: Severity.warning,
+        filePath: tempFile.path,
+        line: 4,
+        message: 'Silent catch block',
+        evidence: {
+          'enclosing_declaration': enclosingMethod,
+          'enclosing_name': 'fetchUser',
+          'clause': 'catch (e) {}',
+        },
+      );
+
+      final prompt = PromptReporter.buildPromptForFinding(
+        finding,
+        tempDir.path,
+      );
+
+      // Verify 3 Phases
+      expect(prompt, contains('[1. CONTEXTO AISLADO]'));
+      expect(prompt, contains('Ámbito contenedor (fetchUser):'));
+      expect(prompt, contains('Future<void> fetchUser() async {'));
+
+      expect(
+        prompt,
+        contains('[2. RESTRICCIONES NEGATIVAS (PROHIBICIONES ESTRICTAS)]'),
+      );
+      expect(
+        prompt,
+        contains('NO dejes el bloque catch vacío ni tragues silenciosamente'),
+      );
+      expect(
+        prompt,
+        contains('NO agregues dependencias externas no declaradas'),
+      );
+
+      expect(prompt, contains('[3. CONTRATO DE SOLUCIÓN (vetro_core)]'));
+      expect(
+        prompt,
+        contains(
+          'Utiliza Result.guard() o Result.guardAsync() de package:vetro_core/vetro_core.dart',
+        ),
+      );
+
+      // Verify strict non-conversational delivery rule
+      expect(prompt, contains('Reglas estrictas de entrega:'));
+      expect(
+        prompt,
+        contains(
+          'Devuelve únicamente el fragmento de código refactorizado y limpio.',
+        ),
+      );
+      expect(
+        prompt,
+        contains(
+          'Sin explicaciones conversacionales, comentarios superfluos ni saludos.',
+        ),
+      );
+    });
   });
 }

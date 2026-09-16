@@ -41,6 +41,30 @@ final class UncheckedBoundaryRule extends AnalysisRule {
       isPresentationFile: isPresentationFile,
       onViolation: (CatchClause node, String className, String reason) {
         final line = unit.lineInfo.getLocation(node.offset).lineNumber;
+        // Traverse up to find enclosing method or function declaration
+        var current = node.parent;
+        while (current != null) {
+          if (current is MethodDeclaration || current is FunctionDeclaration) {
+            break;
+          }
+          current = current.parent;
+        }
+
+        final evidence = <String, String>{
+          'class': className,
+          'clause': node.toSource(),
+          'reason': reason,
+        };
+
+        if (current != null) {
+          evidence['enclosing_declaration'] = current.toSource();
+          if (current is MethodDeclaration) {
+            evidence['enclosing_name'] = current.name.lexeme;
+          } else if (current is FunctionDeclaration) {
+            evidence['enclosing_name'] = current.name.lexeme;
+          }
+        }
+
         findings.add(
           Finding(
             ruleId: id,
@@ -50,11 +74,7 @@ final class UncheckedBoundaryRule extends AnalysisRule {
             line: line,
             message:
                 'Presentation class "$className" captures raw exceptions without domain Failure mapping ($reason).',
-            evidence: {
-              'class': className,
-              'clause': node.toSource(),
-              'reason': reason,
-            },
+            evidence: evidence,
           ),
         );
       },

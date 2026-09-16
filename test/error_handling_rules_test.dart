@@ -42,6 +42,11 @@ void main() {
       expect(findings, hasLength(1));
       expect(findings.first.ruleId, 'empty_catch');
       expect(findings.first.message, contains('empty body'));
+      expect(findings.first.evidence['enclosing_name'], 'doWork');
+      expect(
+        findings.first.evidence['enclosing_declaration'],
+        contains('void doWork()'),
+      );
     });
 
     test('flags catch clause with underscore parameter that does nothing', () {
@@ -146,6 +151,11 @@ void main() {
         expect(findings, hasLength(1));
         expect(findings.first.ruleId, 'unchecked_boundary');
         expect(findings.first.message, contains('AuthController'));
+        expect(findings.first.evidence['enclosing_name'], 'login');
+        expect(
+          findings.first.evidence['enclosing_declaration'],
+          contains('void login()'),
+        );
       },
     );
 

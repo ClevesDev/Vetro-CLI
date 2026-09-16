@@ -3,7 +3,9 @@ import 'package:path/path.dart' as p;
 import 'package:vetro/core/models/finding.dart';
 import 'package:vetro/core/report/reporter.dart';
 
-/// Reporter that formats findings as copy-pasteable remediation prompts for LLMs.
+/// Reporter that formats findings as copy-pasteable remediation prompts for LLMs
+/// structured in three deterministic phases: Isolated Context, Negative Constraints,
+/// and Solution Contract (vetro_core), ordered topologically by architectural impact.
 final class PromptReporter extends Reporter {
   const PromptReporter();
 
@@ -28,89 +30,235 @@ final class PromptReporter extends Reporter {
       return buffer.toString();
     }
 
-    // Group findings by file
-    final byFile = <String, List<Finding>>{};
-    for (final finding in allFindings) {
-      byFile.putIfAbsent(finding.filePath, () => []).add(finding);
-    }
+    // Topological sorting of findings by architectural impact
+    final sortedFindings = List<Finding>.from(allFindings)
+      ..sort((a, b) {
+        final orderA = _ruleTopologicalOrder(a.ruleId);
+        final orderB = _ruleTopologicalOrder(b.ruleId);
+        if (orderA != orderB) return orderA.compareTo(orderB);
+
+        // Severity tie-breaker: error > warning > info
+        final sevCompare = b.severity.index.compareTo(a.severity.index);
+        if (sevCompare != 0) return sevCompare;
+
+        // File path tie-breaker
+        final pathCompare = a.filePath.compareTo(b.filePath);
+        if (pathCompare != 0) return pathCompare;
+
+        // Line tie-breaker
+        return a.line.compareTo(b.line);
+      });
 
     var index = 1;
-    for (final entry in byFile.entries) {
-      final filePath = entry.key;
-      final findings = entry.value;
+    for (final finding in sortedFindings) {
+      final filePath = finding.filePath;
       final relPath = p.relative(filePath, from: report.projectPath);
+      final priority = _ruleTopologicalOrder(finding.ruleId);
+      final category = _topologicalCategoryName(priority);
 
-      for (final finding in findings) {
-        buffer.writeln('---');
-        buffer.writeln();
-        buffer.writeln('## 📌 Remedio #$index: ${finding.ruleName}');
-        buffer.writeln();
-        buffer.writeln('**Ubicación:** `$relPath:${finding.line}`');
-        buffer.writeln(
-          '**Severidad:** `${finding.severity.name.toUpperCase()}`',
-        );
-        buffer.writeln('**Mensaje:** ${finding.message}');
-        buffer.writeln();
+      buffer.writeln('---');
+      buffer.writeln();
+      buffer.writeln('## 📌 Remedio #$index: ${finding.ruleName}');
+      buffer.writeln();
+      buffer.writeln('**Prioridad Topológica:** Nivel $priority — $category');
+      buffer.writeln('**Ubicación:** `$relPath:${finding.line}`');
+      buffer.writeln('**Severidad:** `${finding.severity.name.toUpperCase()}`');
+      buffer.writeln('**Mensaje:** ${finding.message}');
+      buffer.writeln();
 
-        // Include code snippet if available
-        final snippet = _getCodeSnippet(filePath, finding.line);
-        if (snippet.isNotEmpty) {
-          final ext = p.extension(filePath).replaceAll('.', '');
-          buffer.writeln('### Código de Contexto:');
-          buffer.writeln('```$ext');
-          buffer.write(snippet);
-          buffer.writeln('```');
-          buffer.writeln();
-        }
+      // Phase 1: Isolated Code Context
+      final enclosingDecl = finding.evidence['enclosing_declaration'];
+      final snippet = _getCodeSnippet(filePath, finding.line);
 
-        // Include mathematical evidence details
-        if (finding.evidence.isNotEmpty) {
-          buffer.writeln('### Evidencia Métrica:');
-          for (final ev in finding.evidence.entries) {
-            buffer.writeln('- **${ev.key}**: `${ev.value}`');
-          }
-          buffer.writeln();
-        }
-
-        // Instructions for the LLM
-        buffer.writeln(
-          '### 📋 Prompt / Instrucciones de Refactorización para la IA:',
-        );
-        buffer.writeln('```text');
-        buffer.writeln(
-          'Actúa como un ingeniero de software experto en refactorización de código limpio.',
-        );
-        buffer.writeln(
-          'Refactoriza el fragmento de código arriba provisto para resolver el problema de deuda de IA detectado.',
-        );
-        buffer.writeln();
-        buffer.writeln('Problema: ${finding.ruleName}');
-        buffer.writeln('Detalle: ${finding.message}');
-        buffer.writeln();
-        buffer.writeln('Directrices de Refactorización:');
-        buffer.write(_getRemedyInstructions(finding.ruleId));
-        buffer.writeln();
-        buffer.writeln('Reglas estrictas de entrega:');
-        buffer.writeln(
-          '1. Devuelve únicamente el fragmento de código refactorizado y limpio.',
-        );
-        buffer.writeln(
-          '2. Mantén intactos los contratos de tipos de firma y el comportamiento funcional externo.',
-        );
-        buffer.writeln(
-          '3. Reduce la complejidad y mejora la mantenibilidad de forma demostrable.',
-        );
+      if (enclosingDecl != null && enclosingDecl.isNotEmpty) {
+        final ext = p.extension(filePath).replaceAll('.', '');
+        final name = finding.evidence['enclosing_name'] ?? 'función';
+        buffer.writeln('### Código de Contexto:');
+        buffer.writeln('```$ext');
+        buffer.writeln('// Ámbito completo: $name en $relPath:${finding.line}');
+        buffer.writeln(enclosingDecl);
         buffer.writeln('```');
         buffer.writeln();
-
-        index++;
+      } else if (snippet.isNotEmpty) {
+        final ext = p.extension(filePath).replaceAll('.', '');
+        buffer.writeln('### Código de Contexto:');
+        buffer.writeln('```$ext');
+        buffer.write(snippet);
+        buffer.writeln('```');
+        buffer.writeln();
       }
+
+      // Include metric evidence details
+      final nonContextEvidence = Map<String, String>.from(finding.evidence)
+        ..remove('enclosing_declaration')
+        ..remove('enclosing_name')
+        ..remove('clause');
+
+      if (nonContextEvidence.isNotEmpty) {
+        buffer.writeln('### Evidencia Métrica:');
+        for (final ev in nonContextEvidence.entries) {
+          buffer.writeln('- **${ev.key}**: `${ev.value}`');
+        }
+        buffer.writeln();
+      }
+
+      // Instructions for LLMs (Deterministic 3-phase template)
+      buffer.writeln(
+        '### 📋 Prompt / Instrucciones de Refactorización para la IA:',
+      );
+      buffer.writeln('```text');
+      buffer.write(buildPromptForFinding(finding, report.projectPath));
+      buffer.writeln();
+      buffer.writeln('```');
+      buffer.writeln();
+
+      index++;
     }
 
     return buffer.toString();
   }
 
-  String _getCodeSnippet(String filePath, int line) {
+  /// Builds a self-contained, deterministic 3-phase prompt for an LLM to resolve [finding].
+  static String buildPromptForFinding(Finding finding, String projectPath) {
+    final relPath = p.relative(finding.filePath, from: projectPath);
+    final enclosingDecl = finding.evidence['enclosing_declaration'];
+    final buffer = StringBuffer();
+
+    buffer.writeln(
+      'Actúa como un ingeniero de software experto en refactorización de código limpio.',
+    );
+    buffer.writeln(
+      'Refactoriza el fragmento de código provisto para resolver el problema de deuda detectado por Vetro:',
+    );
+    buffer.writeln();
+    buffer.writeln('Problema: ${finding.ruleName} (${finding.ruleId})');
+    buffer.writeln('Detalle: ${finding.message}');
+    buffer.writeln('Ubicación: $relPath:${finding.line}');
+    buffer.writeln();
+
+    buffer.writeln('[1. CONTEXTO AISLADO]');
+    buffer.writeln('Archivo: $relPath');
+    buffer.writeln('Línea de inicio: ${finding.line}');
+    if (enclosingDecl != null && enclosingDecl.isNotEmpty) {
+      final name = finding.evidence['enclosing_name'] ?? 'método';
+      buffer.writeln('Ámbito contenedor ($name):');
+      buffer.writeln(enclosingDecl);
+    } else if (finding.evidence.containsKey('clause')) {
+      buffer.writeln('Fragmento afectado:');
+      buffer.writeln(finding.evidence['clause']);
+    }
+    buffer.writeln();
+
+    buffer.writeln('[2. RESTRICCIONES NEGATIVAS (PROHIBICIONES ESTRICTAS)]');
+    buffer.writeln(_getNegativeConstraints(finding.ruleId));
+    buffer.writeln();
+
+    buffer.writeln('[3. CONTRATO DE SOLUCIÓN (vetro_core)]');
+    buffer.writeln(_getSolutionContract(finding.ruleId));
+    buffer.writeln();
+
+    buffer.writeln('Directrices de Refactorización:');
+    buffer.write(_getRemedyInstructions(finding.ruleId));
+    buffer.writeln();
+    buffer.writeln();
+
+    buffer.writeln('Reglas estrictas de entrega:');
+    buffer.writeln(
+      '1. Devuelve únicamente el fragmento de código refactorizado y limpio.',
+    );
+    buffer.writeln(
+      '2. Mantén intactos los contratos de tipos de firma y el comportamiento funcional externo.',
+    );
+    buffer.writeln(
+      '3. Reduce la complejidad y mejora la mantenibilidad de forma demostrable.',
+    );
+    buffer.writeln(
+      '4. Sin explicaciones conversacionales, comentarios superfluos ni saludos.',
+    );
+
+    return buffer.toString().trim();
+  }
+
+  static int _ruleTopologicalOrder(String ruleId) {
+    return switch (ruleId) {
+      'boundary_violation' || 'circular_dependency' => 1,
+      'unchecked_boundary' => 2,
+      'empty_catch' => 3,
+      'cognitive_complexity' ||
+      'cyclomatic_complexity' ||
+      'halstead_complexity' => 4,
+      'semantic_duplication' || 'copy_mutate' => 5,
+      'low_cohesion' || 'tight_coupling' || 'low_entropy' => 6,
+      _ => 7,
+    };
+  }
+
+  static String _topologicalCategoryName(int priority) {
+    return switch (priority) {
+      1 => 'Arquitectura de Capas e Interfaces',
+      2 => 'Flujo de Datos y Mapeo en Fronteras',
+      3 => 'Gestión Resiliente de Errores e Infraestructura',
+      4 => 'Complejidad Cognitiva y Flujo de Control',
+      5 => 'Duplicación y Redundancia Semántica',
+      6 => 'Cohesión y Acoplamiento Modular',
+      _ => 'Calidad de Código y Mantenibilidad',
+    };
+  }
+
+  static String _getNegativeConstraints(String ruleId) {
+    return switch (ruleId) {
+      'empty_catch' =>
+        '- NO dejes el bloque catch vacío ni tragues silenciosamente el error.\n'
+            '- NO captures Exception ni dynamic sin registrar log, relanzar o mapear.\n'
+            '- NO envuelvas el cuerpo en otro bloque try/catch anidado innecesario.\n'
+            '- NO agregues dependencias externas no declaradas (como fpdart o dartz).',
+
+      'unchecked_boundary' =>
+        '- NO captures excepciones crudas (Exception, Error, SocketException) en la capa de presentación.\n'
+            '- NO expongas e.toString(), detalles de infraestructura o stack traces al estado de UI.\n'
+            '- NO realices mapeos manuales inline dentro de controladores de vista.',
+
+      'boundary_violation' =>
+        '- NO importes dependencias de infraestructura ni presentación dentro del dominio.\n'
+            '- NO violes el flujo unidireccional de dependencias de Clean Architecture.',
+
+      'cognitive_complexity' || 'cyclomatic_complexity' =>
+        '- NO agregues flags booleanos de control adicionales ni aumentes el anidamiento.\n'
+            '- NO utilices múltiples niveles de if/else anidados ni bucles complejos dentro del mismo método.',
+
+      _ =>
+        '- NO introduzcas dependencias circulares ni rompas contratos de tipos existentes.\n'
+            '- NO añadas código muerto, comentarios innecesarios ni dependencias externas sin justificación.',
+    };
+  }
+
+  static String _getSolutionContract(String ruleId) {
+    return switch (ruleId) {
+      'empty_catch' =>
+        '- Si la operación es falible en infraestructura/datos, refactoriza para devolver Result<T, FeatureFailure>.\n'
+            '- Utiliza Result.guard() o Result.guardAsync() de package:vetro_core/vetro_core.dart.\n'
+            '- Si la excepción es irrecuperable o de sistema, regístrala con el logger estructurado o propágala con rethrow;.',
+
+      'unchecked_boundary' =>
+        '- Asegura que el servicio o repositorio retorne Result<T, DomainFailure>.\n'
+            '- Consume el resultado usando pattern matching con .when() o .fold().\n'
+            '- Utiliza CompositeErrorMapper o una subclase de BaseFeatureErrorMapper<F> para traducir fallos a un UserMessage sanitizado.',
+
+      'boundary_violation' =>
+        '- Invierte la dependencia declarando una interfaz abstracta en el dominio e implementándola en la infraestructura.',
+
+      'cognitive_complexity' || 'cyclomatic_complexity' =>
+        '- Utiliza cláusulas de guardia (guard clauses) y retornos tempranos (early returns).\n'
+            '- Emplea switch expressions y pattern matching de Dart 3 en lugar de if-else extensos.\n'
+            '- Extrae bloques anidados a métodos auxiliares puros con nombres semánticos.',
+
+      _ =>
+        '- Sigue los principios SOLID y la arquitectura en capas.\n'
+            '- Mantén alta cohesión y bajo acoplamiento entre módulos.',
+    };
+  }
+
+  static String _getCodeSnippet(String filePath, int line) {
     try {
       final file = File(filePath);
       if (!file.existsSync()) return '';
@@ -132,7 +280,7 @@ final class PromptReporter extends Reporter {
     }
   }
 
-  String _getRemedyInstructions(String ruleId) {
+  static String _getRemedyInstructions(String ruleId) {
     return switch (ruleId) {
       'cognitive_complexity' =>
         '- Reduce el anidamiento de control. Utiliza guardias y retornos tempranos (early returns).\n'
