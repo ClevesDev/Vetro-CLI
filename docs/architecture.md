@@ -190,9 +190,34 @@ When multiple findings exist, `.vetro/remedies.md` orders refactoring tasks by s
 
 ---
 
-## 8. Architectural Invariants
+## 8. Lean Feature Scaffolding Engine (`vetro make feature <name>`)
+
+Existing generator solutions (such as generic Mason bricks) frequently produce excessive boilerplate ("Folder Origami") with empty layers and redundant single-line use-cases. Vetro provides a zero-codegen, pragmatic scaffolding engine via `vetro make feature <name>`:
+
+```bash
+vetro make feature billing --state riverpod
+```
+
+### Standard Feature-First Layout
+Each scaffolded feature generates exactly 5 cohesive files structured for immediate compliance with Vetro static analysis and Clean Architecture boundaries:
+
+1. `domain/<name>_failure.dart`: Domain failure sealed hierarchy extending `Failure` from `package:vetro_core/vetro_core.dart`.
+2. `domain/<name>_repository.dart`: Interface and resilient default implementation returning `Result<T, <Name>Failure>` using `Result.guardAsync()`.
+3. `domain/<name>_error_mapper.dart`: Feature error mapper extending `BaseFeatureErrorMapper<<Name>Failure>`, translating failures into user-facing `UserMessage` instances.
+4. `presentation/<name>_controller.dart`: Presentation controller pattern-matching on `Result` and delegating failures to the local error mapper.
+5. `<name>.dart`: Clean barrel export exposing public contracts, error mappers, and controllers.
+
+### Guarantees
+- **Zero AST Violations**: All scaffolded files immediately pass `EmptyCatchRule`, `UncheckedBoundaryRule`, and `BoundaryViolationRule`.
+- **Zero Codegen**: No `build_runner` required; pure Dart 3 sealed classes, records, and pattern matching.
+- **SLOC Compliance**: Every scaffolded file is < 100 lines (far below the 500 SLOC threshold).
+
+---
+
+## 9. Architectural Invariants
 
 1. **Zero-Leakage Policy**: Vetro is a universal developer tool. No domain-specific business logic, client identifiers, or private filesystem paths may ever be committed to this repository.
 2. **Deterministic Analysis**: All rules must produce identical results across operating systems, path separators, and execution environments.
 3. **Dogfooding Standard**: Every new rule and metric added to Vetro is immediately run against the Vetro codebase itself to maintain zero technical debt.
+
 
