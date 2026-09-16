@@ -141,10 +141,11 @@ vetro analyze ./lib --format markdown  # Markdown (for PRs)
 
 Vetro has been heavily tested and verified against real-world projects and production pull requests to validate its metrics:
 
-* **[Project Analysis Report](docs/projects_analysis_report.md):** Detailed analysis of code-debt findings across various real-world production projects (anonymized as `Proyecto_XXX_A`, `Proyecto_XXX_B`, etc.).
+* **[Google Pull Request Audit](docs/google_pr_audit_report.md):** Real-world case study auditing Google's official `dart-lang/http` PR #1773 with zero token costs and deterministic analysis in 50 ms.
+* **[RxDart Pull Request Audit](docs/rxdart_pr_audit_report.md):** Continuous integration audit study on `ReactiveX/rxdart` PR #784 detecting architectural regressions and improvements in 180 ms.
+* **[GitHub Experiments Report](docs/github_experiments_report.md):** Comparative static audit validation across production repositories.
 * **[Performance Benchmark Report](docs/performance_benchmark_report.md):** Execution speed benchmarks on medium-to-large codebases pre- and post-algorithmic optimizations.
 * **[Token Savings & Cost Report](docs/token_savings_and_cost_report.md):** Comparative analysis of execution costs and time between Vetro and equivalent LLM-based code audits.
-* **[Pull Request Audits (English)](docs/walkthrough.md#cupertino_http-manual--pr-audits-verification) / [Bitácora de Auditorías (Español)](docs/walkthrough_ES.md#cupertino_http-manual--pr-audits-verification):** Real-world case studies analyzing production PRs from Google and RxDart repositories (such as [Google PR Audit](docs/google_pr_audit_report.md), [RxDart PR Audit](docs/rxdart_pr_audit_report.md), and [GitHub Experiments](docs/github_experiments_report.md)).
 * **[Scientific Validation Roadmap](docs/scientific_validation_roadmap.md):** Research methodology, property-based algebraic invariant proofs, and future roadmap for scientific validation of Vetro.
 
 ## Philosophy

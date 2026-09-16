@@ -320,14 +320,14 @@ vetro:
 
 ---
 
-## 🎯 Dogfooding: Vetro ↔ Proyecto_XXX_D
+## 🎯 Dogfooding y Verificación en Proyectos Reales
 
-Proyecto_XXX_D (`/home/dimas/development/Proyecto_XXX_D`) es el primer proyecto real contra el que Vetro se prueba. Ambos proyectos coexisten pero son independientes:
+Vetro se somete a autodiagnóstico continuo (*self-hosting*) y se valida contra bases de código reales de producción (incluyendo repositorios oficiales como `dart-lang/http` y `ReactiveX/rxdart`):
 
 ```text
-/home/dimas/development/
-├── Proyecto_XXX_D/     # ERP (Flutter + Drift) — cliente #1 de Vetro
-└── Vetro/              # Analizador estático — analiza a Proyecto_XXX_D (y a sí mismo)
+workspace/
+├── sample_project/     # Proyecto real de prueba
+└── vetro/              # Analizador estático — analiza al proyecto y a sí mismo
 ```
 
 ---

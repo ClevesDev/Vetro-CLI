@@ -1,5 +1,7 @@
+import 'dart:io';
 import 'package:analyzer/dart/analysis/utilities.dart';
 import 'package:analyzer/dart/ast/ast.dart';
+import 'package:path/path.dart' as p;
 import 'package:test/test.dart';
 import 'package:vetro/analyzers/dart/rules/eigenvector_centrality_rule.dart';
 import 'package:vetro/core/rules/halstead_complexity_rule.dart';
@@ -178,10 +180,11 @@ void main() {
       final unitC = parseString(content: sourceC).unit;
       final unitD = parseString(content: sourceD).unit;
 
-      final pathA = '/home/dimas/development/Vetro/lib/a.dart';
-      final pathB = '/home/dimas/development/Vetro/lib/b.dart';
-      final pathC = '/home/dimas/development/Vetro/lib/c.dart';
-      final pathD = '/home/dimas/development/Vetro/lib/d.dart';
+      final root = Directory.current.path;
+      final pathA = p.join(root, 'lib', 'a.dart');
+      final pathB = p.join(root, 'lib', 'b.dart');
+      final pathC = p.join(root, 'lib', 'c.dart');
+      final pathD = p.join(root, 'lib', 'd.dart');
 
       final units = {
         pathA: unitA,

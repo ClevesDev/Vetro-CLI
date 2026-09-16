@@ -43,7 +43,7 @@ Mediante la comparación normalizada de los reportes JSON generados por Vetro, e
 El refactor resolvió con éxito las siguientes advertencias de mantenibilidad:
 
 1. **Mejora en Cohesión (`low_cohesion`)**:
-   - `RetryClient` en [retry.dart](file:///home/dimas/development/Vetro/scratch/http/pkgs/http/lib/retry.dart) (línea 12) tenía una cohesión semántica crítica del **15.0%**. Con el rediseño para soportar cancelación, se introdujeron miembros y dependencias semánticas afines, lo que **aumentó su cohesión por encima del umbral de advertencia**.
+   - `RetryClient` en [`retry.dart`](https://github.com/dart-lang/http/blob/master/pkgs/http/lib/retry.dart) (línea 12) tenía una cohesión semántica crítica del **15.0%**. Con el rediseño para soportar cancelación, se introdujeron miembros y dependencias semánticas afines, lo que **aumentó su cohesión por encima del umbral de advertencia**.
 2. **Ciclos de Dependencia Simplificados (`circular_dependency`)**:
    - Se disolvió el ciclo directo de 4 archivos: `base_client.dart -> base_request.dart -> base_response.dart -> client.dart -> base_client.dart` gracias a la reorganización de firmas de métodos en la llamada a `send`.
 
@@ -54,13 +54,13 @@ El refactor resolvió con éxito las siguientes advertencias de mantenibilidad:
 La adición de la funcionalidad de cancelación introdujo deuda técnica estructural sutil en el diseño de las dependencias:
 
 1. **Introducción de Dependencias Circulares (`circular_dependency`)**:
-   Al crear la abstracción [abortable.dart](file:///home/dimas/development/Vetro/scratch/http/pkgs/http/lib/src/abortable.dart), esta se acopló de manera bidireccional con las peticiones y respuestas base, generando **6 nuevos ciclos cerrados**:
+   Al crear la abstracción [`abortable.dart`](https://github.com/dart-lang/http/blob/master/pkgs/http/lib/src/abortable.dart), esta se acopló de manera bidireccional con las peticiones y respuestas base, generando **6 nuevos ciclos cerrados**:
    - `abortable.dart -> base_request.dart -> abortable.dart` (Ciclo directo de longitud 2).
    - `abortable.dart -> streamed_response.dart -> base_response.dart -> base_request.dart -> abortable.dart` (Ciclo de longitud 4).
    - `abortable.dart -> streamed_response.dart -> base_response.dart -> client.dart -> base_client.dart -> base_request.dart -> abortable.dart` (Ciclo de longitud 6).
 
 2. **Acoplamiento de la Nueva Abstracción (`tight_coupling`)**:
-   - El archivo [abortable.dart](file:///home/dimas/development/Vetro/scratch/http/pkgs/http/lib/src/abortable.dart) nació con una tasa de acoplamiento del **37.0%** (`fan-in: 6, fan-out: 4`), convirtiéndose inmediatamente en un nodo altamente acoplado dentro de la arquitectura interna de la librería.
+   - El archivo [`abortable.dart`](https://github.com/dart-lang/http/blob/master/pkgs/http/lib/src/abortable.dart) nació con una tasa de acoplamiento del **37.0%** (`fan-in: 6, fan-out: 4`), convirtiéndose inmediatamente en un nodo altamente acoplado dentro de la arquitectura interna de la librería.
 
 ---
 

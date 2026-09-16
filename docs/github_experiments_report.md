@@ -8,8 +8,8 @@ Este documento presenta los resultados de los análisis estáticos y auditorías
 
 | Proyecto / Experimento | Archivos Analizados | Líneas de Código | AI Debt Score | Diagnóstico de Calidad | Reporte Detallado |
 | :--- | :---: | :---: | :---: | :---: | :---: |
-| **dart-lang/http** (Google) | 27 | 2,697 | **71/100** | ⚠️ Advertencia (Deuda Moderada / Ciclos) | [Ver Reporte](file:///home/dimas/development/Vetro/docs/google_pr_audit_report.md) |
-| **RxDart** (Open Source) | 83 | 10,840 | **0/100** | ⚠️ Boilerplate (Uso de Plantillas Estructurales) | [Ver Reporte](file:///home/dimas/development/Vetro/docs/rxdart_pr_audit_report.md) |
+| **dart-lang/http** (Google) | 27 | 2,697 | **71/100** | ⚠️ Advertencia (Deuda Moderada / Ciclos) | [Ver Reporte](google_pr_audit_report.md) |
+| **RxDart** (Open Source) | 83 | 10,840 | **0/100** | ⚠️ Boilerplate (Uso de Plantillas Estructurales) | [Ver Reporte](rxdart_pr_audit_report.md) |
 | **cupertino_http** (Open Source) | 4 | 2,148 | **86/100** | ⚠️ Advertencia (Deuda Moderada) | [Ver Sección](#3-apple-cupertino_http-exclusión-de-autogenerados-y-análisis) |
 | **cupertino_http** (PR Audits A/B) | 4 | 2,113 - 2,187 | **85 - 87/100** | ⚠️ Variación de CC y Cohesión en PR #1885 | [Ver Sección](#-4-cupertino_http-auditoría-de-impacto-estructural-de-pull-requests) |
 
@@ -19,15 +19,15 @@ Este documento presenta los resultados de los análisis estáticos y auditorías
 
 ### 1. ⚡ dart-lang/http (PR #1773 — Soporte de Abortar Peticiones)
 * **Objetivo**: Evaluar el impacto estructural de la adición de la característica de cancelación de peticiones HTTP en el paquete oficial de Dart de Google.
-* **Resultado**: Vetro detectó que la adición de la característica `abortable.dart` acopló fuertemente el diseño de dependencias, introduciendo **6 dependencias circulares** en la arquitectura interna y aumentando el acoplamiento directo al **37.0%**. Al mismo tiempo, resolvě una alerta de baja cohesión en la clase `RetryClient`.
-* **Reporte de Auditoría**: Para ver el análisis paso a paso y la comparativa de eficiencia frente a LLMs, lee el reporte completo en [google_pr_audit_report.md](file:///home/dimas/development/Vetro/docs/google_pr_audit_report.md).
+* **Resultado**: Vetro detectó que la adición de la característica `abortable.dart` acopló fuertemente el diseño de dependencias, introduciendo **6 dependencias circulares** en la arquitectura interna y aumentando el acoplamiento directo al **37.0%**. Al mismo tiempo, resolvió una alerta de baja cohesión en la clase `RetryClient`.
+* **Reporte de Auditoría**: Para ver el análisis paso a paso y la comparativa de eficiencia frente a LLMs, lee el reporte completo en [google_pr_audit_report.md](google_pr_audit_report.md).
 
 ---
 
 ### 📦 2. RxDart (PR #784 — Adición de isReplayValueStream)
 * **Objetivo**: Probar la precisión milimétrica de Vetro al evaluar un cambio menor y calcular la variación exacta de cohesión de clase (LCOM) en una base de código con alta densidad de código similar.
 * **Resultado**: Vetro analizó el cambio en **0.18 segundos** detectando que la cohesión de la clase `ValueStream` en `value_stream.dart` aumentó del **4.5% al 7.2%** de manera determinista y sin introducir regresiones de código duplicado ni dependencias circulares.
-* **Reporte de Auditoría**: Para ver las conclusiones y la tabla comparativa de este experimento, lee el reporte en [rxdart_pr_audit_report.md](file:///home/dimas/development/Vetro/docs/rxdart_pr_audit_report.md).
+* **Reporte de Auditoría**: Para ver las conclusiones y la tabla comparativa de este experimento, lee el reporte en [rxdart_pr_audit_report.md](rxdart_pr_audit_report.md).
 
 ---
 

@@ -1,4 +1,6 @@
+import 'dart:io';
 import 'package:analyzer/dart/analysis/utilities.dart';
+import 'package:path/path.dart' as p;
 import 'package:test/test.dart';
 import 'package:vetro/analyzers/dart/rules/boundary_violation_rule.dart';
 import 'package:vetro/core/models/config.dart';
@@ -11,10 +13,11 @@ void main() {
       final sourceInfra = "import '../domain/domain.dart'; class InfraClass {}";
       final sourcePres = "import '../../domain/domain.dart'; import '../application/app.dart'; class PresClass {}";
 
-      final pathDomain = '/home/dimas/development/Vetro/lib/domain/domain.dart';
-      final pathApp = '/home/dimas/development/Vetro/lib/application/app.dart';
-      final pathInfra = '/home/dimas/development/Vetro/lib/infrastructure/infra.dart';
-      final pathPres = '/home/dimas/development/Vetro/lib/presentation/pres.dart';
+      final root = Directory.current.path;
+      final pathDomain = p.join(root, 'lib', 'domain', 'domain.dart');
+      final pathApp = p.join(root, 'lib', 'application', 'app.dart');
+      final pathInfra = p.join(root, 'lib', 'infrastructure', 'infra.dart');
+      final pathPres = p.join(root, 'lib', 'presentation', 'pres.dart');
 
       final units = {
         pathDomain: parseString(content: sourceDomain).unit,
@@ -47,8 +50,9 @@ void main() {
       final sourceDomain = "import '../presentation/pres.dart'; class DomainClass {}";
       final sourcePres = "class PresClass {}";
 
-      final pathDomain = '/home/dimas/development/Vetro/lib/domain/domain.dart';
-      final pathPres = '/home/dimas/development/Vetro/lib/presentation/pres.dart';
+      final root = Directory.current.path;
+      final pathDomain = p.join(root, 'lib', 'domain', 'domain.dart');
+      final pathPres = p.join(root, 'lib', 'presentation', 'pres.dart');
 
       final units = {
         pathDomain: parseString(content: sourceDomain).unit,
@@ -81,8 +85,9 @@ void main() {
       final sourceCore = "import '../ui/ui.dart'; class CoreClass {}";
       final sourceUi = "class UiClass {}";
 
-      final pathCore = '/home/dimas/development/Vetro/lib/core/core.dart';
-      final pathUi = '/home/dimas/development/Vetro/lib/ui/ui.dart';
+      final root = Directory.current.path;
+      final pathCore = p.join(root, 'lib', 'core', 'core.dart');
+      final pathUi = p.join(root, 'lib', 'ui', 'ui.dart');
 
       final units = {
         pathCore: parseString(content: sourceCore).unit,
@@ -113,9 +118,10 @@ void main() {
       final sourceShared = "import '../presentation/pres.dart'; class SharedUtils {}";
       final sourcePres = "class PresClass {}";
 
-      final pathDomain = '/home/dimas/development/Vetro/lib/domain/domain.dart';
-      final pathShared = '/home/dimas/development/Vetro/lib/shared/utils.dart';
-      final pathPres = '/home/dimas/development/Vetro/lib/presentation/pres.dart';
+      final root = Directory.current.path;
+      final pathDomain = p.join(root, 'lib', 'domain', 'domain.dart');
+      final pathShared = p.join(root, 'lib', 'shared', 'utils.dart');
+      final pathPres = p.join(root, 'lib', 'presentation', 'pres.dart');
 
       final units = {
         pathDomain: parseString(content: sourceDomain).unit,
@@ -148,8 +154,9 @@ void main() {
       final sourceDomain = "import 'package:vetro/presentation/pres.dart'; class DomainClass {}";
       final sourcePres = "class PresClass {}";
 
-      final pathDomain = '/home/dimas/development/Vetro/lib/domain/domain.dart';
-      final pathPres = '/home/dimas/development/Vetro/lib/presentation/pres.dart';
+      final root = Directory.current.path;
+      final pathDomain = p.join(root, 'lib', 'domain', 'domain.dart');
+      final pathPres = p.join(root, 'lib', 'presentation', 'pres.dart');
 
       final units = {
         pathDomain: parseString(content: sourceDomain).unit,

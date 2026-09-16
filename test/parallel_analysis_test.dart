@@ -148,8 +148,9 @@ void main() {
       final sources = <String, String>{};
 
       // Add the duplicate pair
-      final pathBase = '/home/dimas/development/Vetro/lib/base.dart';
-      final pathCopy = '/home/dimas/development/Vetro/lib/copy.dart';
+      final root = Directory.current.path;
+      final pathBase = p.join(root, 'lib', 'base.dart');
+      final pathCopy = p.join(root, 'lib', 'copy.dart');
       units[pathBase] = parseString(content: sourceBase).unit;
       sources[pathBase] = sourceBase;
       units[pathCopy] = parseString(content: sourceCopy).unit;
@@ -164,7 +165,7 @@ void main() {
             print('unique' + other\$i.toString());
           }
         ''';
-        final path = '/home/dimas/development/Vetro/lib/unique_\$i.dart';
+        final path = p.join(root, 'lib', 'unique_\$i.dart');
         units[path] = parseString(content: uniqueSource).unit;
         sources[path] = uniqueSource;
       }

@@ -10,19 +10,19 @@ Este documento describe detalladamente los cambios realizados en los últimos co
 > **Mensaje de Commit**: `feat: implement git diff analysis (vetro diff) and AI prompt remedies format`
 * **Descripción**: Introducción de la característica de análisis incremental y del formateador de remedios de IA.
 * **Componentes Afectados**:
-  * [git_diff_parser.dart](file:///home/dimas/development/Vetro/lib/cli/git_diff_parser.dart): Procesa e identifica líneas añadidas/modificadas mediante `git diff -U0`.
-  * [prompt_reporter.dart](file:///home/dimas/development/Vetro/lib/core/report/prompt_reporter.dart): Formatea hallazgos agregando código de contexto (±5 líneas con marcador `👉`) y directrices de refactorización para el LLM.
-  * [bin/vetro.dart](file:///home/dimas/development/Vetro/bin/vetro.dart): Registra el comando `diff` y filtra hallazgos.
-  * [config.dart](file:///home/dimas/development/Vetro/lib/core/models/config.dart): Añade soporte para el formato `prompt` en CLI y archivo YAML.
+  * [git_diff_parser.dart](lib/cli/git_diff_parser.dart): Procesa e identifica líneas añadidas/modificadas mediante `git diff -U0`.
+  * [prompt_reporter.dart](lib/core/report/prompt_reporter.dart): Formatea hallazgos agregando código de contexto (±5 líneas con marcador `👉`) y directrices de refactorización para el LLM.
+  * [bin/vetro.dart](bin/vetro.dart): Registra el comando `diff` y filtra hallazgos.
+  * [config.dart](lib/core/models/config.dart): Añade soporte para el formato `prompt` en CLI y archivo YAML.
 
 ### 2. `6ef3c32` — Unificación de Halstead, Inicialización y Optimización de Python
 > **Mensaje de Commit**: `feat: implement unified Halstead complexity, parallel Python processing, vetro init command, and fix nested functions rule crashes`
 * **Descripción**: Mejoras de modularidad, paralelismo y el comando de inicialización.
 * **Componentes Afectados**:
-  * [halstead_complexity_rule.dart](file:///home/dimas/development/Vetro/lib/core/rules/halstead_complexity_rule.dart): Regla unificada en el core.
-  * [python_analyzer.dart](file:///home/dimas/development/Vetro/lib/analyzers/python/python_analyzer.dart): Ejecución en paralelo de análisis Python mediante `Isolate.run`.
-  * [py_cognitive_complexity_rule.dart](file:///home/dimas/development/Vetro/lib/analyzers/python/rules/py_cognitive_complexity_rule.dart): Corrección de error crítico de parada `Bad state: No element` al procesar funciones anidadas.
-  * [bin/vetro.dart](file:///home/dimas/development/Vetro/bin/vetro.dart): Comando `vetro init` con autodetección de lenguaje.
+  * [halstead_complexity_rule.dart](lib/core/rules/halstead_complexity_rule.dart): Regla unificada en el core.
+  * [python_analyzer.dart](lib/analyzers/python/python_analyzer.dart): Ejecución en paralelo de análisis Python mediante `Isolate.run`.
+  * [py_cognitive_complexity_rule.dart](lib/analyzers/python/rules/py_cognitive_complexity_rule.dart): Corrección de error crítico de parada `Bad state: No element` al procesar funciones anidadas.
+  * [bin/vetro.dart](bin/vetro.dart): Comando `vetro init` con autodetección de lenguaje.
 
 ### 3. `4d605ea` — Fusión de Configuraciones de Reglas
 > **Mensaje de Commit**: `fix(config): merge parsed rules with default configs to prevent silences`

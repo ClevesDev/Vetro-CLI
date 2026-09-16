@@ -1,4 +1,6 @@
+import 'dart:io';
 import 'package:analyzer/dart/analysis/utilities.dart';
+import 'package:path/path.dart' as p;
 import 'package:test/test.dart';
 import 'package:vetro/analyzers/dart/rules/circular_dependency_rule.dart';
 import 'package:vetro/analyzers/dart/rules/tight_coupling_rule.dart';
@@ -15,10 +17,10 @@ void main() {
       final unitB = parseString(content: sourceB).unit;
       final unitC = parseString(content: sourceC).unit;
 
-      // Mock absolute paths under the project path to ensure findProjectRoot works.
-      final pathA = '/home/dimas/development/Vetro/lib/a.dart';
-      final pathB = '/home/dimas/development/Vetro/lib/b.dart';
-      final pathC = '/home/dimas/development/Vetro/lib/c.dart';
+      final root = Directory.current.path;
+      final pathA = p.join(root, 'lib', 'a.dart');
+      final pathB = p.join(root, 'lib', 'b.dart');
+      final pathC = p.join(root, 'lib', 'c.dart');
 
       final units = {
         pathA: unitA,
@@ -53,10 +55,11 @@ void main() {
       final unitB = parseString(content: sourceB).unit;
       final unitC = parseString(content: sourceC).unit;
 
-      final pathCenter = '/home/dimas/development/Vetro/lib/center.dart';
-      final pathA = '/home/dimas/development/Vetro/lib/a.dart';
-      final pathB = '/home/dimas/development/Vetro/lib/b.dart';
-      final pathC = '/home/dimas/development/Vetro/lib/c.dart';
+      final root = Directory.current.path;
+      final pathCenter = p.join(root, 'lib', 'center.dart');
+      final pathA = p.join(root, 'lib', 'a.dart');
+      final pathB = p.join(root, 'lib', 'b.dart');
+      final pathC = p.join(root, 'lib', 'c.dart');
 
       final units = {
         pathCenter: unitCenter,
