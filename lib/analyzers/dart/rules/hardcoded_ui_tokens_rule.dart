@@ -45,9 +45,7 @@ final class HardcodedUiTokensRule extends AnalysisRule {
             filePath: context.filePath,
             line: line,
             message: message,
-            evidence: {
-              'expression': node.toString(),
-            },
+            evidence: {'expression': node.toString()},
           ),
         );
       },
@@ -59,9 +57,8 @@ final class HardcodedUiTokensRule extends AnalysisRule {
 }
 
 class _BuildMethodVisitor extends RecursiveAstVisitor<void> {
-  final void Function(AstNode node, String message) onViolation;
-
   _BuildMethodVisitor({required this.onViolation});
+  final void Function(AstNode node, String message) onViolation;
 
   @override
   void visitMethodDeclaration(MethodDeclaration node) {
@@ -76,9 +73,8 @@ class _BuildMethodVisitor extends RecursiveAstVisitor<void> {
 }
 
 class _BuildBodyVisitor extends RecursiveAstVisitor<void> {
-  final void Function(AstNode node, String message) onViolation;
-
   _BuildBodyVisitor({required this.onViolation});
+  final void Function(AstNode node, String message) onViolation;
 
   void _checkTypeName(AstNode node, String typeName) {
     if (typeName == 'Color') {

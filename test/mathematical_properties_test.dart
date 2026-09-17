@@ -1,17 +1,15 @@
 import 'dart:io';
 import 'dart:math' as math;
+
 import 'package:analyzer/dart/analysis/utilities.dart';
 import 'package:analyzer/dart/ast/ast.dart';
-import 'package:path/path.dart' as p;
 import 'package:test/test.dart';
-import 'package:vetro/analyzers/dart/ast_utils.dart';
-import 'package:vetro/core/metrics/cohesion.dart';
-import 'package:vetro/core/metrics/dependency_graph.dart';
-import 'package:vetro/core/metrics/entropy.dart';
-import 'package:vetro/core/metrics/similarity.dart';
 import 'package:vetro/analyzers/dart/adapters/dart_cohesion.dart';
 import 'package:vetro/analyzers/dart/adapters/dart_entropy.dart';
 import 'package:vetro/analyzers/dart/adapters/dart_similarity.dart';
+import 'package:vetro/analyzers/dart/ast_utils.dart';
+import 'package:vetro/core/metrics/dependency_graph.dart';
+import 'package:vetro/core/metrics/similarity.dart';
 
 void main() {
   final corpus = <CompilationUnit>[];
@@ -37,15 +35,24 @@ void main() {
           if (decl.body case final body?) {
             final h = shannonEntropy(body);
             final n = nodeCount(body);
-            expect(h, greaterThanOrEqualTo(0.0),
-                reason: 'Entropy should be non-negative');
+            expect(
+              h,
+              greaterThanOrEqualTo(0.0),
+              reason: 'Entropy should be non-negative',
+            );
             if (n > 1) {
               final maxEntropy = math.log(n) / math.log(2);
-              expect(h, lessThanOrEqualTo(maxEntropy + 1e-9),
-                  reason: 'Entropy cannot exceed log2(N)');
+              expect(
+                h,
+                lessThanOrEqualTo(maxEntropy + 1e-9),
+                reason: 'Entropy cannot exceed log2(N)',
+              );
             } else {
-              expect(h, equals(0.0),
-                  reason: 'Single node should have zero entropy');
+              expect(
+                h,
+                equals(0.0),
+                reason: 'Single node should have zero entropy',
+              );
             }
           }
         }
@@ -65,8 +72,11 @@ void main() {
         final tokens = tokenizeRaw(decl.node);
         if (tokens.isNotEmpty) {
           final sim = cosineSimilarity(tokens, tokens);
-          expect(sim, closeTo(1.0, 1e-6),
-              reason: 'Similarity of a function with itself must be 1.0');
+          expect(
+            sim,
+            closeTo(1.0, 1e-6),
+            reason: 'Similarity of a function with itself must be 1.0',
+          );
         }
       }
 
@@ -78,8 +88,11 @@ void main() {
           final tokensB = tokenizeRaw(declarations[j].node);
           final simAB = cosineSimilarity(tokensA, tokensB);
           final simBA = cosineSimilarity(tokensB, tokensA);
-          expect(simAB, closeTo(simBA, 1e-6),
-              reason: 'Cosine similarity must be symmetric');
+          expect(
+            simAB,
+            closeTo(simBA, 1e-6),
+            reason: 'Cosine similarity must be symmetric',
+          );
         }
       }
     });
@@ -88,10 +101,16 @@ void main() {
       for (final unit in corpus) {
         for (final cls in extractClasses(unit)) {
           final cohesion = classCohesion(cls);
-          expect(cohesion, greaterThanOrEqualTo(0.0),
-              reason: 'Cohesion must be non-negative');
-          expect(cohesion, lessThanOrEqualTo(1.0),
-              reason: 'Cohesion cannot exceed 1.0');
+          expect(
+            cohesion,
+            greaterThanOrEqualTo(0.0),
+            reason: 'Cohesion must be non-negative',
+          );
+          expect(
+            cohesion,
+            lessThanOrEqualTo(1.0),
+            reason: 'Cohesion cannot exceed 1.0',
+          );
         }
       }
     });
@@ -99,7 +118,7 @@ void main() {
     test('Dependency Graph Centrality Conservation & L2 Normalization', () {
       final graph = DependencyGraph();
       final random = math.Random(42);
-      
+
       // Construct a random directed network
       for (var i = 0; i < 30; i++) {
         final from = 'Node_$i';
@@ -113,12 +132,18 @@ void main() {
       if (centrality.isNotEmpty) {
         var sumSq = 0.0;
         for (final val in centrality.values) {
-          expect(val, greaterThanOrEqualTo(0.0),
-              reason: 'Centrality scores must be non-negative');
+          expect(
+            val,
+            greaterThanOrEqualTo(0.0),
+            reason: 'Centrality scores must be non-negative',
+          );
           sumSq += val * val;
         }
-        expect(sumSq, closeTo(1.0, 1e-6),
-            reason: 'L2-normalized centrality scores must sum of squares to 1.0');
+        expect(
+          sumSq,
+          closeTo(1.0, 1e-6),
+          reason: 'L2-normalized centrality scores must sum of squares to 1.0',
+        );
       }
     });
 
@@ -150,8 +175,12 @@ void main() {
             final thetaBC = math.acos(simBC);
             final thetaAC = math.acos(simAC);
 
-            expect(thetaAC, lessThanOrEqualTo(thetaAB + thetaBC + 1e-9),
-                reason: 'Cosine angular distance must satisfy the triangle inequality on real corpus tokens');
+            expect(
+              thetaAC,
+              lessThanOrEqualTo(thetaAB + thetaBC + 1e-9),
+              reason:
+                  'Cosine angular distance must satisfy the triangle inequality on real corpus tokens',
+            );
           }
         }
       }
@@ -185,42 +214,55 @@ void main() {
             final dBC = d(b, c);
             final dAC = d(a, c);
 
-            expect(dAC, lessThanOrEqualTo(dAB + dBC),
-                reason: 'LCS edit distance must satisfy the triangle inequality on real corpus tokens');
+            expect(
+              dAC,
+              lessThanOrEqualTo(dAB + dBC),
+              reason:
+                  'LCS edit distance must satisfy the triangle inequality on real corpus tokens',
+            );
           }
         }
       }
     });
 
-    test('Local Clustering Coefficient bounds on actual Vetro corpus graph', () {
-      final graph = DependencyGraph();
+    test(
+      'Local Clustering Coefficient bounds on actual Vetro corpus graph',
+      () {
+        final graph = DependencyGraph();
 
-      // Let's populate the graph using the actual file imports in Vetro.
-      // We can scan import statements from the corpus source code.
-      for (var i = 0; i < corpus.length; i++) {
-        final path = 'File_$i';
-        graph.addNode(path);
-        final unit = corpus[i];
-        
-        // Find import directives
-        for (final directive in unit.directives) {
-          if (directive is ImportDirective) {
-            final uri = directive.uri.stringValue;
-            if (uri != null) {
-              // Add a dependency from this file to the imported URI
-              graph.addEdge(path, uri);
+        // Let's populate the graph using the actual file imports in Vetro.
+        // We can scan import statements from the corpus source code.
+        for (var i = 0; i < corpus.length; i++) {
+          final path = 'File_$i';
+          graph.addNode(path);
+          final unit = corpus[i];
+
+          // Find import directives
+          for (final directive in unit.directives) {
+            if (directive is ImportDirective) {
+              final uri = directive.uri.stringValue;
+              if (uri != null) {
+                // Add a dependency from this file to the imported URI
+                graph.addEdge(path, uri);
+              }
             }
           }
         }
-      }
 
-      for (final node in graph.nodes) {
-        final cc = graph.localClusteringCoefficient(node);
-        expect(cc, greaterThanOrEqualTo(0.0),
-            reason: 'Clustering coefficient must be non-negative');
-        expect(cc, lessThanOrEqualTo(1.0 + 1e-9),
-            reason: 'Clustering coefficient cannot exceed 1.0');
-      }
-    });
+        for (final node in graph.nodes) {
+          final cc = graph.localClusteringCoefficient(node);
+          expect(
+            cc,
+            greaterThanOrEqualTo(0.0),
+            reason: 'Clustering coefficient must be non-negative',
+          );
+          expect(
+            cc,
+            lessThanOrEqualTo(1.0 + 1e-9),
+            reason: 'Clustering coefficient cannot exceed 1.0',
+          );
+        }
+      },
+    );
   });
 }

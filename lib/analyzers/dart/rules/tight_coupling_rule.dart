@@ -30,7 +30,8 @@ final class TightCouplingRule extends CrossFileRule {
   String get name => 'Tight Coupling';
 
   @override
-  String get description => 'Detects files with excessive import/export coupling.';
+  String get description =>
+      'Detects files with excessive import/export coupling.';
 
   @override
   Future<List<Finding>> analyzeProject(
@@ -55,7 +56,12 @@ final class TightCouplingRule extends CrossFileRule {
       final unit = entry.value;
 
       for (final importUri in extractImports(unit)) {
-        final resolvedPath = resolveImport(importUri, filePath, projectRoot, packageName);
+        final resolvedPath = resolveImport(
+          importUri,
+          filePath,
+          projectRoot,
+          packageName,
+        );
         if (resolvedPath != null && units.containsKey(resolvedPath)) {
           graph.addEdge(filePath, resolvedPath);
         }
@@ -84,7 +90,8 @@ final class TightCouplingRule extends CrossFileRule {
             severity: severity,
             filePath: node,
             line: 1, // File-level finding
-            message: 'File "$relativePath" has tight coupling: '
+            message:
+                'File "$relativePath" has tight coupling: '
                 '${(c * 100).toStringAsFixed(1)}% (fan-in: $fanInCount, fan-out: $fanOutCount).',
             evidence: {
               'coupling': '${(c * 100).toStringAsFixed(1)}%',

@@ -5,11 +5,10 @@ import 'package:yaml/yaml.dart';
 
 /// Represents a parsed semantic version for robust SDK compatibility checks.
 class Version implements Comparable<Version> {
+  const Version(this.major, this.minor, this.patch);
   final int major;
   final int minor;
   final int patch;
-
-  const Version(this.major, this.minor, this.patch);
 
   /// Parses a version string (e.g. "3.22.2" or "3.44.0-3.0.pre").
   static Version? parse(String? versionString) {
@@ -54,11 +53,6 @@ class Version implements Comparable<Version> {
 /// Holds the environment context of the project under analysis,
 /// specifically the Dart and Flutter SDK versions.
 class ProjectContext {
-  final String projectPath;
-  final bool isFlutterProject;
-  final Version? flutterVersion;
-  final String? dartVersionConstraint;
-
   const ProjectContext({
     required this.projectPath,
     required this.isFlutterProject,
@@ -68,15 +62,19 @@ class ProjectContext {
 
   /// Creates a default, empty [ProjectContext] when no configuration is available.
   const ProjectContext.empty({required this.projectPath})
-      : isFlutterProject = false,
-        flutterVersion = null,
-        dartVersionConstraint = null;
+    : isFlutterProject = false,
+      flutterVersion = null,
+      dartVersionConstraint = null;
+  final String projectPath;
+  final bool isFlutterProject;
+  final Version? flutterVersion;
+  final String? dartVersionConstraint;
 
   /// Resolves the SDK versions of the target project by reading `pubspec.yaml`
   /// and `.dart_tool/package_config.json`.
   static Future<ProjectContext> resolve(String projectPath) async {
     final pubspecFile = File(p.join(projectPath, 'pubspec.yaml'));
-    if (!await pubspecFile.exists()) {
+    if (!pubspecFile.existsSync()) {
       return ProjectContext.empty(projectPath: projectPath);
     }
 
@@ -92,7 +90,7 @@ class ProjectContext {
       }
 
       // Check if project depends on flutter
-      bool hasFlutterDep = false;
+      var hasFlutterDep = false;
       if (pubspec['dependencies'] is YamlMap) {
         final deps = pubspec['dependencies'] as YamlMap;
         hasFlutterDep = deps.containsKey('flutter');
@@ -107,10 +105,12 @@ class ProjectContext {
       }
 
       // Attempt to resolve the exact Flutter version using package_config.json
-      final packageConfigFile = File(p.join(projectPath, '.dart_tool', 'package_config.json'));
+      final packageConfigFile = File(
+        p.join(projectPath, '.dart_tool', 'package_config.json'),
+      );
       Version? resolvedFlutterVersion;
 
-      if (await packageConfigFile.exists()) {
+      if (packageConfigFile.existsSync()) {
         try {
           final content = await packageConfigFile.readAsString();
           final json = jsonDecode(content) as Map<String, dynamic>;
@@ -130,7 +130,7 @@ class ProjectContext {
               // Backtracking 2 directories resolves to the root of the SDK
               final sdkRoot = p.dirname(p.dirname(flutterPkgPath));
               final versionFile = File(p.join(sdkRoot, 'version'));
-              if (await versionFile.exists()) {
+              if (versionFile.existsSync()) {
                 final versionStr = (await versionFile.readAsString()).trim();
                 resolvedFlutterVersion = Version.parse(versionStr);
               }

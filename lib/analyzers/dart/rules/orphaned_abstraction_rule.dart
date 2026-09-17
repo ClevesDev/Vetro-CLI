@@ -58,7 +58,9 @@ final class OrphanedAbstractionRule extends CrossFileRule {
   ///
   /// We do this because we need to establish the complete list of abstractions
   /// before counting how many concrete classes implement or extend them.
-  List<_AbstractionInfo> _collectAbstractions(Map<String, CompilationUnit> units) {
+  List<_AbstractionInfo> _collectAbstractions(
+    Map<String, CompilationUnit> units,
+  ) {
     final abstractions = <_AbstractionInfo>[];
     for (final entry in units.entries) {
       final filePath = entry.key;
@@ -100,7 +102,7 @@ final class OrphanedAbstractionRule extends CrossFileRule {
     Map<String, CompilationUnit> units,
     Set<String> abstractionNames,
   ) {
-    // We traverse all concrete classes across the project because an abstraction's 
+    // We traverse all concrete classes across the project because an abstraction's
     // implementations can reside in any file.
     final implCounts = {for (final name in abstractionNames) name: 0};
 
@@ -163,7 +165,7 @@ final class OrphanedAbstractionRule extends CrossFileRule {
             message: count == 0
                 ? 'Abstract class "${abstraction.name}" has no implementations.'
                 : 'Abstract class "${abstraction.name}" has only '
-                    '1 implementation — the abstraction may be unnecessary.',
+                      '1 implementation — the abstraction may be unnecessary.',
             evidence: {
               'abstraction': abstraction.name,
               'implementation_count': '$count',

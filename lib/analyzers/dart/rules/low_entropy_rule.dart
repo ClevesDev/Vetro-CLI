@@ -1,6 +1,6 @@
 import 'package:analyzer/dart/ast/ast.dart';
-import 'package:vetro/analyzers/dart/ast_utils.dart';
 import 'package:vetro/analyzers/dart/adapters/dart_entropy.dart';
+import 'package:vetro/analyzers/dart/ast_utils.dart';
 import 'package:vetro/core/models/finding.dart';
 import 'package:vetro/core/rules/rule.dart';
 
@@ -19,18 +19,14 @@ final class LowEntropyRule extends Rule {
       'Flags complex or long functions whose AST node type entropy is abnormally low.';
 
   @override
-  List<Finding> analyze(
-    CompilationUnit unit,
-    String filePath,
-    String source,
-  ) {
+  List<Finding> analyze(CompilationUnit unit, String filePath, String source) {
     // Note: The purpose of this rule is to detect highly repetitive boilerplate or flat structures.
-    final minEntropy =
-        config.threshold('min_entropy', defaultValue: 1.8);
-    final minIdentEntropy =
-        config.threshold('min_identifier_entropy', defaultValue: 2.0);
-    final minNodes =
-        config.threshold('min_nodes', defaultValue: 30.0).toInt();
+    final minEntropy = config.threshold('min_entropy', defaultValue: 1.8);
+    final minIdentEntropy = config.threshold(
+      'min_identifier_entropy',
+      defaultValue: 2.0,
+    );
+    final minNodes = config.threshold('min_nodes', defaultValue: 30.0).toInt();
     final findings = <Finding>[];
 
     for (final decl in extractDeclarations(unit)) {
@@ -89,7 +85,8 @@ final class LowEntropyRule extends Rule {
       severity: severity,
       filePath: filePath,
       line: line,
-      message: 'Function "$name" has Shannon entropy ${entropy.toStringAsFixed(3)} '
+      message:
+          'Function "$name" has Shannon entropy ${entropy.toStringAsFixed(3)} '
           'with $totalNodes nodes (threshold: ${minEntropy.toStringAsFixed(3)}).',
       evidence: {
         'shannon_entropy': entropy.toStringAsFixed(3),
@@ -115,7 +112,8 @@ final class LowEntropyRule extends Rule {
       severity: severity,
       filePath: filePath,
       line: line,
-      message: 'Function "$name" has low identifier Shannon entropy ${entropy.toStringAsFixed(3)} '
+      message:
+          'Function "$name" has low identifier Shannon entropy ${entropy.toStringAsFixed(3)} '
           'with $totalNodes nodes (threshold: ${minEntropy.toStringAsFixed(3)}).',
       evidence: {
         'identifier_entropy': entropy.toStringAsFixed(3),

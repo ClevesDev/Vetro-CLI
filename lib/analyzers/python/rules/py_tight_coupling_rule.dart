@@ -41,7 +41,12 @@ final class PyTightCouplingRule extends PyCrossFileRule {
 
       final imports = _extractImports(rootNode);
       for (final import in imports) {
-        final resolvedPath = _resolveImport(import.uri, import.level, filePath, allFiles);
+        final resolvedPath = _resolveImport(
+          import.uri,
+          import.level,
+          filePath,
+          allFiles,
+        );
         if (resolvedPath != null) {
           graph.addEdge(filePath, resolvedPath);
         }
@@ -68,7 +73,8 @@ final class PyTightCouplingRule extends PyCrossFileRule {
             severity: severity,
             filePath: node,
             line: 1,
-            message: 'File "$relativePath" has tight coupling: '
+            message:
+                'File "$relativePath" has tight coupling: '
                 '${(c * 100).toStringAsFixed(1)}% (fan-in: $fanInCount, fan-out: $fanOutCount).',
             evidence: {
               'coupling': '${(c * 100).toStringAsFixed(1)}%',
@@ -87,10 +93,9 @@ final class PyTightCouplingRule extends PyCrossFileRule {
   List<({String uri, int level})> _extractImports(PyNode rootNode) {
     final imports = <({String uri, int level})>[];
 
-    final importNodes = rootNode.descendentNodes((node) => const {
-          'Import',
-          'ImportFrom',
-        }.contains(node.type));
+    final importNodes = rootNode.descendentNodes(
+      (node) => const {'Import', 'ImportFrom'}.contains(node.type),
+    );
 
     for (final node in importNodes) {
       if (node.type == 'Import') {
@@ -112,7 +117,12 @@ final class PyTightCouplingRule extends PyCrossFileRule {
     return imports;
   }
 
-  String? _resolveImport(String importUri, int level, String filePath, Set<String> allFiles) {
+  String? _resolveImport(
+    String importUri,
+    int level,
+    String filePath,
+    Set<String> allFiles,
+  ) {
     if (importUri.isEmpty && level == 0) return null;
 
     final dir = p.dirname(filePath);
@@ -123,7 +133,9 @@ final class PyTightCouplingRule extends PyCrossFileRule {
         relativeDir = p.dirname(relativeDir);
       }
 
-      final targetPath = p.normalize(p.join(relativeDir, importUri.replaceAll('.', '/')));
+      final targetPath = p.normalize(
+        p.join(relativeDir, importUri.replaceAll('.', '/')),
+      );
 
       final candidates = [
         targetPath,
@@ -155,9 +167,10 @@ final class PyTightCouplingRule extends PyCrossFileRule {
 
     for (final file in allFiles) {
       final normalizedFile = p.normalize(file);
-      final suffix = parts.join('/') + '.py';
-      final initSuffix = parts.join('/') + '/__init__.py';
-      if (normalizedFile.endsWith(suffix) || normalizedFile.endsWith(initSuffix)) {
+      final suffix = '${parts.join('/')}.py';
+      final initSuffix = '${parts.join('/')}/__init__.py';
+      if (normalizedFile.endsWith(suffix) ||
+          normalizedFile.endsWith(initSuffix)) {
         return normalizedFile;
       }
     }

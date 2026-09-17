@@ -31,8 +31,7 @@ final class TsSemanticDuplicationRule extends TsCrossFileRule {
     Map<String, TsNode> roots,
     Map<String, String> sources,
   ) async {
-    final threshold =
-        config.threshold('similarity', defaultValue: 0.80);
+    final threshold = config.threshold('similarity', defaultValue: 0.80);
 
     final cachedBodies = <_TsBodyAnalysisCache>[];
 
@@ -40,17 +39,20 @@ final class TsSemanticDuplicationRule extends TsCrossFileRule {
       final filePath = entry.key;
       final rootNode = entry.value;
 
-      final functionNodes = rootNode.descendentNodes((node) => const {
-            'FunctionDeclaration',
-            'FunctionExpression',
-            'ArrowFunctionExpression',
-            'ClassMethod',
-            'ObjectMethod',
-          }.contains(node.type));
+      final functionNodes = rootNode.descendentNodes(
+        (node) => const {
+          'FunctionDeclaration',
+          'FunctionExpression',
+          'ArrowFunctionExpression',
+          'ClassMethod',
+          'ObjectMethod',
+        }.contains(node.type),
+      );
 
       for (final fn in functionNodes) {
         final bodyNode = fn.children.firstWhere(
-          (child) => const {'BlockStatement', 'ClassBody'}.contains(child.type) ||
+          (child) =>
+              const {'BlockStatement', 'ClassBody'}.contains(child.type) ||
               fn.type == 'ArrowFunctionExpression',
           orElse: () => fn,
         );
@@ -126,7 +128,8 @@ final class TsSemanticDuplicationRule extends TsCrossFileRule {
               severity: severity,
               filePath: a.info.filePath,
               line: a.info.line,
-              message: 'Function "${a.info.name}" is $percentage% semantically '
+              message:
+                  'Function "${a.info.name}" is $percentage% semantically '
                   'similar to "${b.info.name}" at $relPathB:${b.info.line}.',
               evidence: {
                 'similarity': '$percentage%',
@@ -171,9 +174,13 @@ final class TsSemanticDuplicationRule extends TsCrossFileRule {
       }
     }
 
-    final declarator = root.descendentNodes((node) =>
-        node.type == 'VariableDeclarator' &&
-        node.children.any((c) => c.start == fnNode.start && c.end == fnNode.end));
+    final declarator = root.descendentNodes(
+      (node) =>
+          node.type == 'VariableDeclarator' &&
+          node.children.any(
+            (c) => c.start == fnNode.start && c.end == fnNode.end,
+          ),
+    );
 
     if (declarator.isNotEmpty) {
       final idMap = declarator.first.raw['id'];

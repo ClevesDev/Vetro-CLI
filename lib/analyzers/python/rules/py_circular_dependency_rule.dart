@@ -16,7 +16,8 @@ final class PyCircularDependencyRule extends PyCrossFileRule {
   String get name => 'Circular Dependency (Python)';
 
   @override
-  String get description => 'Detects Python file-level circular import dependencies.';
+  String get description =>
+      'Detects Python file-level circular import dependencies.';
 
   @override
   Future<List<Finding>> analyzeProject(
@@ -40,7 +41,12 @@ final class PyCircularDependencyRule extends PyCrossFileRule {
 
       final imports = _extractImports(rootNode);
       for (final import in imports) {
-        final resolvedPath = _resolveImport(import.uri, import.level, filePath, allFiles);
+        final resolvedPath = _resolveImport(
+          import.uri,
+          import.level,
+          filePath,
+          allFiles,
+        );
         if (resolvedPath != null) {
           graph.addEdge(filePath, resolvedPath);
         }
@@ -57,7 +63,9 @@ final class PyCircularDependencyRule extends PyCrossFileRule {
       if (reported.contains(key)) continue;
       reported.add(key);
 
-      final relativeCycle = canon.map((path) => p.relative(path, from: projectRoot)).toList();
+      final relativeCycle = canon
+          .map((path) => p.relative(path, from: projectRoot))
+          .toList();
       final pathStr = relativeCycle.join(' -> ');
 
       findings.add(
@@ -130,10 +138,9 @@ final class PyCircularDependencyRule extends PyCrossFileRule {
   List<({String uri, int level})> _extractImports(PyNode rootNode) {
     final imports = <({String uri, int level})>[];
 
-    final importNodes = rootNode.descendentNodes((node) => const {
-          'Import',
-          'ImportFrom',
-        }.contains(node.type));
+    final importNodes = rootNode.descendentNodes(
+      (node) => const {'Import', 'ImportFrom'}.contains(node.type),
+    );
 
     for (final node in importNodes) {
       if (node.type == 'Import') {
@@ -155,7 +162,12 @@ final class PyCircularDependencyRule extends PyCrossFileRule {
     return imports;
   }
 
-  String? _resolveImport(String importUri, int level, String filePath, Set<String> allFiles) {
+  String? _resolveImport(
+    String importUri,
+    int level,
+    String filePath,
+    Set<String> allFiles,
+  ) {
     if (importUri.isEmpty && level == 0) return null;
 
     final dir = p.dirname(filePath);
@@ -166,7 +178,9 @@ final class PyCircularDependencyRule extends PyCrossFileRule {
         relativeDir = p.dirname(relativeDir);
       }
 
-      final targetPath = p.normalize(p.join(relativeDir, importUri.replaceAll('.', '/')));
+      final targetPath = p.normalize(
+        p.join(relativeDir, importUri.replaceAll('.', '/')),
+      );
 
       final candidates = [
         targetPath,
@@ -198,9 +212,10 @@ final class PyCircularDependencyRule extends PyCrossFileRule {
 
     for (final file in allFiles) {
       final normalizedFile = p.normalize(file);
-      final suffix = parts.join('/') + '.py';
-      final initSuffix = parts.join('/') + '/__init__.py';
-      if (normalizedFile.endsWith(suffix) || normalizedFile.endsWith(initSuffix)) {
+      final suffix = '${parts.join('/')}.py';
+      final initSuffix = '${parts.join('/')}/__init__.py';
+      if (normalizedFile.endsWith(suffix) ||
+          normalizedFile.endsWith(initSuffix)) {
         return normalizedFile;
       }
     }

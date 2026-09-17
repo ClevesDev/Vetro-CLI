@@ -27,8 +27,7 @@ final class PySemanticDuplicationRule extends PyCrossFileRule {
     Map<String, PyNode> roots,
     Map<String, String> sources,
   ) async {
-    final threshold =
-        config.threshold('similarity', defaultValue: 0.80);
+    final threshold = config.threshold('similarity', defaultValue: 0.80);
 
     final cachedBodies = <_PyBodyAnalysisCache>[];
 
@@ -36,10 +35,9 @@ final class PySemanticDuplicationRule extends PyCrossFileRule {
       final filePath = entry.key;
       final rootNode = entry.value;
 
-      final functionNodes = rootNode.descendentNodes((node) => const {
-            'FunctionDef',
-            'AsyncFunctionDef',
-          }.contains(node.type));
+      final functionNodes = rootNode.descendentNodes(
+        (node) => const {'FunctionDef', 'AsyncFunctionDef'}.contains(node.type),
+      );
 
       for (final fn in functionNodes) {
         final totalNodes = _countNodes(fn);
@@ -110,13 +108,15 @@ final class PySemanticDuplicationRule extends PyCrossFileRule {
               severity: severity,
               filePath: a.info.filePath,
               line: a.info.line,
-              message: 'Function "${a.info.name}" is $percentage% semantically '
+              message:
+                  'Function "${a.info.name}" is $percentage% semantically '
                   'similar to "${b.info.name}" at $relPathB:${b.info.line}.',
               evidence: {
                 'similarity': '$percentage%',
                 'function_a': a.info.name,
                 'function_b': b.info.name,
-                'location_a': '${p.relative(a.info.filePath, from: projectRoot)}:${a.info.line}',
+                'location_a':
+                    '${p.relative(a.info.filePath, from: projectRoot)}:${a.info.line}',
                 'location_b': '$relPathB:${b.info.line}',
               },
             ),

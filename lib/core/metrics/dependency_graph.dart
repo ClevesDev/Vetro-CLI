@@ -18,7 +18,6 @@ library;
 
 import 'dart:math' as math;
 
-
 /// A simple directed graph for import/dependency analysis.
 ///
 /// Edges represent "A depends on B" (A imports B).
@@ -108,7 +107,7 @@ final class DependencyGraph {
   /// each direction).
   double coupling(String node) {
     // We normalize the coupling metric by dividing the sum of fan-in and fan-out
-    // by the total number of nodes in the project to obtain a relative measure of 
+    // by the total number of nodes in the project to obtain a relative measure of
     // how interconnected this node is compared to the rest of the codebase.
     final totalNodes = _adjacency.length;
     if (totalNodes == 0) return 0.0;
@@ -135,9 +134,7 @@ final class DependencyGraph {
     if (n == 0) return const {};
 
     // Initialize scores to 1 / n
-    var scores = <String, double>{
-      for (final node in allNodes) node: 1.0 / n,
-    };
+    var scores = <String, double>{for (final node in allNodes) node: 1.0 / n};
 
     // Precompute incoming connections to avoid O(V^2) scan in each iteration
     final incoming = <String, List<String>>{
@@ -208,10 +205,8 @@ final class DependencyGraph {
   double localClusteringCoefficient(String node) {
     if (!_adjacency.containsKey(node)) return 0.0;
 
-    final neighbors = <String>{
-      ...dependenciesOf(node),
-      ...dependentsOf(node),
-    }..remove(node);
+    final neighbors = <String>{...dependenciesOf(node), ...dependentsOf(node)}
+      ..remove(node);
 
     final kv = neighbors.length;
     if (kv < 2) return 0.0;

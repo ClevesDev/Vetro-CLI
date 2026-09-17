@@ -43,16 +43,22 @@ final class EigenvectorCentralityRule extends CrossFileRule {
       final unit = entry.value;
 
       for (final importUri in extractImports(unit)) {
-        final resolvedPath =
-            resolveImport(importUri, filePath, projectRoot, packageName);
+        final resolvedPath = resolveImport(
+          importUri,
+          filePath,
+          projectRoot,
+          packageName,
+        );
         if (resolvedPath != null && units.containsKey(resolvedPath)) {
           graph.addEdge(filePath, resolvedPath);
         }
       }
     }
 
-    final maxCentrality =
-        config.threshold('max_centrality', defaultValue: 0.40);
+    final maxCentrality = config.threshold(
+      'max_centrality',
+      defaultValue: 0.40,
+    );
     final minFanOut = config.options['min_fan_out'] is num
         ? (config.options['min_fan_out'] as num).toInt()
         : 0;
@@ -75,7 +81,8 @@ final class EigenvectorCentralityRule extends CrossFileRule {
             severity: severity,
             filePath: node,
             line: 1, // File-level finding
-            message: 'File "$relativePath" has high eigenvector centrality: '
+            message:
+                'File "$relativePath" has high eigenvector centrality: '
                 '${score.toStringAsFixed(3)} (fan-in: $fanInCount, fan-out: $fanOutCount).',
             evidence: {
               'eigenvector_centrality': score.toStringAsFixed(3),

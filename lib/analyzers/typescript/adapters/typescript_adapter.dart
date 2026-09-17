@@ -1,16 +1,21 @@
 import 'dart:math' as math;
+
 import 'package:path/path.dart' as p;
+import 'package:vetro/analyzers/typescript/adapters/typescript_halstead.dart';
 import 'package:vetro/core/models/context.dart';
 import 'package:vetro/core/models/project_context.dart';
 import 'package:vetro/core/models/ts_node.dart';
-import 'package:vetro/analyzers/typescript/adapters/typescript_halstead.dart';
 
 final class TsAdapter {
+  const TsAdapter({required this.allFiles});
   final Set<String> allFiles;
 
-  const TsAdapter({required this.allFiles});
-
-  FileContext adapt(TsNode root, String filePath, String source, ProjectContext projectContext) {
+  FileContext adapt(
+    TsNode root,
+    String filePath,
+    String source,
+    ProjectContext projectContext,
+  ) {
     final functions = <FunctionContext>[];
     final classes = <ClassContext>[];
     final imports = <ImportEdge>[];
@@ -27,21 +32,26 @@ final class TsAdapter {
     }
 
     // 1. Extract classes and their methods
-    final classNodes = root.descendentNodes((node) => node.type == 'ClassDeclaration');
+    final classNodes = root.descendentNodes(
+      (node) => node.type == 'ClassDeclaration',
+    );
     final classMethodStarts = <int>{};
 
     for (final cls in classNodes) {
       final classMethods = <FunctionContext>[];
       final methodVocabularies = <Set<String>>[];
 
-      final methods = cls.descendentNodes((node) => const {
-            'ClassMethod',
-          }.contains(node.type));
+      final methods = cls.descendentNodes(
+        (node) => const {'ClassMethod'}.contains(node.type),
+      );
 
       for (final method in methods) {
         classMethodStarts.add(method.start);
-        final methodName = '${_getClassName(cls)}.${_getFunctionName(method, root)}';
-        classMethods.add(_mapFunction(method, methodName, root, source, comments));
+        final methodName =
+            '${_getClassName(cls)}.${_getFunctionName(method, root)}';
+        classMethods.add(
+          _mapFunction(method, methodName, root, source, comments),
+        );
 
         methodVocabularies.add(_extractMethodIdentifiers(method));
       }
@@ -57,13 +67,15 @@ final class TsAdapter {
     }
 
     // 2. Extract non-class-method functions (top-level and other functions)
-    final functionNodes = root.descendentNodes((node) => const {
-          'FunctionDeclaration',
-          'FunctionExpression',
-          'ArrowFunctionExpression',
-          'ObjectMethod',
-          'ClassMethod',
-        }.contains(node.type));
+    final functionNodes = root.descendentNodes(
+      (node) => const {
+        'FunctionDeclaration',
+        'FunctionExpression',
+        'ArrowFunctionExpression',
+        'ObjectMethod',
+        'ClassMethod',
+      }.contains(node.type),
+    );
 
     for (final fn in functionNodes) {
       // Avoid mapping class methods again here
@@ -74,18 +86,23 @@ final class TsAdapter {
     }
 
     // 3. Extract imports and resolve them
-    final importNodes = root.descendentNodes((node) => const {
-          'ImportDeclaration',
-          'ExportNamedDeclaration',
-          'ExportAllDeclaration',
-        }.contains(node.type));
+    final importNodes = root.descendentNodes(
+      (node) => const {
+        'ImportDeclaration',
+        'ExportNamedDeclaration',
+        'ExportAllDeclaration',
+      }.contains(node.type),
+    );
 
     for (final node in importNodes) {
       final sourceVal = node.raw['source'];
       if (sourceVal is Map && sourceVal['value'] is String) {
         final importUri = sourceVal['value'] as String;
         final resolvedPath = _resolveImport(importUri, filePath);
-        final importString = (node.start >= 0 && node.end <= source.length && node.start <= node.end)
+        final importString =
+            (node.start >= 0 &&
+                node.end <= source.length &&
+                node.start <= node.end)
             ? source.substring(node.start, node.end)
             : '';
         imports.add(
@@ -120,12 +137,16 @@ final class TsAdapter {
   ) {
     // Find the body/block of the function to count nodes & compute metrics
     final bodyNode = fnNode.children.firstWhere(
-      (child) => const {'BlockStatement', 'ClassBody'}.contains(child.type) ||
+      (child) =>
+          const {'BlockStatement', 'ClassBody'}.contains(child.type) ||
           fnNode.type == 'ArrowFunctionExpression',
       orElse: () => fnNode,
     );
 
-    final fnSource = (fnNode.start >= 0 && fnNode.end <= source.length && fnNode.start <= fnNode.end)
+    final fnSource =
+        (fnNode.start >= 0 &&
+            fnNode.end <= source.length &&
+            fnNode.start <= fnNode.end)
         ? source.substring(fnNode.start, fnNode.end)
         : '';
 
@@ -178,7 +199,9 @@ final class TsAdapter {
   }
 
   List<String> _tokenizeRawString(String source) {
-    final regExp = RegExp(r'[a-zA-Z_][a-zA-Z0-9_]*|\d+|[+\-*/%=<>!&|^~]+|[{}[\]().,;]');
+    final regExp = RegExp(
+      r'[a-zA-Z_][a-zA-Z0-9_]*|\d+|[+\-*/%=<>!&|^~]+|[{}[\]().,;]',
+    );
     return regExp.allMatches(source).map((m) => m.group(0)!).toList();
   }
 
@@ -230,7 +253,8 @@ final class TsAdapter {
     }
 
     final bodyNode = fnNode.children.firstWhere(
-      (child) => const {'BlockStatement', 'ClassBody'}.contains(child.type) ||
+      (child) =>
+          const {'BlockStatement', 'ClassBody'}.contains(child.type) ||
           fnNode.type == 'ArrowFunctionExpression',
       orElse: () => fnNode,
     );
@@ -242,7 +266,12 @@ final class TsAdapter {
   int _computeCognitiveComplexity(TsNode fnNode) {
     var complexity = 0;
 
-    void visit(TsNode node, TsNode? parent, int nestingLevel, String? parentLogicalOp) {
+    void visit(
+      TsNode node,
+      TsNode? parent,
+      int nestingLevel,
+      String? parentLogicalOp,
+    ) {
       if (node != fnNode &&
           const {
             'FunctionDeclaration',
@@ -258,7 +287,8 @@ final class TsAdapter {
       var currentLogicalOp = parentLogicalOp;
 
       if (node.type == 'IfStatement') {
-        final isElseIf = parent != null &&
+        final isElseIf =
+            parent != null &&
             parent.type == 'IfStatement' &&
             parent.raw['alternate'] is Map &&
             node.start == (parent.raw['alternate'] as Map)['start'];
@@ -270,13 +300,18 @@ final class TsAdapter {
         }
         currentNesting = nestingLevel + 1;
         currentLogicalOp = null;
-      } else if (const {'ForStatement', 'ForInStatement', 'ForOfStatement'}
-          .contains(node.type)) {
+      } else if (const {
+        'ForStatement',
+        'ForInStatement',
+        'ForOfStatement',
+      }.contains(node.type)) {
         complexity += 1 + nestingLevel;
         currentNesting = nestingLevel + 1;
         currentLogicalOp = null;
-      } else if (const {'WhileStatement', 'DoWhileStatement'}
-          .contains(node.type)) {
+      } else if (const {
+        'WhileStatement',
+        'DoWhileStatement',
+      }.contains(node.type)) {
         complexity += 1 + nestingLevel;
         currentNesting = nestingLevel + 1;
         currentLogicalOp = null;
@@ -308,7 +343,8 @@ final class TsAdapter {
     }
 
     final bodyNode = fnNode.children.firstWhere(
-      (child) => const {'BlockStatement', 'ClassBody'}.contains(child.type) ||
+      (child) =>
+          const {'BlockStatement', 'ClassBody'}.contains(child.type) ||
           fnNode.type == 'ArrowFunctionExpression',
       orElse: () => fnNode,
     );
@@ -345,15 +381,66 @@ final class TsAdapter {
     var total = 0;
 
     const keywords = {
-      'break', 'case', 'catch', 'class', 'const', 'continue', 'debugger',
-      'default', 'delete', 'do', 'else', 'export', 'extends', 'false',
-      'finally', 'for', 'function', 'if', 'import', 'in', 'instanceof',
-      'new', 'null', 'return', 'super', 'switch', 'this', 'throw', 'true',
-      'try', 'typeof', 'var', 'void', 'while', 'with', 'yield',
-      'let', 'package', 'private', 'protected', 'public', 'static',
-      'any', 'boolean', 'constructor', 'declare', 'get', 'module',
-      'require', 'number', 'readonly', 'set', 'string', 'symbol',
-      'type', 'from', 'of', 'as', 'keyof', 'is'
+      'break',
+      'case',
+      'catch',
+      'class',
+      'const',
+      'continue',
+      'debugger',
+      'default',
+      'delete',
+      'do',
+      'else',
+      'export',
+      'extends',
+      'false',
+      'finally',
+      'for',
+      'function',
+      'if',
+      'import',
+      'in',
+      'instanceof',
+      'new',
+      'null',
+      'return',
+      'super',
+      'switch',
+      'this',
+      'throw',
+      'true',
+      'try',
+      'typeof',
+      'var',
+      'void',
+      'while',
+      'with',
+      'yield',
+      'let',
+      'package',
+      'private',
+      'protected',
+      'public',
+      'static',
+      'any',
+      'boolean',
+      'constructor',
+      'declare',
+      'get',
+      'module',
+      'require',
+      'number',
+      'readonly',
+      'set',
+      'string',
+      'symbol',
+      'type',
+      'from',
+      'of',
+      'as',
+      'keyof',
+      'is',
     };
 
     void count(TsNode n) {
@@ -382,8 +469,17 @@ final class TsAdapter {
 
   bool _hasIntentComment(TsNode fnNode, List<Map<String, dynamic>> comments) {
     const intentKeywords = {
-      'why', 'because', 'reason', 'purpose', 'intent',
-      'rationale', 'note', 'important', 'hack', 'workaround', 'todo'
+      'why',
+      'because',
+      'reason',
+      'purpose',
+      'intent',
+      'rationale',
+      'note',
+      'important',
+      'hack',
+      'workaround',
+      'todo',
     };
 
     for (final comment in comments) {
@@ -409,15 +505,66 @@ final class TsAdapter {
   Set<String> _extractMethodIdentifiers(TsNode methodNode) {
     final counts = <String>{};
     const keywords = {
-      'break', 'case', 'catch', 'class', 'const', 'continue', 'debugger',
-      'default', 'delete', 'do', 'else', 'export', 'extends', 'false',
-      'finally', 'for', 'function', 'if', 'import', 'in', 'instanceof',
-      'new', 'null', 'return', 'super', 'switch', 'this', 'throw', 'true',
-      'try', 'typeof', 'var', 'void', 'while', 'with', 'yield',
-      'let', 'package', 'private', 'protected', 'public', 'static',
-      'any', 'boolean', 'constructor', 'declare', 'get', 'module',
-      'require', 'number', 'readonly', 'set', 'string', 'symbol',
-      'type', 'from', 'of', 'as', 'keyof', 'is'
+      'break',
+      'case',
+      'catch',
+      'class',
+      'const',
+      'continue',
+      'debugger',
+      'default',
+      'delete',
+      'do',
+      'else',
+      'export',
+      'extends',
+      'false',
+      'finally',
+      'for',
+      'function',
+      'if',
+      'import',
+      'in',
+      'instanceof',
+      'new',
+      'null',
+      'return',
+      'super',
+      'switch',
+      'this',
+      'throw',
+      'true',
+      'try',
+      'typeof',
+      'var',
+      'void',
+      'while',
+      'with',
+      'yield',
+      'let',
+      'package',
+      'private',
+      'protected',
+      'public',
+      'static',
+      'any',
+      'boolean',
+      'constructor',
+      'declare',
+      'get',
+      'module',
+      'require',
+      'number',
+      'readonly',
+      'set',
+      'string',
+      'symbol',
+      'type',
+      'from',
+      'of',
+      'as',
+      'keyof',
+      'is',
     };
 
     void collect(TsNode n) {
@@ -449,9 +596,13 @@ final class TsAdapter {
       }
     }
 
-    final declarator = root.descendentNodes((node) =>
-        node.type == 'VariableDeclarator' &&
-        node.children.any((c) => c.start == fnNode.start && c.end == fnNode.end));
+    final declarator = root.descendentNodes(
+      (node) =>
+          node.type == 'VariableDeclarator' &&
+          node.children.any(
+            (c) => c.start == fnNode.start && c.end == fnNode.end,
+          ),
+    );
 
     if (declarator.isNotEmpty) {
       final idMap = declarator.first.raw['id'];

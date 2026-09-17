@@ -1,13 +1,11 @@
-import 'dart:io';
-import 'package:analyzer/dart/analysis/utilities.dart';
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/token.dart';
-import 'package:vetro/analyzers/dart/ast_utils.dart' as ast_utils;
 import 'package:vetro/analyzers/dart/adapters/dart_cohesion.dart';
 import 'package:vetro/analyzers/dart/adapters/dart_complexity.dart';
 import 'package:vetro/analyzers/dart/adapters/dart_entropy.dart';
-import 'package:vetro/analyzers/dart/adapters/dart_similarity.dart';
 import 'package:vetro/analyzers/dart/adapters/dart_halstead.dart';
+import 'package:vetro/analyzers/dart/adapters/dart_similarity.dart';
+import 'package:vetro/analyzers/dart/ast_utils.dart' as ast_utils;
 import 'package:vetro/core/metrics/entropy.dart';
 import 'package:vetro/core/models/context.dart';
 import 'package:vetro/core/models/project_context.dart';
@@ -17,7 +15,12 @@ final class DartAdapter {
   const DartAdapter();
 
   /// Maps a parsed Dart AST [unit] to a language-agnostic [FileContext].
-  FileContext adapt(CompilationUnit unit, String filePath, String source, ProjectContext projectContext) {
+  FileContext adapt(
+    CompilationUnit unit,
+    String filePath,
+    String source,
+    ProjectContext projectContext,
+  ) {
     final functions = <FunctionContext>[];
     final classes = <ClassContext>[];
     final imports = <ImportEdge>[];
@@ -56,14 +59,21 @@ final class DartAdapter {
 
     // 3. Map imports.
     final projectRoot = ast_utils.findProjectRoot(filePath);
-    final packageName = projectRoot != null ? (ast_utils.getPackageName(projectRoot) ?? '') : '';
+    final packageName = projectRoot != null
+        ? (ast_utils.getPackageName(projectRoot) ?? '')
+        : '';
 
     for (final directive in unit.directives.whereType<ImportDirective>()) {
       final importUri = directive.uri.stringValue;
       if (importUri != null) {
         final line = unit.lineInfo.getLocation(directive.offset).lineNumber;
         final resolvedPath = projectRoot != null
-            ? ast_utils.resolveImport(importUri, filePath, projectRoot, packageName)
+            ? ast_utils.resolveImport(
+                importUri,
+                filePath,
+                projectRoot,
+                packageName,
+              )
             : null;
         imports.add(
           ImportEdge(
@@ -113,15 +123,15 @@ final class DartAdapter {
 
     // Pre-calculate comment intent.
     // Scan the preceding comments of the node as well as the body comments.
-    var commentText = '';
+    final commentBuffer = StringBuffer();
     var comment = node.beginToken.precedingComments;
     while (comment != null) {
-      commentText += '${comment.lexeme}\n';
+      commentBuffer.writeln(comment.lexeme);
       comment = comment.next as CommentToken?;
     }
-    commentText += fnSource;
+    commentBuffer.write(fnSource);
 
-    final intentRatio = commentIntentRatio(commentText);
+    final intentRatio = commentIntentRatio(commentBuffer.toString());
 
     final halstead = halsteadMetrics(node);
 

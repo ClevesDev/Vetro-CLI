@@ -1,16 +1,21 @@
 import 'dart:math' as math;
+
 import 'package:path/path.dart' as p;
+import 'package:vetro/analyzers/python/adapters/python_halstead.dart';
 import 'package:vetro/core/models/context.dart';
 import 'package:vetro/core/models/project_context.dart';
 import 'package:vetro/core/models/py_node.dart';
-import 'package:vetro/analyzers/python/adapters/python_halstead.dart';
 
 final class PythonAdapter {
+  const PythonAdapter({required this.allFiles});
   final Set<String> allFiles;
 
-  const PythonAdapter({required this.allFiles});
-
-  FileContext adapt(PyNode root, String filePath, String source, ProjectContext projectContext) {
+  FileContext adapt(
+    PyNode root,
+    String filePath,
+    String source,
+    ProjectContext projectContext,
+  ) {
     final functions = <FunctionContext>[];
     final classes = <ClassContext>[];
     final imports = <ImportEdge>[];
@@ -35,10 +40,9 @@ final class PythonAdapter {
       final methodVocabularies = <Set<String>>[];
 
       // Extract only methods belonging directly to this class
-      final methods = cls.children.where((node) => const {
-            'FunctionDef',
-            'AsyncFunctionDef',
-          }.contains(node.type));
+      final methods = cls.children.where(
+        (node) => const {'FunctionDef', 'AsyncFunctionDef'}.contains(node.type),
+      );
 
       for (final method in methods) {
         // En Python, una función anidada puede estar dentro de un método.
@@ -46,7 +50,9 @@ final class PythonAdapter {
         // Pero para el propósito de cohesión, todos los métodos declarados son válidos.
         classMethodStarts.add(method.start);
         final methodName = '${cls.raw['name']}.${method.raw['name']}';
-        classMethods.add(_mapFunction(method, methodName, root, source, comments));
+        classMethods.add(
+          _mapFunction(method, methodName, root, source, comments),
+        );
 
         methodVocabularies.add(_extractMethodIdentifiers(method));
       }
@@ -62,10 +68,9 @@ final class PythonAdapter {
     }
 
     // 2. Extract top-level and standalone functions
-    final functionNodes = root.children.where((node) => const {
-          'FunctionDef',
-          'AsyncFunctionDef',
-        }.contains(node.type));
+    final functionNodes = root.children.where(
+      (node) => const {'FunctionDef', 'AsyncFunctionDef'}.contains(node.type),
+    );
 
     for (final fn in functionNodes) {
       if (classMethodStarts.contains(fn.start)) continue;
@@ -75,14 +80,16 @@ final class PythonAdapter {
     }
 
     // 3. Extract imports
-    final importNodes = root.descendentNodes((node) => const {
-          'Import',
-          'ImportFrom',
-        }.contains(node.type));
+    final importNodes = root.descendentNodes(
+      (node) => const {'Import', 'ImportFrom'}.contains(node.type),
+    );
 
     for (final node in importNodes) {
       final line = node.line;
-      final importString = (node.start >= 0 && node.end <= source.length && node.start <= node.end)
+      final importString =
+          (node.start >= 0 &&
+              node.end <= source.length &&
+              node.start <= node.end)
           ? source.substring(node.start, node.end)
           : '';
 
@@ -139,7 +146,10 @@ final class PythonAdapter {
     String source,
     List<Map<String, dynamic>> comments,
   ) {
-    final fnSource = (fnNode.start >= 0 && fnNode.end <= source.length && fnNode.start <= fnNode.end)
+    final fnSource =
+        (fnNode.start >= 0 &&
+            fnNode.end <= source.length &&
+            fnNode.start <= fnNode.end)
         ? source.substring(fnNode.start, fnNode.end)
         : '';
 
@@ -190,7 +200,9 @@ final class PythonAdapter {
   }
 
   List<String> _tokenizeRawString(String source) {
-    final regExp = RegExp(r'[a-zA-Z_][a-zA-Z0-9_]*|\d+|[+\-*/%=<>!&|^~]+|[{}[\]().,;]');
+    final regExp = RegExp(
+      r'[a-zA-Z_][a-zA-Z0-9_]*|\d+|[+\-*/%=<>!&|^~]+|[{}[\]().,;]',
+    );
     return regExp.allMatches(source).map((m) => m.group(0)!).toList();
   }
 
@@ -199,7 +211,8 @@ final class PythonAdapter {
 
     void count(PyNode node) {
       // Evitar contar funciones internas anidadas
-      if (node != fnNode && const {'FunctionDef', 'AsyncFunctionDef'}.contains(node.type)) {
+      if (node != fnNode &&
+          const {'FunctionDef', 'AsyncFunctionDef'}.contains(node.type)) {
         return;
       }
 
@@ -239,8 +252,14 @@ final class PythonAdapter {
   int _computeCognitiveComplexity(PyNode fnNode) {
     var complexity = 0;
 
-    void visit(PyNode node, PyNode? parent, int nestingLevel, String? parentLogicalOp) {
-      if (node != fnNode && const {'FunctionDef', 'AsyncFunctionDef'}.contains(node.type)) {
+    void visit(
+      PyNode node,
+      PyNode? parent,
+      int nestingLevel,
+      String? parentLogicalOp,
+    ) {
+      if (node != fnNode &&
+          const {'FunctionDef', 'AsyncFunctionDef'}.contains(node.type)) {
         return;
       }
 
@@ -250,7 +269,8 @@ final class PythonAdapter {
       if (node.type == 'If') {
         // En Python AST, un 'elif' se representa como un nodo 'If' anidado
         // dentro del campo 'orelse' de su padre 'If', y es el único elemento o el inicio del orelse.
-        final isElif = parent != null &&
+        final isElif =
+            parent != null &&
             parent.type == 'If' &&
             parent.raw['orelse'] is List &&
             (parent.raw['orelse'] as List).isNotEmpty &&
@@ -323,11 +343,43 @@ final class PythonAdapter {
     var total = 0;
 
     const keywords = {
-      'False', 'None', 'True', 'and', 'as', 'assert', 'async', 'await',
-      'break', 'class', 'continue', 'def', 'del', 'elif', 'else', 'except',
-      'finally', 'for', 'from', 'global', 'if', 'import', 'in', 'is', 'lambda',
-      'nonlocal', 'not', 'or', 'pass', 'raise', 'return', 'try', 'while',
-      'with', 'yield', 'self', 'cls'
+      'False',
+      'None',
+      'True',
+      'and',
+      'as',
+      'assert',
+      'async',
+      'await',
+      'break',
+      'class',
+      'continue',
+      'def',
+      'del',
+      'elif',
+      'else',
+      'except',
+      'finally',
+      'for',
+      'from',
+      'global',
+      'if',
+      'import',
+      'in',
+      'is',
+      'lambda',
+      'nonlocal',
+      'not',
+      'or',
+      'pass',
+      'raise',
+      'return',
+      'try',
+      'while',
+      'with',
+      'yield',
+      'self',
+      'cls',
     };
 
     void count(PyNode n) {
@@ -368,8 +420,17 @@ final class PythonAdapter {
 
   bool _hasIntentComment(PyNode fnNode, List<Map<String, dynamic>> comments) {
     const intentKeywords = {
-      'why', 'because', 'reason', 'purpose', 'intent',
-      'rationale', 'note', 'important', 'hack', 'workaround', 'todo'
+      'why',
+      'because',
+      'reason',
+      'purpose',
+      'intent',
+      'rationale',
+      'note',
+      'important',
+      'hack',
+      'workaround',
+      'todo',
     };
 
     // 1. Evaluar docstrings en el AST.
@@ -417,11 +478,43 @@ final class PythonAdapter {
   Set<String> _extractMethodIdentifiers(PyNode methodNode) {
     final counts = <String>{};
     const keywords = {
-      'False', 'None', 'True', 'and', 'as', 'assert', 'async', 'await',
-      'break', 'class', 'continue', 'def', 'del', 'elif', 'else', 'except',
-      'finally', 'for', 'from', 'global', 'if', 'import', 'in', 'is', 'lambda',
-      'nonlocal', 'not', 'or', 'pass', 'raise', 'return', 'try', 'while',
-      'with', 'yield', 'self', 'cls'
+      'False',
+      'None',
+      'True',
+      'and',
+      'as',
+      'assert',
+      'async',
+      'await',
+      'break',
+      'class',
+      'continue',
+      'def',
+      'del',
+      'elif',
+      'else',
+      'except',
+      'finally',
+      'for',
+      'from',
+      'global',
+      'if',
+      'import',
+      'in',
+      'is',
+      'lambda',
+      'nonlocal',
+      'not',
+      'or',
+      'pass',
+      'raise',
+      'return',
+      'try',
+      'while',
+      'with',
+      'yield',
+      'self',
+      'cls',
     };
 
     void collect(PyNode n) {
@@ -462,7 +555,9 @@ final class PythonAdapter {
         relativeDir = p.dirname(relativeDir);
       }
 
-      final targetPath = p.normalize(p.join(relativeDir, importUri.replaceAll('.', '/')));
+      final targetPath = p.normalize(
+        p.join(relativeDir, importUri.replaceAll('.', '/')),
+      );
 
       final candidates = [
         targetPath,
@@ -497,9 +592,10 @@ final class PythonAdapter {
     // basados en la raíz del proyecto (e.g. sys.path configurado en la raíz).
     for (final file in allFiles) {
       final normalizedFile = p.normalize(file);
-      final suffix = parts.join('/') + '.py';
-      final initSuffix = parts.join('/') + '/__init__.py';
-      if (normalizedFile.endsWith(suffix) || normalizedFile.endsWith(initSuffix)) {
+      final suffix = '${parts.join('/')}.py';
+      final initSuffix = '${parts.join('/')}/__init__.py';
+      if (normalizedFile.endsWith(suffix) ||
+          normalizedFile.endsWith(initSuffix)) {
         return normalizedFile;
       }
     }

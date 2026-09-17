@@ -31,13 +31,13 @@ void main() {
     });
 
     test('astStructuralSimilarity detects renaming', () {
-      final sourceA = '''
+      const sourceA = '''
         int add(int x, int y) {
           final sum = x + y;
           return sum;
         }
       ''';
-      final sourceB = '''
+      const sourceB = '''
         int sumNumbers(int a, int b) {
           final result = a + b;
           return result;
@@ -54,38 +54,41 @@ void main() {
       expect(sim, equals(1.0)); // Identical after identifier normalization!
     });
 
-    test('astCosineSimilarity computes similarity using raw tokens and cosine similarity', () {
-      final sourceA = '''
+    test(
+      'astCosineSimilarity computes similarity using raw tokens and cosine similarity',
+      () {
+        const sourceA = '''
         int add(int x, int y) {
           final sum = x + y;
           return sum;
         }
       ''';
-      final sourceB = '''
+        const sourceB = '''
         int sumNumbers(int a, int b) {
           final result = a + b;
           return result;
         }
       ''';
 
-      final unitA = parseString(content: sourceA).unit;
-      final unitB = parseString(content: sourceB).unit;
+        final unitA = parseString(content: sourceA).unit;
+        final unitB = parseString(content: sourceB).unit;
 
-      final fnA = unitA.declarations.first;
-      final fnB = unitB.declarations.first;
+        final fnA = unitA.declarations.first;
+        final fnB = unitB.declarations.first;
 
-      final simRenamed = astCosineSimilarity(fnA, fnB);
-      // Since it preserves names, renaming lowers the similarity
-      expect(simRenamed, closeTo(0.458, 0.01));
+        final simRenamed = astCosineSimilarity(fnA, fnB);
+        // Since it preserves names, renaming lowers the similarity
+        expect(simRenamed, closeTo(0.458, 0.01));
 
-      final simIdentical = astCosineSimilarity(fnA, fnA);
-      expect(simIdentical, equals(1.0));
-    });
+        final simIdentical = astCosineSimilarity(fnA, fnA);
+        expect(simIdentical, equals(1.0));
+      },
+    );
   });
 
   group('Complexity Metrics', () {
     test('cyclomaticComplexity counts decision points correctly', () {
-      final source = '''
+      const source = '''
         void check(int value) {
           if (value > 10) {
             print('large');
@@ -105,7 +108,7 @@ void main() {
 
   group('Entropy Metrics', () {
     test('shannonEntropy computes entropy for AST nodes', () {
-      final source = 'void foo() {}';
+      const source = 'void foo() {}';
       final unit = parseString(content: source).unit;
       final fn = unit.declarations.first;
       final entropy = shannonEntropy(fn);
@@ -113,7 +116,7 @@ void main() {
     });
 
     test('commentIntentRatio detects intent keywords', () {
-      final source = '''
+      const source = '''
         // TODO: implement this function
         // because of a bug we had to do this
         // print value

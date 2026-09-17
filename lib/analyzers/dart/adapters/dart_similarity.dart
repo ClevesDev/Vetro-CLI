@@ -23,7 +23,7 @@ double astStructuralSimilarity(AstNode nodeA, AstNode nodeB) {
 List<String> tokenizeRaw(AstNode node) {
   final tokens = <String>[];
   var token = node.beginToken;
-  
+
   if (token == token.next) {
     if (!isStopWord(token.lexeme)) {
       tokens.add(token.lexeme);
@@ -48,9 +48,39 @@ List<String> tokenizeRaw(AstNode node) {
 /// Checks if a lexeme is a common punctuation or operator "stop word".
 bool isStopWord(String lexeme) {
   const stopWords = {
-    '(', ')', '{', '}', '[', ']', ';', ',', '.', ':', '?', '=',
-    '+', '-', '*', '/', '%', '==', '!=', '>', '<', '>=', '<=',
-    '&&', '||', '!', '??', '?.', '=>', '+=', '-=', '*=', '/=',
+    '(',
+    ')',
+    '{',
+    '}',
+    '[',
+    ']',
+    ';',
+    ',',
+    '.',
+    ':',
+    '?',
+    '=',
+    '+',
+    '-',
+    '*',
+    '/',
+    '%',
+    '==',
+    '!=',
+    '>',
+    '<',
+    '>=',
+    '<=',
+    '&&',
+    '||',
+    '!',
+    '??',
+    '?.',
+    '=>',
+    '+=',
+    '-=',
+    '*=',
+    '/=',
   };
   return stopWords.contains(lexeme);
 }

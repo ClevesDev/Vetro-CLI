@@ -44,7 +44,8 @@ final class UnreleasedControllersRule extends AnalysisRule {
             severity: severity,
             filePath: context.filePath,
             line: line,
-            message: 'Controller "$controllerName" is declared but not disposed. '
+            message:
+                'Controller "$controllerName" is declared but not disposed. '
                 'Override the dispose() method and call "$controllerName.dispose()" to prevent memory leaks.',
             evidence: {
               'controller': controllerName,
@@ -61,9 +62,8 @@ final class UnreleasedControllersRule extends AnalysisRule {
 }
 
 class _ControllerVisitor extends RecursiveAstVisitor<void> {
-  final void Function(AstNode node, String name) onFinding;
-
   _ControllerVisitor({required this.onFinding});
+  final void Function(AstNode node, String name) onFinding;
 
   @override
   void visitClassDeclaration(ClassDeclaration node) {
@@ -75,7 +75,8 @@ class _ControllerVisitor extends RecursiveAstVisitor<void> {
 
     final superclass = extendsClause.superclass.toString();
     // Typical state classes: extends State<MyWidget> or State, etc.
-    final isStateClass = superclass.startsWith('State') || superclass.contains('State<');
+    final isStateClass =
+        superclass.startsWith('State') || superclass.contains('State<');
 
     if (!isStateClass) {
       super.visitClassDeclaration(node);
@@ -141,9 +142,7 @@ class _ControllerVisitor extends RecursiveAstVisitor<void> {
     // If dispose method exists, check which controllers are disposed
     final disposedVariables = <String>{};
     final disposeBodyVisitor = _DisposeBodyVisitor(
-      onDisposeCall: (varName) {
-        disposedVariables.add(varName);
-      },
+      onDisposeCall: disposedVariables.add,
     );
 
     disposeMethod.body.accept(disposeBodyVisitor);
@@ -159,9 +158,8 @@ class _ControllerVisitor extends RecursiveAstVisitor<void> {
 }
 
 class _DisposeBodyVisitor extends RecursiveAstVisitor<void> {
-  final void Function(String name) onDisposeCall;
-
   _DisposeBodyVisitor({required this.onDisposeCall});
+  final void Function(String name) onDisposeCall;
 
   @override
   void visitMethodInvocation(MethodInvocation node) {

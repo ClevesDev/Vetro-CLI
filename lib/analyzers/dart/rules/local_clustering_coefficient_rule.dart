@@ -54,15 +54,25 @@ final class LocalClusteringCoefficientRule extends CrossFileRule {
       final unit = entry.value;
 
       for (final importUri in extractImports(unit)) {
-        final resolvedPath = resolveImport(importUri, filePath, projectRoot, packageName);
+        final resolvedPath = resolveImport(
+          importUri,
+          filePath,
+          projectRoot,
+          packageName,
+        );
         if (resolvedPath != null && units.containsKey(resolvedPath)) {
           graph.addEdge(filePath, resolvedPath);
         }
       }
     }
 
-    final minClustering = config.threshold('min_clustering', defaultValue: 0.15);
-    final minConnections = config.threshold('min_connections', defaultValue: 4.0).toInt();
+    final minClustering = config.threshold(
+      'min_clustering',
+      defaultValue: 0.15,
+    );
+    final minConnections = config
+        .threshold('min_connections', defaultValue: 4.0)
+        .toInt();
     final minFanOut = config.options['min_fan_out'] is num
         ? (config.options['min_fan_out'] as num).toInt()
         : 0;
@@ -88,7 +98,8 @@ final class LocalClusteringCoefficientRule extends CrossFileRule {
             severity: severity,
             filePath: node,
             line: 1, // File-level finding
-            message: 'File "$relativePath" has low local clustering coefficient: '
+            message:
+                'File "$relativePath" has low local clustering coefficient: '
                 '${(coef * 100).toStringAsFixed(1)}% (neighbors: $connections, threshold: >= ${(minClustering * 100).toStringAsFixed(1)}%).',
             evidence: {
               'clustering_coefficient': '${(coef * 100).toStringAsFixed(1)}%',

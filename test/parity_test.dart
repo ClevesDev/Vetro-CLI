@@ -3,8 +3,8 @@ import 'package:test/test.dart';
 import 'package:vetro/analyzers/dart/adapters/dart_adapter.dart';
 import 'package:vetro/analyzers/python/adapters/python_adapter.dart';
 import 'package:vetro/analyzers/typescript/adapters/typescript_adapter.dart';
-import 'package:vetro/core/models/py_node.dart';
 import 'package:vetro/core/models/project_context.dart';
+import 'package:vetro/core/models/py_node.dart';
 import 'package:vetro/core/models/ts_node.dart';
 
 TsNode makeMockNode({
@@ -68,19 +68,28 @@ void main() {
           }
         }
       ''';
-      
+
       final dartResult = parseString(content: dartSource);
       const dartAdapter = DartAdapter();
-      final dartContext = dartAdapter.adapt(dartResult.unit, 'test.dart', dartSource, const ProjectContext.empty(projectPath: '.'));
-      
+      final dartContext = dartAdapter.adapt(
+        dartResult.unit,
+        'test.dart',
+        dartSource,
+        const ProjectContext.empty(projectPath: '.'),
+      );
+
       expect(dartContext.functions, hasLength(1));
       final dartFn = dartContext.functions.first;
       expect(dartFn.cyclomaticComplexity, equals(3));
-      expect(dartFn.cognitiveComplexity, equals(3)); // 1 (outer if) + 2 (inner nested while) = 3
+      expect(
+        dartFn.cognitiveComplexity,
+        equals(3),
+      ); // 1 (outer if) + 2 (inner nested while) = 3
       expect(dartFn.halsteadStats.effort, greaterThan(0.0));
-      
+
       // 2. TypeScript mock version of the same structure
-      final tsSource = '''
+      final tsSource =
+          '''
 function myFunction(x) {
   if (x > 0) {
     while (x < 10) {
@@ -88,20 +97,17 @@ function myFunction(x) {
     }
   }
 }
-      '''.trim();
+      '''
+              .trim();
 
-      final tsInner = makeMockNode(
-        type: 'WhileStatement',
-        start: 30,
-        end: 70,
-      );
+      final tsInner = makeMockNode(type: 'WhileStatement', start: 30, end: 70);
       final tsOuterIf = makeMockNode(
         type: 'IfStatement',
         start: 10,
         end: 90,
         children: [tsInner],
         extra: {
-          'consequent': const {'start': 30, 'end': 70}
+          'consequent': const {'start': 30, 'end': 70},
         },
       );
       final tsBody = makeMockNode(
@@ -113,21 +119,23 @@ function myFunction(x) {
         start: 0,
         end: tsSource.length,
         extra: {
-          'id': const {'name': 'myFunction'}
+          'id': const {'name': 'myFunction'},
         },
         children: [tsBody],
       );
-      final tsRoot = makeMockNode(
-        type: 'File',
-        children: [tsFn],
-      );
+      final tsRoot = makeMockNode(type: 'File', children: [tsFn]);
 
       const tsAdapter = TsAdapter(allFiles: {});
-      final tsContext = tsAdapter.adapt(tsRoot, 'test.ts', tsSource, const ProjectContext.empty(projectPath: '.'));
-      
+      final tsContext = tsAdapter.adapt(
+        tsRoot,
+        'test.ts',
+        tsSource,
+        const ProjectContext.empty(projectPath: '.'),
+      );
+
       expect(tsContext.functions, hasLength(1));
       final tsFnCtx = tsContext.functions.first;
-      
+
       expect(tsFnCtx.cyclomaticComplexity, equals(dartFn.cyclomaticComplexity));
       expect(tsFnCtx.cognitiveComplexity, equals(dartFn.cognitiveComplexity));
       expect(tsFnCtx.halsteadStats.totalOperators, greaterThan(0));
@@ -135,18 +143,16 @@ function myFunction(x) {
       expect(tsFnCtx.halsteadStats.effort, greaterThan(0.0));
 
       // 3. Python mock version of the same structure
-      final pySource = '''
+      final pySource =
+          '''
 def myFunction(x):
   if x > 0:
     while x < 10:
       x += 1
-      '''.trim();
+      '''
+              .trim();
 
-      final pyInner = makeMockPyNode(
-        type: 'While',
-        start: 30,
-        end: 70,
-      );
+      final pyInner = makeMockPyNode(type: 'While', start: 30, end: 70);
       final pyOuterIf = makeMockPyNode(
         type: 'If',
         start: 10,
@@ -157,18 +163,18 @@ def myFunction(x):
         type: 'FunctionDef',
         start: 0,
         end: pySource.length,
-        extra: {
-          'name': 'myFunction',
-        },
+        extra: {'name': 'myFunction'},
         children: [pyOuterIf],
       );
-      final pyRoot = makeMockPyNode(
-        type: 'Module',
-        children: [pyFn],
-      );
+      final pyRoot = makeMockPyNode(type: 'Module', children: [pyFn]);
 
       const pyAdapter = PythonAdapter(allFiles: {});
-      final pyContext = pyAdapter.adapt(pyRoot, 'test.py', pySource, const ProjectContext.empty(projectPath: '.'));
+      final pyContext = pyAdapter.adapt(
+        pyRoot,
+        'test.py',
+        pySource,
+        const ProjectContext.empty(projectPath: '.'),
+      );
 
       expect(pyContext.functions, hasLength(1));
       final pyFnCtx = pyContext.functions.first;

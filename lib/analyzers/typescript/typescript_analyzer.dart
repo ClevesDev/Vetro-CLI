@@ -1,7 +1,9 @@
 import 'dart:convert';
 import 'dart:io';
 import 'dart:isolate';
+
 import 'package:path/path.dart' as p;
+import 'package:vetro/analyzers/typescript/adapters/typescript_adapter.dart';
 import 'package:vetro/analyzers/typescript/rules/ts_circular_dependency_rule.dart';
 import 'package:vetro/analyzers/typescript/rules/ts_cognitive_complexity_rule.dart';
 import 'package:vetro/analyzers/typescript/rules/ts_cyclomatic_complexity_rule.dart';
@@ -11,19 +13,17 @@ import 'package:vetro/analyzers/typescript/rules/ts_low_entropy_rule.dart';
 import 'package:vetro/analyzers/typescript/rules/ts_rule.dart';
 import 'package:vetro/analyzers/typescript/rules/ts_semantic_duplication_rule.dart';
 import 'package:vetro/analyzers/typescript/rules/ts_tight_coupling_rule.dart';
-import 'package:vetro/analyzers/typescript/adapters/typescript_adapter.dart';
 import 'package:vetro/core/models/base_analyzer.dart';
 import 'package:vetro/core/models/config.dart';
 import 'package:vetro/core/models/context.dart';
-import 'package:vetro/core/models/project_context.dart';
 import 'package:vetro/core/models/finding.dart';
+import 'package:vetro/core/models/project_context.dart';
 import 'package:vetro/core/models/ts_node.dart';
-import 'package:vetro/core/rules/rule.dart';
-
 import 'package:vetro/core/rules/cyclomatic_complexity_rule.dart' as core_rules;
-import 'package:vetro/core/rules/low_entropy_rule.dart' as core_rules;
-import 'package:vetro/core/rules/intent_gap_rule.dart' as core_rules;
 import 'package:vetro/core/rules/halstead_complexity_rule.dart' as core_rules;
+import 'package:vetro/core/rules/intent_gap_rule.dart' as core_rules;
+import 'package:vetro/core/rules/low_entropy_rule.dart' as core_rules;
+import 'package:vetro/core/rules/rule.dart';
 
 /// TypeScript analyzer orchestrator for Vetro.
 ///
@@ -38,7 +38,10 @@ final class TypeScriptAnalyzer extends BaseAnalyzer<TsNode> {
   List<String> get supportedExtensions => const ['.ts', '.tsx', '.js', '.jsx'];
 
   @override
-  Future<Map<String, TsNode>> parseFiles(List<File> files, VetroConfig config) async {
+  Future<Map<String, TsNode>> parseFiles(
+    List<File> files,
+    VetroConfig config,
+  ) async {
     _allFiles = files.map((f) => p.normalize(f.path)).toSet();
 
     final nodeExec = await _findNodeExecutable();
@@ -50,26 +53,37 @@ final class TypeScriptAnalyzer extends BaseAnalyzer<TsNode> {
       final end = i + batchSize > files.length ? files.length : i + batchSize;
       final batch = files.sublist(i, end);
 
-      await Future.wait(batch.map((file) async {
-        final absolutePath = p.normalize(file.path);
-        try {
-          final result = await Process.run(nodeExec, [parserScript, absolutePath]);
-          if (result.exitCode != 0) {
-            throw Exception(result.stderr.toString());
-          }
+      await Future.wait(
+        batch.map((file) async {
+          final absolutePath = p.normalize(file.path);
+          try {
+            final result = await Process.run(nodeExec, [
+              parserScript,
+              absolutePath,
+            ]);
+            if (result.exitCode != 0) {
+              throw Exception(result.stderr.toString());
+            }
 
-          final jsonAst = jsonDecode(result.stdout.toString()) as Map<String, dynamic>;
-          parsed[absolutePath] = TsNode.fromJson(jsonAst);
-        } catch (_) {
-          // Handled as parse errors by BaseAnalyzer
-        }
-      }));
+            final jsonAst =
+                jsonDecode(result.stdout.toString()) as Map<String, dynamic>;
+            parsed[absolutePath] = TsNode.fromJson(jsonAst);
+          } catch (_) {
+            // Handled as parse errors by BaseAnalyzer
+          }
+        }),
+      );
     }
     return parsed;
   }
 
   @override
-  FileContext adaptToContext(TsNode ast, String filePath, String source, ProjectContext projectContext) {
+  FileContext adaptToContext(
+    TsNode ast,
+    String filePath,
+    String source,
+    ProjectContext projectContext,
+  ) {
     final adapter = TsAdapter(allFiles: _allFiles);
     return adapter.adapt(ast, filePath, source, projectContext);
   }
@@ -99,9 +113,9 @@ final class TypeScriptAnalyzer extends BaseAnalyzer<TsNode> {
     // Load remaining TS rules
     final tsRules = _createTsRules(config);
     for (final rule in tsRules) {
-      if (rule.id == 'cyclomatic_complexity' || 
-          rule.id == 'low_entropy' || 
-          rule.id == 'intent_gap' || 
+      if (rule.id == 'cyclomatic_complexity' ||
+          rule.id == 'low_entropy' ||
+          rule.id == 'intent_gap' ||
           rule.id == 'halstead_complexity') {
         continue;
       }
@@ -145,7 +159,8 @@ final class TypeScriptAnalyzer extends BaseAnalyzer<TsNode> {
     } catch (_) {}
 
     // Fallback path specifically for development environments
-    const cursorNodePath = '/usr/share/cursor/resources/app/resources/helpers/node';
+    const cursorNodePath =
+        '/usr/share/cursor/resources/app/resources/helpers/node';
     if (File(cursorNodePath).existsSync()) {
       return cursorNodePath;
     }
@@ -158,7 +173,9 @@ final class TypeScriptAnalyzer extends BaseAnalyzer<TsNode> {
 
   /// Locates the ts_parser.js script path.
   Future<String> _findParserScript() async {
-    final packageUri = Uri.parse('package:vetro/analyzers/typescript/parser/ts_parser.js');
+    final packageUri = Uri.parse(
+      'package:vetro/analyzers/typescript/parser/ts_parser.js',
+    );
     final resolved = await Isolate.resolvePackageUri(packageUri);
     if (resolved != null && resolved.isScheme('file')) {
       return resolved.toFilePath();
@@ -170,7 +187,14 @@ final class TypeScriptAnalyzer extends BaseAnalyzer<TsNode> {
       var dir = p.dirname(scriptPath);
       // If run via dart command, script might be in bin/vetro.dart
       while (dir != p.separator && dir.isNotEmpty) {
-        final localPath = p.join(dir, 'lib', 'analyzers', 'typescript', 'parser', 'ts_parser.js');
+        final localPath = p.join(
+          dir,
+          'lib',
+          'analyzers',
+          'typescript',
+          'parser',
+          'ts_parser.js',
+        );
         if (File(localPath).existsSync()) {
           return localPath;
         }
@@ -182,20 +206,28 @@ final class TypeScriptAnalyzer extends BaseAnalyzer<TsNode> {
 
     // Default package structure fallback
     final projectDir = Directory.current.path;
-    final fallbackPath = p.join(projectDir, 'lib', 'analyzers', 'typescript', 'parser', 'ts_parser.js');
+    final fallbackPath = p.join(
+      projectDir,
+      'lib',
+      'analyzers',
+      'typescript',
+      'parser',
+      'ts_parser.js',
+    );
     if (File(fallbackPath).existsSync()) {
       return fallbackPath;
     }
 
-    throw StateError('Cannot locate ts_parser.js helper script. Ensure Vetro is installed correctly.');
+    throw StateError(
+      'Cannot locate ts_parser.js helper script. Ensure Vetro is installed correctly.',
+    );
   }
 }
 
 /// A wrapper that adapts the legacy [TsRule] or [TsCrossFileRule] to the new [AnalysisRule] interface.
 final class TsLegacyRuleAdapter extends AnalysisRule {
-  final TsRule legacyRule;
-
   TsLegacyRuleAdapter(this.legacyRule) : super(config: legacyRule.config);
+  final TsRule legacyRule;
 
   @override
   String get id => legacyRule.id;

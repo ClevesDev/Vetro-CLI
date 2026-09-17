@@ -5,9 +5,8 @@
 library;
 
 import 'package:analyzer/dart/ast/ast.dart';
-
-import 'package:vetro/analyzers/dart/ast_utils.dart';
 import 'package:vetro/analyzers/dart/adapters/dart_complexity.dart';
+import 'package:vetro/analyzers/dart/ast_utils.dart';
 import 'package:vetro/core/models/finding.dart';
 import 'package:vetro/core/rules/rule.dart';
 
@@ -30,13 +29,10 @@ final class CognitiveComplexityRule extends Rule {
       'Flags functions whose cognitive complexity exceeds the threshold.';
 
   @override
-  List<Finding> analyze(
-    CompilationUnit unit,
-    String filePath,
-    String source,
-  ) {
-    final maxComplexity =
-        config.threshold('max_cognitive_complexity', defaultValue: 15.0).toInt();
+  List<Finding> analyze(CompilationUnit unit, String filePath, String source) {
+    final maxComplexity = config
+        .threshold('max_cognitive_complexity', defaultValue: 15.0)
+        .toInt();
     final findings = <Finding>[];
 
     for (final decl in extractDeclarations(unit)) {
@@ -75,7 +71,8 @@ final class CognitiveComplexityRule extends Rule {
       severity: severity,
       filePath: filePath,
       line: line,
-      message: 'Function "$name" has cognitive complexity $complexity '
+      message:
+          'Function "$name" has cognitive complexity $complexity '
           '(threshold: $maxComplexity).',
       evidence: {
         'cognitive_complexity': '$complexity',

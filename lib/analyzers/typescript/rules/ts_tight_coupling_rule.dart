@@ -71,7 +71,8 @@ final class TsTightCouplingRule extends TsCrossFileRule {
             severity: severity,
             filePath: node,
             line: 1, // File-level finding
-            message: 'File "$relativePath" has tight coupling: '
+            message:
+                'File "$relativePath" has tight coupling: '
                 '${(c * 100).toStringAsFixed(1)}% (fan-in: $fanInCount, fan-out: $fanOutCount).',
             evidence: {
               'coupling': '${(c * 100).toStringAsFixed(1)}%',
@@ -90,10 +91,12 @@ final class TsTightCouplingRule extends TsCrossFileRule {
   List<String> _extractImports(TsNode rootNode) {
     final imports = <String>[];
     // Find all ImportDeclaration nodes.
-    final importDeclarations = rootNode.descendentNodes((node) =>
-        node.type == 'ImportDeclaration' ||
-        node.type == 'ExportNamedDeclaration' ||
-        node.type == 'ExportAllDeclaration');
+    final importDeclarations = rootNode.descendentNodes(
+      (node) =>
+          node.type == 'ImportDeclaration' ||
+          node.type == 'ExportNamedDeclaration' ||
+          node.type == 'ExportAllDeclaration',
+    );
 
     for (final decl in importDeclarations) {
       final sourceMap = decl.raw['source'];
@@ -104,7 +107,11 @@ final class TsTightCouplingRule extends TsCrossFileRule {
     return imports;
   }
 
-  String? _resolveImport(String importUri, String filePath, Set<String> allFiles) {
+  String? _resolveImport(
+    String importUri,
+    String filePath,
+    Set<String> allFiles,
+  ) {
     if (!importUri.startsWith('.') && !importUri.startsWith('/')) {
       return null;
     }

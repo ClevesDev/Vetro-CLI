@@ -21,10 +21,9 @@ import 'dart:io';
 import 'dart:isolate';
 
 import 'package:analyzer/dart/ast/ast.dart';
-
+import 'package:vetro/analyzers/dart/adapters/dart_similarity.dart';
 import 'package:vetro/analyzers/dart/ast_utils.dart';
 import 'package:vetro/core/metrics/similarity.dart';
-import 'package:vetro/analyzers/dart/adapters/dart_similarity.dart';
 import 'package:vetro/core/models/finding.dart';
 import 'package:vetro/core/rules/rule.dart';
 
@@ -58,8 +57,7 @@ final class CopyMutateRule extends CrossFileRule {
     Map<String, CompilationUnit> units,
     Map<String, String> sources,
   ) async {
-    final threshold =
-        config.threshold('similarity', defaultValue: 0.70);
+    final threshold = config.threshold('similarity', defaultValue: 0.70);
 
     // Collect, pre-filter, and cache all function/method bodies across the project.
     final cachedBodies = <_BodyAnalysisCache>[];
@@ -141,12 +139,15 @@ final class CopyMutateRule extends CrossFileRule {
               severity: severity,
               filePath: a.info.filePath,
               line: a.info.line,
-              message: 'Function "${a.info.name}" is $percentage% structurally '
+              message:
+                  'Function "${a.info.name}" is $percentage% structurally '
                   'similar to "${b.info.name}" at ${b.info.filePath}:${b.info.line}.',
               evidence: {
                 'similarity': '$percentage%',
-                'function_a': '${a.info.filePath}:${a.info.line} (${a.info.name})',
-                'function_b': '${b.info.filePath}:${b.info.line} (${b.info.name})',
+                'function_a':
+                    '${a.info.filePath}:${a.info.line} (${a.info.name})',
+                'function_b':
+                    '${b.info.filePath}:${b.info.line} (${b.info.name})',
               },
             ),
           );
@@ -189,12 +190,15 @@ final class CopyMutateRule extends CrossFileRule {
               severity: severity,
               filePath: a.info.filePath,
               line: a.info.line,
-              message: 'Function "${a.info.name}" is $percentage% structurally '
+              message:
+                  'Function "${a.info.name}" is $percentage% structurally '
                   'similar to "${b.info.name}" at ${b.info.filePath}:${b.info.line}.',
               evidence: {
                 'similarity': '$percentage%',
-                'function_a': '${a.info.filePath}:${a.info.line} (${a.info.name})',
-                'function_b': '${b.info.filePath}:${b.info.line} (${b.info.name})',
+                'function_a':
+                    '${a.info.filePath}:${a.info.line} (${a.info.name})',
+                'function_b':
+                    '${b.info.filePath}:${b.info.line} (${b.info.name})',
               },
             ),
           );
@@ -207,9 +211,7 @@ final class CopyMutateRule extends CrossFileRule {
 
 /// Helper container holding precomputed properties of a function body for fast comparison.
 final class _BodyAnalysisCache {
+  const _BodyAnalysisCache(this.info, this.rawTokens);
   final FunctionBodyInfo info;
   final List<String> rawTokens;
-
-  const _BodyAnalysisCache(this.info, this.rawTokens);
 }
-

@@ -1,5 +1,5 @@
-import 'package:test/test.dart';
 import 'package:path/path.dart' as p;
+import 'package:test/test.dart';
 import 'package:vetro/cli/git_diff_parser.dart';
 
 void main() {
@@ -15,7 +15,7 @@ void main() {
 
     test('parses single line changes correctly', () {
       final result = <String, Set<int>>{};
-      final diff = '''
+      const diff = '''
 diff --git a/lib/file.dart b/lib/file.dart
 index 123456..789012 100644
 --- a/lib/file.dart
@@ -25,7 +25,7 @@ index 123456..789012 100644
 +new line
 ''';
       parser.parseDiffOutput(diff, targetPath, result);
-      
+
       final expectedPath = p.normalize('$targetPath/lib/file.dart');
       expect(result.keys, contains(expectedPath));
       expect(result[expectedPath], equals({10}));
@@ -33,7 +33,7 @@ index 123456..789012 100644
 
     test('parses multi-line changes correctly', () {
       final result = <String, Set<int>>{};
-      final diff = '''
+      const diff = '''
 diff --git a/lib/src/helper.dart b/lib/src/helper.dart
 index abcdef..ffffff 100644
 --- a/lib/src/helper.dart
@@ -53,7 +53,7 @@ index abcdef..ffffff 100644
 
     test('handles multiple files and hunks in one diff', () {
       final result = <String, Set<int>>{};
-      final diff = '''
+      const diff = '''
 diff --git a/lib/a.dart b/lib/a.dart
 --- a/lib/a.dart
 +++ b/lib/a.dart
@@ -88,7 +88,7 @@ diff --git a/lib/b.dart b/lib/b.dart
 
     test('handles quoted file paths', () {
       final result = <String, Set<int>>{};
-      final diff = '''
+      const diff = '''
 diff --git "a/lib/space file.dart" "b/lib/space file.dart"
 --- "a/lib/space file.dart"
 +++ "b/lib/space file.dart"

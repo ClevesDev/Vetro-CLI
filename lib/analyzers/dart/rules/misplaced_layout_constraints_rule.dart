@@ -45,7 +45,8 @@ final class MisplacedLayoutConstraintsRule extends AnalysisRule {
             severity: severity,
             filePath: context.filePath,
             line: line,
-            message: 'Misplaced "$widgetName" widget. '
+            message:
+                'Misplaced "$widgetName" widget. '
                 'Flexible widgets must be placed directly inside a Row, Column, or Flex. '
                 'It is currently placed inside a "$parentName" container.',
             evidence: {
@@ -82,15 +83,17 @@ final class MisplacedLayoutConstraintsRule extends AnalysisRule {
 }
 
 class _FlexibleWidgetVisitor extends RecursiveAstVisitor<void> {
+  _FlexibleWidgetVisitor({required this.onViolation});
   final void Function(AstNode node, String parentName) onViolation;
 
-  _FlexibleWidgetVisitor({required this.onViolation});
-
   void _checkWidget(AstNode node, String typeName) {
-    if (typeName == 'Expanded' || typeName == 'Flexible' || typeName == 'Spacer') {
+    if (typeName == 'Expanded' ||
+        typeName == 'Flexible' ||
+        typeName == 'Spacer') {
       final parentWidget = _findParentWidgetInstance(node);
       if (parentWidget != null) {
-        final parentTypeName = MisplacedLayoutConstraintsRule._getWidgetTypeName(parentWidget);
+        final parentTypeName =
+            MisplacedLayoutConstraintsRule._getWidgetTypeName(parentWidget);
         if (parentTypeName != null &&
             parentTypeName != 'Row' &&
             parentTypeName != 'Column' &&
@@ -116,7 +119,7 @@ class _FlexibleWidgetVisitor extends RecursiveAstVisitor<void> {
   }
 
   AstNode? _findParentWidgetInstance(AstNode node) {
-    AstNode? current = node.parent;
+    var current = node.parent;
     while (current != null) {
       if (current is InstanceCreationExpression) {
         return current;

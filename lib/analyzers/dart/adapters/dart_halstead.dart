@@ -16,7 +16,9 @@ HalsteadStats halsteadMetrics(AstNode node) {
     final lexeme = tok.lexeme;
     if (lexeme.isEmpty) return;
 
-    if (tok.type.isKeyword || tok.isOperator || isPunctuationOperator(tok.type)) {
+    if (tok.type.isKeyword ||
+        tok.isOperator ||
+        isPunctuationOperator(tok.type)) {
       operators.add(lexeme);
       totalOperators++;
     } else if (tok.type == TokenType.IDENTIFIER || isLiteralToken(tok.type)) {

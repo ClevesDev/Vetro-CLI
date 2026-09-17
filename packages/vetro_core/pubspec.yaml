@@ -1,0 +1,18 @@
+name: vetro_core
+description: >-
+  Lightweight, zero-codegen architectural runtime primitives for Flutter and Dart.
+  Provides functional Result<T, E> types, domain Failures, and modular CompositeErrorMapper patterns.
+version: 0.1.0
+repository: https://github.com/ClevesDev/Vetro-CLI/tree/main/packages/vetro_core
+issue_tracker: https://github.com/ClevesDev/Vetro-CLI/issues
+
+environment:
+  sdk: ^3.11.0
+resolution: workspace
+
+dependencies:
+  meta: ^1.15.0
+
+dev_dependencies:
+  lints: ^6.1.0
+  test: ^1.25.0

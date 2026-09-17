@@ -7,6 +7,20 @@ import 'package:vetro/core/models/project_context.dart';
 
 /// Represents the context of an individual function or method.
 final class FunctionContext {
+  const FunctionContext({
+    required this.name,
+    required this.startLine,
+    required this.endLine,
+    required this.structuralTokens,
+    required this.rawTokens,
+    required this.nodeCount,
+    required this.cyclomaticComplexity,
+    required this.cognitiveComplexity,
+    required this.commentIntentRatio,
+    required this.shannonEntropy,
+    required this.identifierEntropy,
+    required this.halsteadStats,
+  });
   final String name;
   final int startLine;
   final int endLine;
@@ -35,25 +49,16 @@ final class FunctionContext {
 
   /// Halstead software metrics.
   final HalsteadStats halsteadStats;
-
-  const FunctionContext({
-    required this.name,
-    required this.startLine,
-    required this.endLine,
-    required this.structuralTokens,
-    required this.rawTokens,
-    required this.nodeCount,
-    required this.cyclomaticComplexity,
-    required this.cognitiveComplexity,
-    required this.commentIntentRatio,
-    required this.shannonEntropy,
-    required this.identifierEntropy,
-    required this.halsteadStats,
-  });
 }
 
 /// Represents the context of a class declaration.
 final class ClassContext {
+  const ClassContext({
+    required this.name,
+    required this.startLine,
+    required this.methodVocabularies,
+    required this.methods,
+  });
   final String name;
   final int startLine;
 
@@ -63,23 +68,10 @@ final class ClassContext {
 
   /// Methods belonging to this class.
   final List<FunctionContext> methods;
-
-  const ClassContext({
-    required this.name,
-    required this.startLine,
-    required this.methodVocabularies,
-    required this.methods,
-  });
 }
 
 /// Represents an import dependency edge between files.
 final class ImportEdge {
-  final String fromPath;
-  final String targetUri;
-  final String? resolvedPath;
-  final int line;
-  final String importString;
-
   const ImportEdge({
     required this.fromPath,
     required this.targetUri,
@@ -87,10 +79,24 @@ final class ImportEdge {
     required this.line,
     required this.importString,
   });
+  final String fromPath;
+  final String targetUri;
+  final String? resolvedPath;
+  final int line;
+  final String importString;
 }
 
 /// Represents the full context of a source file.
 final class FileContext {
+  const FileContext({
+    required this.filePath,
+    required this.sourceCode,
+    required this.functions,
+    required this.classes,
+    required this.imports,
+    required this.projectContext,
+    this.nativeAst,
+  });
   final String filePath;
   final String sourceCode;
 
@@ -109,14 +115,4 @@ final class FileContext {
   /// Opaque payload to temporarily store the native AST (e.g. CompilationUnit or TsNode)
   /// during incremental migration phases. Will be removed once all rules are migrated.
   final Object? nativeAst;
-
-  const FileContext({
-    required this.filePath,
-    required this.sourceCode,
-    required this.functions,
-    required this.classes,
-    required this.imports,
-    required this.projectContext,
-    this.nativeAst,
-  });
 }

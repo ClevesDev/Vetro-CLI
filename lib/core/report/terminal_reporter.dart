@@ -58,13 +58,10 @@ final class TerminalReporter extends Reporter {
   }
 
   void _writeSummaryStats(StringBuffer buf, ProjectReport report) {
-    final timeSeconds = (report.totalAnalysisTimeMs / 1000)
-        .toStringAsFixed(1);
+    final timeSeconds = (report.totalAnalysisTimeMs / 1000).toStringAsFixed(1);
     final lines = formatNumber(report.totalLines);
 
-    buf.writeln(
-      '  Files analyzed: ${report.fileCount.toString().padLeft(8)}',
-    );
+    buf.writeln('  Files analyzed: ${report.fileCount.toString().padLeft(8)}');
     buf.writeln('  Lines of code:  ${lines.padLeft(8)}');
     buf.writeln('  Analysis time:  ${timeSeconds.padLeft(7)}s');
     buf.writeln();
@@ -90,10 +87,7 @@ final class TerminalReporter extends Reporter {
       final count = findings.length;
       final icon = _severityIcon(first.severity);
       final bar = Ansi.progressBar(count, allFindings.length);
-      final label = Ansi.severityColor(
-        first.severity,
-        first.severity.name,
-      );
+      final label = Ansi.severityColor(first.severity, first.severity.name);
       final countStr = count.toString().padLeft(4);
 
       buf.writeln('  $icon ${first.ruleName}: $countStr  $bar  $label');
@@ -113,25 +107,18 @@ final class TerminalReporter extends Reporter {
       final filePath = entry.key;
       final findings = entry.value;
 
-      buf.writeln(
-        '  $_fileSeparator ${Ansi.bold(filePath)} $_fileSeparator',
-      );
+      buf.writeln('  $_fileSeparator ${Ansi.bold(filePath)} $_fileSeparator');
 
       for (final finding in findings) {
         final icon = _severityIcon(finding.severity);
         final location = Ansi.dim(':${finding.line}');
-        final rule = Ansi.severityColor(
-          finding.severity,
-          finding.ruleName,
-        );
+        final rule = Ansi.severityColor(finding.severity, finding.ruleName);
         buf.writeln('  $icon $location  $rule — ${finding.message}');
 
         // Show evidence if present.
         if (finding.evidence.isNotEmpty) {
           for (final ev in finding.evidence.entries) {
-            buf.writeln(
-              '    ${Ansi.dim('${ev.key}:')} ${ev.value}',
-            );
+            buf.writeln('    ${Ansi.dim('${ev.key}:')} ${ev.value}');
           }
         }
       }
@@ -152,10 +139,10 @@ final class TerminalReporter extends Reporter {
 
   /// Returns the appropriate severity icon.
   static String _severityIcon(Severity severity) => switch (severity) {
-        Severity.error => '🔴',
-        Severity.warning => '⚠️ ',
-        Severity.info => 'ℹ️ ',
-      };
+    Severity.error => '🔴',
+    Severity.warning => '⚠️ ',
+    Severity.info => 'ℹ️ ',
+  };
 
   /// Colors the score string based on value thresholds.
   static String _scoreColor(int score, String text) {

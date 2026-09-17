@@ -120,121 +120,117 @@ final class VetroConfig {
 
   /// Default configuration with all rules enabled at default thresholds.
   factory VetroConfig.defaults() => const VetroConfig(
-        rules: {
-          'semantic_duplication': RuleConfig(
-            enabled: true,
-            severity: Severity.warning,
-            thresholds: {'similarity': 0.80},
-          ),
-          'orphaned_abstraction': RuleConfig(
-            enabled: true,
-            severity: Severity.info,
-          ),
-          'copy_mutate': RuleConfig(
-            enabled: true,
-            severity: Severity.warning,
-            thresholds: {
-              'similarity': 0.70,
-              'max_diff_ratio': 0.15,
-            },
-          ),
-          'intent_gap': RuleConfig(
-            enabled: true,
-            severity: Severity.info,
-            thresholds: {'min_complexity': 5.0},
-          ),
-          'cyclomatic_complexity': RuleConfig(
-            enabled: true,
-            severity: Severity.warning,
-            thresholds: {'max_complexity': 15.0},
-          ),
-          'fragile_test': RuleConfig(
-            enabled: true,
-            severity: Severity.info,
-            thresholds: {'max_mocks': 3.0},
-          ),
-          'circular_dependency': RuleConfig(
-            enabled: true,
-            severity: Severity.warning,
-          ),
-          'tight_coupling': RuleConfig(
-            enabled: true,
-            severity: Severity.warning,
-            thresholds: {'max_coupling': 0.25},
-          ),
-          'halstead_complexity': RuleConfig(
-            enabled: true,
-            severity: Severity.warning,
-            thresholds: {'max_effort': 50000.0},
-          ),
-          'low_entropy': RuleConfig(
-            enabled: true,
-            severity: Severity.warning,
-            thresholds: {'min_entropy': 1.8, 'min_nodes': 30.0, 'min_identifier_entropy': 2.0},
-          ),
-          'eigenvector_centrality': RuleConfig(
-            enabled: true,
-            severity: Severity.warning,
-            thresholds: {'max_centrality': 0.40},
-          ),
-          'low_cohesion': RuleConfig(
-            enabled: true,
-            severity: Severity.warning,
-            thresholds: {'min_cohesion': 0.15, 'min_methods': 3.0},
-          ),
-          'boundary_violation': const RuleConfig(
-            enabled: true,
-            severity: Severity.error,
-            options: {
-              'layers': [
-                'domain',
-                'application',
-                'infrastructure',
-                'presentation'
-              ]
-            },
-          ),
-          'cognitive_complexity': const RuleConfig(
-            enabled: true,
-            severity: Severity.warning,
-            thresholds: {'max_cognitive_complexity': 15.0},
-          ),
-          'local_clustering_coefficient': const RuleConfig(
-            enabled: true,
-            severity: Severity.warning,
-            thresholds: {'min_clustering': 0.15, 'min_connections': 4.0},
-          ),
-          'performance_media_query': const RuleConfig(
-            enabled: true,
-            severity: Severity.warning,
-          ),
-          'business_logic_in_ui': const RuleConfig(
-            enabled: true,
-            severity: Severity.error,
-          ),
-          'misplaced_layout_constraints': const RuleConfig(
-            enabled: true,
-            severity: Severity.error,
-          ),
-          'unreleased_controllers': const RuleConfig(
-            enabled: true,
-            severity: Severity.error,
-          ),
-          'hardcoded_ui_tokens': const RuleConfig(
-            enabled: true,
-            severity: Severity.warning,
-          ),
-          'setState_in_complex_builds': const RuleConfig(
-            enabled: true,
-            severity: Severity.warning,
-            thresholds: {'max_build_complexity': 12.0},
-          ),
-          'missing_const_constructors': const RuleConfig(
-            enabled: true,
-            severity: Severity.warning,
-          ),
+    rules: {
+      'semantic_duplication': RuleConfig(
+        enabled: true,
+        severity: Severity.warning,
+        thresholds: {'similarity': 0.80},
+      ),
+      'orphaned_abstraction': RuleConfig(
+        enabled: true,
+        severity: Severity.info,
+      ),
+      'copy_mutate': RuleConfig(
+        enabled: true,
+        severity: Severity.warning,
+        thresholds: {'similarity': 0.70, 'max_diff_ratio': 0.15},
+      ),
+      'intent_gap': RuleConfig(
+        enabled: true,
+        severity: Severity.info,
+        thresholds: {'min_complexity': 5.0},
+      ),
+      'cyclomatic_complexity': RuleConfig(
+        enabled: true,
+        severity: Severity.warning,
+        thresholds: {'max_complexity': 15.0},
+      ),
+      'fragile_test': RuleConfig(
+        enabled: true,
+        severity: Severity.info,
+        thresholds: {'max_mocks': 3.0},
+      ),
+      'circular_dependency': RuleConfig(
+        enabled: true,
+        severity: Severity.warning,
+      ),
+      'tight_coupling': RuleConfig(
+        enabled: true,
+        severity: Severity.warning,
+        thresholds: {'max_coupling': 0.25},
+      ),
+      'halstead_complexity': RuleConfig(
+        enabled: true,
+        severity: Severity.warning,
+        thresholds: {'max_effort': 50000.0},
+      ),
+      'low_entropy': RuleConfig(
+        enabled: true,
+        severity: Severity.warning,
+        thresholds: {
+          'min_entropy': 1.8,
+          'min_nodes': 30.0,
+          'min_identifier_entropy': 2.0,
         },
-      );
+      ),
+      'eigenvector_centrality': RuleConfig(
+        enabled: true,
+        severity: Severity.warning,
+        thresholds: {'max_centrality': 0.40},
+      ),
+      'low_cohesion': RuleConfig(
+        enabled: true,
+        severity: Severity.warning,
+        thresholds: {'min_cohesion': 0.15, 'min_methods': 3.0},
+      ),
+      'boundary_violation': RuleConfig(
+        enabled: true,
+        severity: Severity.error,
+        options: {
+          'layers': ['domain', 'application', 'infrastructure', 'presentation'],
+        },
+      ),
+      'cognitive_complexity': RuleConfig(
+        enabled: true,
+        severity: Severity.warning,
+        thresholds: {'max_cognitive_complexity': 15.0},
+      ),
+      'local_clustering_coefficient': RuleConfig(
+        enabled: true,
+        severity: Severity.warning,
+        thresholds: {'min_clustering': 0.15, 'min_connections': 4.0},
+      ),
+      'performance_media_query': RuleConfig(
+        enabled: true,
+        severity: Severity.warning,
+      ),
+      'business_logic_in_ui': RuleConfig(
+        enabled: true,
+        severity: Severity.error,
+      ),
+      'misplaced_layout_constraints': RuleConfig(
+        enabled: true,
+        severity: Severity.error,
+      ),
+      'unreleased_controllers': RuleConfig(
+        enabled: true,
+        severity: Severity.error,
+      ),
+      'hardcoded_ui_tokens': RuleConfig(
+        enabled: true,
+        severity: Severity.warning,
+      ),
+      'setState_in_complex_builds': RuleConfig(
+        enabled: true,
+        severity: Severity.warning,
+        thresholds: {'max_build_complexity': 12.0},
+      ),
+      'missing_const_constructors': RuleConfig(
+        enabled: true,
+        severity: Severity.warning,
+      ),
+    },
+  );
 
   /// Glob patterns for files to include.
   final List<String> include;
@@ -299,9 +295,9 @@ enum OutputFormat {
 
   /// Parses a string to an OutputFormat, defaulting to [terminal].
   static OutputFormat fromString(String value) => switch (value) {
-        'json' => OutputFormat.json,
-        'markdown' || 'md' => OutputFormat.markdown,
-        'prompt' => OutputFormat.prompt,
-        _ => OutputFormat.terminal,
-      };
+    'json' => OutputFormat.json,
+    'markdown' || 'md' => OutputFormat.markdown,
+    'prompt' => OutputFormat.prompt,
+    _ => OutputFormat.terminal,
+  };
 }

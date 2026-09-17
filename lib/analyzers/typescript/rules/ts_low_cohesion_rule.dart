@@ -20,20 +20,18 @@ final class TsLowCohesionRule extends TsRule {
       'Flags classes whose average method identifier cosine similarity falls below the threshold.';
 
   @override
-  List<Finding> analyze(
-    TsNode root,
-    String filePath,
-    String source,
-  ) {
-    final minCohesion =
-        config.threshold('min_cohesion', defaultValue: 0.15);
-    final minMethods =
-        config.threshold('min_methods', defaultValue: 3.0).toInt();
+  List<Finding> analyze(TsNode root, String filePath, String source) {
+    final minCohesion = config.threshold('min_cohesion', defaultValue: 0.15);
+    final minMethods = config
+        .threshold('min_methods', defaultValue: 3.0)
+        .toInt();
     final findings = <Finding>[];
 
     // Find all class declarations/expressions.
-    final classNodes = root.descendentNodes((node) =>
-        node.type == 'ClassDeclaration' || node.type == 'ClassExpression');
+    final classNodes = root.descendentNodes(
+      (node) =>
+          node.type == 'ClassDeclaration' || node.type == 'ClassExpression',
+    );
 
     for (final cls in classNodes) {
       final isAbstract = cls.raw['abstract'] == true;
@@ -45,8 +43,11 @@ final class TsLowCohesionRule extends TsRule {
         orElse: () => cls,
       );
 
-      final methods = classBody.children.where((c) =>
-          c.type == 'ClassMethod' && c.raw['kind'] != 'constructor').toList();
+      final methods = classBody.children
+          .where(
+            (c) => c.type == 'ClassMethod' && c.raw['kind'] != 'constructor',
+          )
+          .toList();
 
       if (methods.length >= minMethods) {
         final cohesion = _computeClassCohesion(methods);
@@ -59,7 +60,8 @@ final class TsLowCohesionRule extends TsRule {
               severity: severity,
               filePath: filePath,
               line: cls.line,
-              message: 'Class "$className" has low cohesion: '
+              message:
+                  'Class "$className" has low cohesion: '
                   '${(cohesion * 100).toStringAsFixed(1)}% '
                   '(threshold: ${(minCohesion * 100).toStringAsFixed(1)}%).',
               evidence: {
@@ -98,7 +100,9 @@ final class TsLowCohesionRule extends TsRule {
         final intersectionSize = vocabA.intersection(vocabB).length;
         final denominator = math.sqrt(vocabA.length * vocabB.length);
 
-        final similarity = denominator == 0 ? 0.0 : intersectionSize / denominator;
+        final similarity = denominator == 0
+            ? 0.0
+            : intersectionSize / denominator;
         sumSimilarity += similarity;
         countPairs++;
       }
@@ -111,9 +115,30 @@ final class TsLowCohesionRule extends TsRule {
   Set<String> _extractMethodIdentifiers(TsNode methodNode) {
     final identifiers = <String>{};
     const stopWords = {
-      'void', 'int', 'double', 'num', 'String', 'bool', 'List', 'Map', 'Set',
-      'dynamic', 'var', 'final', 'const', 'true', 'false', 'null', 'any', 'string',
-      'number', 'boolean', 'this', 'super', 'constructor', 'undefined'
+      'void',
+      'int',
+      'double',
+      'num',
+      'String',
+      'bool',
+      'List',
+      'Map',
+      'Set',
+      'dynamic',
+      'var',
+      'final',
+      'const',
+      'true',
+      'false',
+      'null',
+      'any',
+      'string',
+      'number',
+      'boolean',
+      'this',
+      'super',
+      'constructor',
+      'undefined',
     };
 
     void collect(TsNode n) {

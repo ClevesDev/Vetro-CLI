@@ -20,23 +20,20 @@ final class TsIntentGapRule extends TsRule {
       'Flags complex TypeScript functions that lack intent documentation (no comments explaining why).';
 
   @override
-  List<Finding> analyze(
-    TsNode root,
-    String filePath,
-    String source,
-  ) {
-    final minCC =
-        config.threshold('min_complexity', defaultValue: 5.0).toInt();
+  List<Finding> analyze(TsNode root, String filePath, String source) {
+    final minCC = config.threshold('min_complexity', defaultValue: 5.0).toInt();
     final findings = <Finding>[];
 
     // Find all function-like nodes.
-    final functionNodes = root.descendentNodes((node) => const {
-          'FunctionDeclaration',
-          'FunctionExpression',
-          'ArrowFunctionExpression',
-          'ClassMethod',
-          'ObjectMethod',
-        }.contains(node.type));
+    final functionNodes = root.descendentNodes(
+      (node) => const {
+        'FunctionDeclaration',
+        'FunctionExpression',
+        'ArrowFunctionExpression',
+        'ClassMethod',
+        'ObjectMethod',
+      }.contains(node.type),
+    );
 
     // Get all comments from the root File AST.
     final commentsList = root.raw['comments'];
@@ -62,7 +59,8 @@ final class TsIntentGapRule extends TsRule {
               severity: severity,
               filePath: filePath,
               line: fn.line,
-              message: 'Function "$fnName" has complexity $cc but no intent '
+              message:
+                  'Function "$fnName" has complexity $cc but no intent '
                   'documentation (no comments explaining why).',
               evidence: {
                 'cyclomatic_complexity': '$cc',
@@ -79,8 +77,17 @@ final class TsIntentGapRule extends TsRule {
 
   bool _hasIntentComment(TsNode fnNode, List<Map<String, dynamic>> comments) {
     const intentKeywords = {
-      'why', 'because', 'reason', 'purpose', 'intent',
-      'rationale', 'note', 'important', 'hack', 'workaround', 'todo'
+      'why',
+      'because',
+      'reason',
+      'purpose',
+      'intent',
+      'rationale',
+      'note',
+      'important',
+      'hack',
+      'workaround',
+      'todo',
     };
 
     for (final comment in comments) {
@@ -123,11 +130,16 @@ final class TsIntentGapRule extends TsRule {
 
       if (node.type == 'IfStatement') {
         decisionPoints++;
-      } else if (const {'ForStatement', 'ForInStatement', 'ForOfStatement'}
-          .contains(node.type)) {
+      } else if (const {
+        'ForStatement',
+        'ForInStatement',
+        'ForOfStatement',
+      }.contains(node.type)) {
         decisionPoints++;
-      } else if (const {'WhileStatement', 'DoWhileStatement'}
-          .contains(node.type)) {
+      } else if (const {
+        'WhileStatement',
+        'DoWhileStatement',
+      }.contains(node.type)) {
         decisionPoints++;
       } else if (node.type == 'SwitchCase') {
         if (node.raw['test'] != null) {
@@ -150,7 +162,8 @@ final class TsIntentGapRule extends TsRule {
     }
 
     final bodyNode = fnNode.children.firstWhere(
-      (child) => const {'BlockStatement', 'ClassBody'}.contains(child.type) ||
+      (child) =>
+          const {'BlockStatement', 'ClassBody'}.contains(child.type) ||
           fnNode.type == 'ArrowFunctionExpression',
       orElse: () => fnNode,
     );
@@ -172,9 +185,13 @@ final class TsIntentGapRule extends TsRule {
       }
     }
 
-    final declarator = root.descendentNodes((node) =>
-        node.type == 'VariableDeclarator' &&
-        node.children.any((c) => c.start == fnNode.start && c.end == fnNode.end));
+    final declarator = root.descendentNodes(
+      (node) =>
+          node.type == 'VariableDeclarator' &&
+          node.children.any(
+            (c) => c.start == fnNode.start && c.end == fnNode.end,
+          ),
+    );
 
     if (declarator.isNotEmpty) {
       final idMap = declarator.first.raw['id'];

@@ -27,23 +27,22 @@ final class TsCyclomaticComplexityRule extends TsRule {
       'Flags TypeScript functions whose cyclomatic complexity exceeds the threshold.';
 
   @override
-  List<Finding> analyze(
-    TsNode root,
-    String filePath,
-    String source,
-  ) {
-    final maxCC =
-        config.threshold('max_complexity', defaultValue: 15.0).toInt();
+  List<Finding> analyze(TsNode root, String filePath, String source) {
+    final maxCC = config
+        .threshold('max_complexity', defaultValue: 15.0)
+        .toInt();
     final findings = <Finding>[];
 
     // Find all function-like nodes.
-    final functionNodes = root.descendentNodes((node) => const {
-          'FunctionDeclaration',
-          'FunctionExpression',
-          'ArrowFunctionExpression',
-          'ClassMethod',
-          'ObjectMethod',
-        }.contains(node.type));
+    final functionNodes = root.descendentNodes(
+      (node) => const {
+        'FunctionDeclaration',
+        'FunctionExpression',
+        'ArrowFunctionExpression',
+        'ClassMethod',
+        'ObjectMethod',
+      }.contains(node.type),
+    );
 
     for (final fn in functionNodes) {
       final cc = _computeCyclomaticComplexity(fn);
@@ -56,12 +55,10 @@ final class TsCyclomaticComplexityRule extends TsRule {
             severity: severity,
             filePath: filePath,
             line: fn.line,
-            message: 'Function "$fnName" has cyclomatic complexity $cc '
+            message:
+                'Function "$fnName" has cyclomatic complexity $cc '
                 '(threshold: $maxCC).',
-            evidence: {
-              'cyclomatic_complexity': '$cc',
-              'threshold': '$maxCC',
-            },
+            evidence: {'cyclomatic_complexity': '$cc', 'threshold': '$maxCC'},
           ),
         );
       }
@@ -89,11 +86,16 @@ final class TsCyclomaticComplexityRule extends TsRule {
 
       if (node.type == 'IfStatement') {
         decisionPoints++;
-      } else if (const {'ForStatement', 'ForInStatement', 'ForOfStatement'}
-          .contains(node.type)) {
+      } else if (const {
+        'ForStatement',
+        'ForInStatement',
+        'ForOfStatement',
+      }.contains(node.type)) {
         decisionPoints++;
-      } else if (const {'WhileStatement', 'DoWhileStatement'}
-          .contains(node.type)) {
+      } else if (const {
+        'WhileStatement',
+        'DoWhileStatement',
+      }.contains(node.type)) {
         decisionPoints++;
       } else if (node.type == 'SwitchCase') {
         // Only count if there is a test (default case does not count)
@@ -118,7 +120,8 @@ final class TsCyclomaticComplexityRule extends TsRule {
 
     // Find the body/block of the function
     final bodyNode = fnNode.children.firstWhere(
-      (child) => const {'BlockStatement', 'ClassBody'}.contains(child.type) ||
+      (child) =>
+          const {'BlockStatement', 'ClassBody'}.contains(child.type) ||
           fnNode.type == 'ArrowFunctionExpression',
       orElse: () => fnNode,
     );
@@ -143,9 +146,13 @@ final class TsCyclomaticComplexityRule extends TsRule {
     // If it's an arrow function or function expression, check if it's assigned to a variable.
     // We can scan the parent hierarchy or do a quick search in the root to see if this node is
     // the init of a VariableDeclarator.
-    final declarator = root.descendentNodes((node) =>
-        node.type == 'VariableDeclarator' &&
-        node.children.any((c) => c.start == fnNode.start && c.end == fnNode.end));
+    final declarator = root.descendentNodes(
+      (node) =>
+          node.type == 'VariableDeclarator' &&
+          node.children.any(
+            (c) => c.start == fnNode.start && c.end == fnNode.end,
+          ),
+    );
 
     if (declarator.isNotEmpty) {
       final idMap = declarator.first.raw['id'];

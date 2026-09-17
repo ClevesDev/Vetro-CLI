@@ -5,7 +5,7 @@ import 'package:vetro/analyzers/dart/adapters/dart_entropy.dart';
 void main() {
   group('Identifier Entropy', () {
     test('Flat function with no identifiers has entropy 0', () {
-      final source = '''
+      const source = '''
         void foo() {}
       ''';
       final unit = parseString(content: source).unit;
@@ -16,7 +16,7 @@ void main() {
     });
 
     test('Function with repetitive identifier naming has low entropy', () {
-      final source = '''
+      const source = '''
         void foo() {
           final x = 1;
           final y = x + x;
@@ -34,7 +34,7 @@ void main() {
     });
 
     test('Function with diverse vocabulary has higher entropy', () {
-      final source = '''
+      const source = '''
         void rich(int first, int second, int third) {
           final sum = first + second;
           final result = sum * third;

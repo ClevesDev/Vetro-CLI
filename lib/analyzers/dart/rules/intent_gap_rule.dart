@@ -16,9 +16,8 @@ library;
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/token.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
-
-import 'package:vetro/analyzers/dart/ast_utils.dart';
 import 'package:vetro/analyzers/dart/adapters/dart_complexity.dart';
+import 'package:vetro/analyzers/dart/ast_utils.dart';
 import 'package:vetro/core/models/finding.dart';
 import 'package:vetro/core/rules/rule.dart';
 
@@ -60,13 +59,8 @@ final class IntentGapRule extends Rule {
       '(comments explaining why).';
 
   @override
-  List<Finding> analyze(
-    CompilationUnit unit,
-    String filePath,
-    String source,
-  ) {
-    final minCC =
-        config.threshold('min_complexity', defaultValue: 5.0).toInt();
+  List<Finding> analyze(CompilationUnit unit, String filePath, String source) {
+    final minCC = config.threshold('min_complexity', defaultValue: 5.0).toInt();
     final findings = <Finding>[];
 
     // We extract both functions and methods because complex business logic
@@ -102,11 +96,7 @@ final class IntentGapRule extends Rule {
   /// 1. Doc comments on the declaration
   /// 2. Preceding comments (above the function)
   /// 3. Inline comments within the function body
-  bool _hasIntentComment(
-    AstNode node,
-    CompilationUnit unit,
-    String source,
-  ) {
+  bool _hasIntentComment(AstNode node, CompilationUnit unit, String source) {
     // Check doc comments on the declaration.
     final docComment = switch (node) {
       FunctionDeclaration(:final documentationComment) => documentationComment,
@@ -158,12 +148,10 @@ final class IntentGapRule extends Rule {
       severity: severity,
       filePath: filePath,
       line: line,
-      message: 'Function "$name" has complexity $cc but no intent '
+      message:
+          'Function "$name" has complexity $cc but no intent '
           'documentation (no comments explaining why).',
-      evidence: {
-        'cyclomatic_complexity': '$cc',
-        'intent_comments': '0',
-      },
+      evidence: {'cyclomatic_complexity': '$cc', 'intent_comments': '0'},
     );
   }
 }
