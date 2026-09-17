@@ -14,6 +14,7 @@ export 'analyzers/dart/adapters/dart_similarity.dart';
 export 'analyzers/dart/dart_analyzer.dart';
 export 'analyzers/python/python_analyzer.dart';
 export 'analyzers/typescript/typescript_analyzer.dart';
+export 'cli/scaffolding/scaffolding.dart';
 export 'core/metrics/entropy.dart';
 export 'core/metrics/halstead.dart';
 export 'core/metrics/similarity.dart';

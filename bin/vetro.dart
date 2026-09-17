@@ -28,6 +28,41 @@ Future<void> main(List<String> arguments) async {
       help: 'Show help for init command.',
     );
 
+  final makeFeatureParser = ArgParser()
+    ..addFlag(
+      'help',
+      abbr: 'h',
+      negatable: false,
+      help: 'Show help for make feature command.',
+    )
+    ..addOption(
+      'path',
+      abbr: 'p',
+      help: 'Custom target directory (defaults to lib/features/<name>).',
+    )
+    ..addOption(
+      'state',
+      abbr: 's',
+      allowed: ['riverpod', 'bloc', 'state-notifier', 'agnostic'],
+      defaultsTo: 'riverpod',
+      help: 'State management pattern to scaffold.',
+    )
+    ..addFlag(
+      'force',
+      abbr: 'f',
+      negatable: false,
+      help: 'Overwrite existing files if they already exist.',
+    );
+
+  final makeParser = ArgParser()
+    ..addCommand('feature', makeFeatureParser)
+    ..addFlag(
+      'help',
+      abbr: 'h',
+      negatable: false,
+      help: 'Show help for make command.',
+    );
+
   final parser = ArgParser();
 
   final diffParser = ArgParser()
@@ -96,6 +131,7 @@ Future<void> main(List<String> arguments) async {
   parser
     ..addCommand('init', initParser)
     ..addCommand('diff', diffParser)
+    ..addCommand('make', makeParser)
     ..addFlag(
       'help',
       abbr: 'h',
@@ -201,16 +237,62 @@ Future<void> main(List<String> arguments) async {
     exit(0);
   }
 
+  if (argResults.command?.name == 'make') {
+    final makeResults = argResults.command!;
+    if (makeResults['help'] as bool || makeResults.command == null) {
+      print('Vetro — Scaffolding Engine');
+      print('Usage: vetro make <subcommand> [options] [arguments]');
+      print('');
+      print('Subcommands:');
+      print('  feature <name>    Scaffold a lean, clean-architecture feature.');
+      print('');
+      print(makeParser.usage);
+      exit(0);
+    }
+
+    if (makeResults.command?.name == 'feature') {
+      final featureResults = makeResults.command!;
+      if (featureResults['help'] as bool) {
+        print('Vetro — Make Feature');
+        print('Usage: vetro make feature <name> [options]');
+        print('');
+        print(makeFeatureParser.usage);
+        exit(0);
+      }
+
+      if (featureResults.rest.isEmpty) {
+        stderr.writeln(Ansi.red('Error: Missing feature name.'));
+        stderr.writeln('Usage: vetro make feature <name> [options]');
+        exit(1);
+      }
+
+      final featureName = featureResults.rest.first;
+      final targetPath = featureResults['path'] as String?;
+      final stateStr = featureResults['state'] as String;
+      final force = featureResults['force'] as bool;
+
+      await _handleMakeFeature(
+        featureName: featureName,
+        targetPath: targetPath,
+        stateStr: stateStr,
+        force: force,
+      );
+      exit(0);
+    }
+  }
+
   if (argResults['help'] as bool) {
     print('Vetro — AI Code Debt Scanner');
     print('Usage: vetro [options] <project_path>');
     print('       vetro init [options] [project_path]');
     print('       vetro diff [options] [base_ref]');
+    print('       vetro make feature <name> [options]');
     print('');
     print(parser.usage);
     print('Commands:');
     print('  init       Initialize a new vetro.yaml configuration file.');
     print('  diff       Analyze debt only on modified lines in Git diff.');
+    print('  make       Scaffold clean features and architectural components.');
     exit(0);
   }
 
@@ -755,4 +837,39 @@ int _parseMaxRemedies(String? raw) {
   final parsed = int.tryParse(raw.trim());
   if (parsed == null || parsed < 0) return 50;
   return parsed;
+}
+
+Future<void> _handleMakeFeature({
+  required String featureName,
+  required String? targetPath,
+  required String stateStr,
+  required bool force,
+}) async {
+  const generator = FeatureGenerator();
+  final statePattern = FeatureStatePattern.fromString(stateStr);
+
+  try {
+    print('Scaffolding feature "$featureName" ($stateStr)...');
+    final result = await generator.generate(
+      FeatureScaffoldOptions(
+        name: featureName,
+        targetPath: targetPath,
+        statePattern: statePattern,
+        force: force,
+      ),
+    );
+
+    print(
+      Ansi.green('✨ Successfully generated feature "${result.featureName}":'),
+    );
+    for (final file in result.createdFiles) {
+      final rel = p.relative(file, from: Directory.current.path);
+      print('  📄 $rel');
+    }
+    print('');
+    print(Ansi.dim('Verify architecture anytime with: vetro (or vetro audit)'));
+  } catch (e) {
+    stderr.writeln(Ansi.red('Error: Failed to scaffold feature: $e'));
+    exit(1);
+  }
 }
