@@ -53,7 +53,42 @@ Vetro/
 
 ---
 
-## 3. Mathematical & Algorithmic Foundation
+## 3. The Two Extraction Engines: File Visitor & Topological Graph
+
+The static analysis pipeline in Vetro is powered by two complementary extraction engines:
+
+```text
+Source Files (.dart, .py, .ts)
+         │
+         ├──▶ [1. RecursiveAstVisitor (File-Level)] ────▶ Campbell Cognitive Complexity
+         │                                          ────▶ Shannon Identifier Entropy
+         │                                          ────▶ Local AST Directives & Tokens
+         │
+         └──▶ [2. Topological Graph (Global-Level)] ────▶ Clean Architecture Boundary Checks
+                                                    ────▶ Eigenvector & PageRank Centrality
+                                                    ────▶ Local Clustering Coefficient (Ci)
+```
+
+### 1. `RecursiveAstVisitor` (File-Level AST Traversal)
+The compiler transforms source code into an Abstract Syntax Tree (AST). Vetro employs the `RecursiveAstVisitor` pattern (from `package:analyzer`) to traverse nodes deterministically without code execution:
+- **Campbell Cognitive Complexity**: Visits functions and methods to count control flow branchings (`if`, `else if`, `switch`, loops, ternary operators), accumulating nesting penalties to measure true human comprehension effort.
+- **Shannon Identifier Entropy ($H(X)$)**: Tokenizes variable and method identifiers to measure lexical diversity, surfacing repetitive naming anti-patterns common in uncurated AI-generated code.
+- **Import Extraction**: Inspects all `ImportDirective` declarations to build the local dependency manifest for each file.
+
+### 2. Topological Dependency Graph (Global-Level Architecture)
+Vetro aggregates individual file dependencies into a global directed mathematical network $G = (V, E)$, where vertices $V$ represent modules/classes and directed edges $E$ represent imports and call relationships:
+- **Clean Architecture Boundary Invariants**: If a directed edge flows outward from `domain/` toward `presentation/` or `data/`, a boundary violation is raised immediately at compile time.
+- **Eigenvector & PageRank Centrality**: Identifies architectural bottleneck nodes that concentrate disproportionate dependency traffic, exposing "God Objects" frequently produced by unconstrained AI code generation.
+- **Local Clustering Coefficient ($C_i$)**: Evaluates whether modules intended to be decoupled are forming tightly-coupled "big balls of mud".
+
+### Fault Isolation via `Result<T, E>`
+Auditing arbitrary, in-development repositories is inherently unpredictable: codebases often contain syntax errors, corrupted tokens, missing file paths, or circular import loops. 
+
+If the AST Visitor or graph constructor relied on legacy exception throwing (`throw Exception`), the entire analysis of a large repository would abort on the first malformed file. By designing the extraction pipeline around `Result<T, AnalysisFailure>`, every file extraction returns either `Success(FileMetrics)` or `FailureResult(AnalysisFailure)`. Corrupted files are cleanly isolated into structured diagnostic reports while the global analysis continues evaluating the rest of the project uninterrupted.
+
+---
+
+## 4. Mathematical & Algorithmic Foundation
 
 Vetro replaces subjective linting heuristics with proven mathematical and graph-theoretical metrics:
 
@@ -88,7 +123,31 @@ While Dart and Flutter represent Vetro's flagship target, the core metrics engin
 
 ---
 
-## 5. Architectural Invariants
+## 5. Modular Error Presentation Architecture
+
+In conventional Flutter applications, error mapping tends to degenerate into a monolithic 1000-line switch statement, violating the Single Responsibility and Open/Closed Principles:
+
+```text
+❌ Monolithic Anti-Pattern:
+Presentation Layer ───> MonolithicErrorMapper (1000+ lines, imports all feature models)
+```
+
+Vetro's `CompositeErrorMapper` implements the **Supervisor / Delegation Pattern**:
+1. **Feature Isolation**: Each feature package or folder owns a dedicated `FeatureErrorMapper` (or `BaseFeatureErrorMapper<F>`) that only knows its local domain failures.
+2. **Dynamic Delegation**: The `CompositeErrorMapper` queries registered mappers in priority order. When an error occurs, only the owning feature mapper translates it.
+3. **Safe Fallbacks**: If no feature mapper matches or if an unexpected runtime exception escapes, a baseline `StandardErrorMapper` and fallback handler ensure the user never sees raw crash stack traces.
+
+```text
+✅ Vetro Supervisor Architecture:
+Presentation Layer ───> CompositeErrorMapper
+                              ├──> AuthErrorMapper (Feature)
+                              ├──> CheckoutErrorMapper (Feature)
+                              └──> StandardErrorMapper (Baseline Fallback)
+```
+
+---
+
+## 6. Architectural Invariants
 
 1. **Zero-Leakage Policy**: Vetro is a universal developer tool. No domain-specific business logic, client identifiers, or private filesystem paths may ever be committed to this repository.
 2. **Deterministic Analysis**: All rules must produce identical results across operating systems, path separators, and execution environments.

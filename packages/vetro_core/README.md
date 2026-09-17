@@ -144,6 +144,52 @@ final class PaymentDeclinedFailure extends CheckoutFailure {
 }
 ```
 
+### 7. Modular Error Presentation Architecture (`CompositeErrorMapper`)
+
+Prevent massive 1000-line presentation switch statements by letting each feature own its error mapping while providing a single entry point for UI layers:
+
+```dart
+import 'package:vetro_core/vetro_core.dart';
+
+// 1. Feature defines its local mapper
+final class CheckoutErrorMapper extends BaseFeatureErrorMapper<CheckoutFailure> {
+  const CheckoutErrorMapper();
+
+  @override
+  UserMessage mapFailure(CheckoutFailure failure) => switch (failure) {
+    OutOfStockFailure(:final itemId) => UserMessage(
+        title: 'Item Unavailable',
+        message: 'Item $itemId is no longer in stock.',
+        code: 'CHECKOUT_OUT_OF_STOCK',
+      ),
+    PaymentDeclinedFailure(:final declineReason) => UserMessage(
+        title: 'Payment Failed',
+        message: declineReason,
+        code: 'CHECKOUT_PAYMENT_DECLINED',
+        actionLabel: 'Update Payment Method',
+      ),
+  };
+}
+
+// 2. Register mappers centrally or inject via DI
+final errorMapper = CompositeErrorMapper()
+  ..register(const CheckoutErrorMapper());
+
+// 3. Presentation layer converts ANY failure or exception into UI-ready messages
+void onCheckoutError(Object error) {
+  final UserMessage message = errorMapper.map(error);
+  
+  ScaffoldMessenger.of(context).showSnackBar(
+    SnackBar(
+      content: Text('${message.title}: ${message.message}'),
+      action: message.actionLabel != null
+          ? SnackBarAction(label: message.actionLabel!, onPressed: () {})
+          : null,
+    ),
+  );
+}
+```
+
 ---
 
 ## License
