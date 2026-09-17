@@ -5,7 +5,10 @@ import 'package:vetro/core/metrics/cohesion.dart';
 /// Computes the semantic cohesion of a class [node] based on the average
 /// pairwise cosine similarity of identifier vocabularies between its methods.
 double classCohesion(ClassDeclaration node) {
-  final methods = node.members.whereType<MethodDeclaration>().toList();
+  final methods = node.members
+      .whereType<MethodDeclaration>()
+      .where((m) => !m.isGetter && !m.isSetter)
+      .toList();
   if (methods.length <= 1) return 1.0;
 
   final methodVocabularies = <Set<String>>[];

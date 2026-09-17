@@ -27,8 +27,20 @@ final class LowCohesionRule extends Rule {
     final findings = <Finding>[];
 
     for (final cls in extractClasses(unit)) {
+      final superclass = cls.extendsClause?.superclass.name2.lexeme ?? '';
+      if (superclass == 'Table' ||
+          superclass == 'DriftTable' ||
+          superclass == 'View') {
+        continue;
+      }
+
+      final behavioralMethods = cls.members
+          .whereType<MethodDeclaration>()
+          .where((m) => !m.isGetter && !m.isSetter)
+          .toList();
+
       if (cls.abstractKeyword == null &&
-          cls.members.whereType<MethodDeclaration>().length >= minMethods) {
+          behavioralMethods.length >= minMethods) {
         final cohesion = classCohesion(cls);
         if (cohesion < minCohesion) {
           findings.add(

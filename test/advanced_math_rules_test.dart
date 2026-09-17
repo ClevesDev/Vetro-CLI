@@ -302,5 +302,27 @@ void main() {
 
       expect(findings, isEmpty);
     });
+
+    test('LowCohesionRule does not flag Drift Table or getter-only classes', () {
+      const source = '''
+        class Atletas extends Table {
+          IntColumn get id => integer().autoIncrement()();
+          TextColumn get remoteId => text()();
+          TextColumn get primerNombre => text()();
+          TextColumn get primerApellido => text()();
+        }
+      ''';
+      final unit = parseString(content: source).unit;
+
+      const config = RuleConfig(
+        enabled: true,
+        severity: Severity.warning,
+        thresholds: {'min_cohesion': 0.8},
+      );
+      const rule = LowCohesionRule(config: config);
+      final findings = rule.analyze(unit, 'test.dart', source);
+
+      expect(findings, isEmpty);
+    });
   });
 }
