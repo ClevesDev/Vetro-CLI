@@ -171,10 +171,11 @@ final class _NodeCountVisitor extends GeneralizingAstVisitor<void> {
   }
 }
 
-/// Checks if the given function/method name matches typical Flutter/Widget boilerplate.
+/// Checks if the given function/method name matches typical Flutter/Widget or model boilerplate.
 ///
 /// This helps filter out declarative UI definitions (like build, initState, etc.)
-/// which naturally share high structural similarity across standard widgets.
+/// and standard data model utilities (like copyWith, toJson, fromJson, operator ==, hashCode)
+/// which naturally share high structural similarity across standard widgets and models.
 bool isFlutterBoilerplate(String name) {
   final parts = name.split('.');
   final methodName = parts.last.toLowerCase();
@@ -183,14 +184,37 @@ bool isFlutterBoilerplate(String name) {
       methodName.startsWith('_build') ||
       methodName == 'dispose' ||
       methodName == 'initstate' ||
-      methodName == 'createstate';
+      methodName == 'createstate' ||
+      methodName == 'copywith' ||
+      methodName == 'tojson' ||
+      methodName == 'fromjson' ||
+      methodName == 'props' ||
+      methodName == 'hashcode' ||
+      methodName == 'tostring' ||
+      methodName == 'operator ==' ||
+      methodName == '==';
 }
 
 /// Checks if a [Declaration] node is a boilerplate method or function.
 ///
 /// Filters out declarations annotated with `@override` (when they are simple
-/// getters/setters or delegate calls) or annotated with `@riverpod` / `@Riverpod`.
+/// getters/setters or delegate calls) or annotated with `@riverpod` / `@Riverpod`,
+/// as well as standard data model methods (copyWith, toJson, fromJson, ==, hashCode, toString).
 bool isBoilerplateDeclaration(Declaration node) {
+  if (node is MethodDeclaration) {
+    final name = node.name.lexeme.toLowerCase();
+    if (name == 'copywith' ||
+        name == 'tojson' ||
+        name == 'fromjson' ||
+        name == 'props' ||
+        name == 'hashcode' ||
+        name == 'tostring' ||
+        name == 'operator ==' ||
+        name == '==') {
+      return true;
+    }
+  }
+
   for (final annotation in node.metadata) {
     final name = annotation.name.name;
     if (name == 'riverpod' || name == 'Riverpod') {

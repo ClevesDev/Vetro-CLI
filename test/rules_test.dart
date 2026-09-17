@@ -1,7 +1,10 @@
 import 'package:analyzer/dart/analysis/utilities.dart';
 import 'package:test/test.dart';
+import 'package:vetro/analyzers/dart/ast_utils.dart';
+import 'package:vetro/analyzers/dart/rules/copy_mutate_rule.dart';
 import 'package:vetro/analyzers/dart/rules/cyclomatic_complexity_rule.dart';
 import 'package:vetro/analyzers/dart/rules/intent_gap_rule.dart';
+import 'package:vetro/analyzers/dart/rules/semantic_duplication_rule.dart';
 import 'package:vetro/core/models/config.dart';
 import 'package:vetro/core/models/finding.dart';
 
@@ -95,6 +98,78 @@ void main() {
       final findings = rule.analyze(unit, 'test.dart', source);
 
       expect(findings, isEmpty);
+    });
+  });
+
+  group('Model Boilerplate Duplication Exclusion', () {
+    test('isFlutterBoilerplate identifies model boilerplate methods', () {
+      expect(isFlutterBoilerplate('User.copyWith'), isTrue);
+      expect(isFlutterBoilerplate('User.toJson'), isTrue);
+      expect(isFlutterBoilerplate('User.fromJson'), isTrue);
+      expect(isFlutterBoilerplate('User.=='), isTrue);
+      expect(isFlutterBoilerplate('User.hashCode'), isTrue);
+      expect(isFlutterBoilerplate('User.toString'), isTrue);
+      expect(isFlutterBoilerplate('User.props'), isTrue);
+      expect(isFlutterBoilerplate('User.calculateTotal'), isFalse);
+    });
+
+    test('CopyMutateRule and SemanticDuplicationRule ignore copyWith methods', () async {
+      const source1 = '''
+        class UserState {
+          final String name;
+          final int age;
+          final String email;
+          final String address;
+          final bool isActive;
+          UserState({required this.name, required this.age, required this.email, required this.address, required this.isActive});
+
+          UserState copyWith({String? name, int? age, String? email, String? address, bool? isActive}) {
+            return UserState(
+              name: name ?? this.name,
+              age: age ?? this.age,
+              email: email ?? this.email,
+              address: address ?? this.address,
+              isActive: isActive ?? this.isActive,
+            );
+          }
+        }
+      ''';
+
+      const source2 = '''
+        class ProductState {
+          final String title;
+          final int count;
+          final String category;
+          final String location;
+          final bool isAvailable;
+          ProductState({required this.title, required this.count, required this.category, required this.location, required this.isAvailable});
+
+          ProductState copyWith({String? title, int? count, String? category, String? location, bool? isAvailable}) {
+            return ProductState(
+              title: title ?? this.title,
+              count: count ?? this.count,
+              category: category ?? this.category,
+              location: location ?? this.location,
+              isAvailable: isAvailable ?? this.isAvailable,
+            );
+          }
+        }
+      ''';
+
+      final unit1 = parseString(content: source1).unit;
+      final unit2 = parseString(content: source2).unit;
+
+      final units = {'user.dart': unit1, 'product.dart': unit2};
+      final sources = {'user.dart': source1, 'product.dart': source2};
+
+      const copyRule = CopyMutateRule(config: RuleConfig(enabled: true));
+      const semanticRule = SemanticDuplicationRule(config: RuleConfig(enabled: true));
+
+      final copyFindings = await copyRule.analyzeProject(units, sources);
+      final semanticFindings = await semanticRule.analyzeProject(units, sources);
+
+      expect(copyFindings, isEmpty);
+      expect(semanticFindings, isEmpty);
     });
   });
 }
