@@ -17,6 +17,7 @@ import 'package:vetro/analyzers/dart/rules/cognitive_complexity_rule.dart';
 import 'package:vetro/analyzers/dart/rules/copy_mutate_rule.dart';
 import 'package:vetro/analyzers/dart/rules/cyclomatic_complexity_rule.dart';
 import 'package:vetro/analyzers/dart/rules/eigenvector_centrality_rule.dart';
+import 'package:vetro/analyzers/dart/rules/empty_catch_rule.dart';
 import 'package:vetro/analyzers/dart/rules/fragile_test_rule.dart';
 import 'package:vetro/analyzers/dart/rules/hardcoded_ui_tokens_rule.dart';
 import 'package:vetro/analyzers/dart/rules/intent_gap_rule.dart';
@@ -30,6 +31,7 @@ import 'package:vetro/analyzers/dart/rules/performance_media_query_rule.dart';
 import 'package:vetro/analyzers/dart/rules/semantic_duplication_rule.dart';
 import 'package:vetro/analyzers/dart/rules/set_state_in_complex_builds_rule.dart';
 import 'package:vetro/analyzers/dart/rules/tight_coupling_rule.dart';
+import 'package:vetro/analyzers/dart/rules/unchecked_boundary_rule.dart';
 import 'package:vetro/analyzers/dart/rules/unreleased_controllers_rule.dart';
 import 'package:vetro/core/models/base_analyzer.dart';
 import 'package:vetro/core/models/config.dart';
@@ -141,6 +143,14 @@ final class DartAnalyzer extends BaseAnalyzer<CompilationUnit> {
     if (missingConstConfig.enabled) {
       rules.add(MissingConstConstructorsRule(config: missingConstConfig));
     }
+    final emptyCatchConfig = config.ruleConfig('empty_catch');
+    if (emptyCatchConfig.enabled) {
+      rules.add(EmptyCatchRule(config: emptyCatchConfig));
+    }
+    final uncheckedBoundaryConfig = config.ruleConfig('unchecked_boundary');
+    if (uncheckedBoundaryConfig.enabled) {
+      rules.add(UncheckedBoundaryRule(config: uncheckedBoundaryConfig));
+    }
 
     // Load remaining rules from the registry
     final legacyRules = RuleRegistry.instance.createRules(config);
@@ -155,7 +165,9 @@ final class DartAnalyzer extends BaseAnalyzer<CompilationUnit> {
           rule.id == 'unreleased_controllers' ||
           rule.id == 'hardcoded_ui_tokens' ||
           rule.id == 'setState_in_complex_builds' ||
-          rule.id == 'missing_const_constructors') {
+          rule.id == 'missing_const_constructors' ||
+          rule.id == 'empty_catch' ||
+          rule.id == 'unchecked_boundary') {
         continue;
       }
       rules.add(LegacyRuleAdapter(rule));

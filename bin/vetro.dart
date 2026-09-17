@@ -49,6 +49,18 @@ Future<void> main(List<String> arguments) async {
       abbr: 'o',
       help: 'Write report output to the specified file path.',
     )
+    ..addFlag(
+      'export-remedies',
+      negatable: false,
+      help: 'Export AI remediation prompts to .vetro/remedies.md.',
+    )
+    ..addOption(
+      'max-remedies',
+      abbr: 'm',
+      defaultsTo: '50',
+      help:
+          'Maximum number of AI remedy prompts to export (0 or "all" for unlimited).',
+    )
     ..addMultiOption(
       'exclude',
       abbr: 'e',
@@ -101,6 +113,18 @@ Future<void> main(List<String> arguments) async {
       'output',
       abbr: 'o',
       help: 'Write report output to the specified file path.',
+    )
+    ..addFlag(
+      'export-remedies',
+      negatable: false,
+      help: 'Export AI remediation prompts to .vetro/remedies.md.',
+    )
+    ..addOption(
+      'max-remedies',
+      abbr: 'm',
+      defaultsTo: '50',
+      help:
+          'Maximum number of AI remedy prompts to export (0 or "all" for unlimited).',
     )
     ..addMultiOption(
       'exclude',
@@ -288,12 +312,14 @@ Future<void> main(List<String> arguments) async {
     exit(1);
   }
 
+  final maxRemedies = _parseMaxRemedies(argResults['max-remedies'] as String?);
+
   // Format using selected reporter.
   final reporter = switch (config.outputFormat) {
     OutputFormat.terminal => const TerminalReporter(),
     OutputFormat.json => const JsonReporter(),
     OutputFormat.markdown => const MarkdownReporter(),
-    OutputFormat.prompt => const PromptReporter(),
+    OutputFormat.prompt => PromptReporter(maxRemedies: maxRemedies),
   };
 
   final formattedOutput = reporter.format(report);
@@ -315,6 +341,30 @@ Future<void> main(List<String> arguments) async {
     }
   } else {
     print(formattedOutput);
+  }
+
+  // Export remedies if flag was passed
+  final exportRemedies = argResults['export-remedies'] as bool? ?? false;
+  if (exportRemedies) {
+    try {
+      final remediesFile = File(
+        p.join(absoluteTargetPath, '.vetro', 'remedies.md'),
+      );
+      remediesFile.parent.createSync(recursive: true);
+      final promptReporter = PromptReporter(maxRemedies: maxRemedies);
+      remediesFile.writeAsStringSync(promptReporter.format(report));
+      if (config.verbose || config.outputFormat == OutputFormat.terminal) {
+        print(
+          Ansi.green('AI remedy prompts exported to: ${remediesFile.path}'),
+        );
+      }
+    } catch (e) {
+      stderr.writeln(
+        Ansi.yellow(
+          'Warning: Failed to export remedies to .vetro/remedies.md: $e',
+        ),
+      );
+    }
   }
 
   // Handle fail-on-severity exit code.
@@ -624,11 +674,13 @@ Future<void> _handleDiff(String? baseRef, ArgResults argResults) async {
     analyzedAt: report.analyzedAt,
   );
 
+  final maxRemedies = _parseMaxRemedies(argResults['max-remedies'] as String?);
+
   final reporter = switch (config.outputFormat) {
     OutputFormat.terminal => const TerminalReporter(),
     OutputFormat.json => const JsonReporter(),
     OutputFormat.markdown => const MarkdownReporter(),
-    OutputFormat.prompt => const PromptReporter(),
+    OutputFormat.prompt => PromptReporter(maxRemedies: maxRemedies),
   };
 
   final formattedOutput = reporter.format(diffReport);
@@ -638,6 +690,9 @@ Future<void> _handleDiff(String? baseRef, ArgResults argResults) async {
     try {
       final outputFile = File(outputPath);
       outputFile.writeAsStringSync(formattedOutput);
+      if (config.verbose || config.outputFormat == OutputFormat.terminal) {
+        print(Ansi.green('Report written to: $outputPath'));
+      }
     } catch (e) {
       stderr.writeln(
         Ansi.red('Error: Failed to write output to "$outputPath". Error: $e'),
@@ -646,6 +701,30 @@ Future<void> _handleDiff(String? baseRef, ArgResults argResults) async {
     }
   } else {
     print(formattedOutput);
+  }
+
+  // Export remedies if flag was passed
+  final exportRemedies = argResults['export-remedies'] as bool? ?? false;
+  if (exportRemedies) {
+    try {
+      final remediesFile = File(
+        p.join(absoluteTargetPath, '.vetro', 'remedies.md'),
+      );
+      remediesFile.parent.createSync(recursive: true);
+      final promptReporter = PromptReporter(maxRemedies: maxRemedies);
+      remediesFile.writeAsStringSync(promptReporter.format(diffReport));
+      if (config.verbose || config.outputFormat == OutputFormat.terminal) {
+        print(
+          Ansi.green('AI remedy prompts exported to: ${remediesFile.path}'),
+        );
+      }
+    } catch (e) {
+      stderr.writeln(
+        Ansi.yellow(
+          'Warning: Failed to export remedies to .vetro/remedies.md: $e',
+        ),
+      );
+    }
   }
 
   final failSeverityStr = argResults['fail-on-severity'] as String;
@@ -664,4 +743,16 @@ Future<void> _handleDiff(String? baseRef, ArgResults argResults) async {
   }
 
   exit(0);
+}
+
+/// Parses raw CLI string into an integer limit for remedies.
+///
+/// Returns 0 for unlimited ("all" or "0"). Defaults to 50 on invalid input.
+int _parseMaxRemedies(String? raw) {
+  if (raw == null || raw.trim().isEmpty || raw.trim().toLowerCase() == 'all') {
+    return 0;
+  }
+  final parsed = int.tryParse(raw.trim());
+  if (parsed == null || parsed < 0) return 50;
+  return parsed;
 }

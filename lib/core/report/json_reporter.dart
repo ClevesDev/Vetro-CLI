@@ -7,6 +7,7 @@ library;
 import 'dart:convert';
 
 import 'package:vetro/core/models/finding.dart';
+import 'package:vetro/core/report/prompt_reporter.dart';
 import 'package:vetro/core/report/reporter.dart';
 
 /// Formats a [ProjectReport] as pretty-printed JSON.
@@ -59,10 +60,11 @@ final class JsonReporter extends Reporter {
   };
 
   List<Map<String, Object>> _buildFindings(ProjectReport report) => [
-    for (final finding in report.allFindings) _findingToMap(finding),
+    for (final finding in report.allFindings)
+      _findingToMap(finding, report.projectPath),
   ];
 
-  Map<String, Object> _findingToMap(Finding finding) {
+  Map<String, Object> _findingToMap(Finding finding, String projectPath) {
     final map = <String, Object>{
       'rule_id': finding.ruleId,
       'rule_name': finding.ruleName,
@@ -71,6 +73,10 @@ final class JsonReporter extends Reporter {
       'line': finding.line,
       'column': finding.column,
       'message': finding.message,
+      'remedy_prompt': PromptReporter.buildPromptForFinding(
+        finding,
+        projectPath,
+      ),
     };
 
     if (finding.endLine != null) {

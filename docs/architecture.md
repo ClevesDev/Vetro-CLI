@@ -147,8 +147,52 @@ Presentation Layer ───> CompositeErrorMapper
 
 ---
 
-## 6. Architectural Invariants
+## 6. AST Error Handling & Debt Detection Rules
+
+To prevent error swallowing and boundary leaks, Vetro's AST Visitor enforces two core rules:
+
+### `empty_catch` (`EmptyCatchRule`)
+- **Target Node**: `CatchClause`
+- **Detection**: Flags empty catch blocks (`catch (e) {}`, `catch (_) {}`) or catch bodies that do not contain logging, a `rethrow`, a `throw`, or a delegating error mapper call.
+- **Goal**: Ensures zero silent exception swallowing across all layers.
+
+### `unchecked_boundary` (`UncheckedBoundaryRule`)
+- **Target Node**: Presentation classes (`*Controller`, `*Notifier`, `*ViewModel`, `*Bloc`, `*Cubit`, or code inside `presentation/`).
+- **Detection**: Flags methods capturing generic `Exception`, `Error`, or untyped `catch (e)` without mapping them to a domain `Failure` or calling an error mapper (`CompositeErrorMapper` / `FeatureErrorMapper`).
+- **Goal**: Guarantees raw infrastructure crashes are never exposed unformatted to presentation state or the UI.
+
+---
+
+## 7. Deterministic Prompt Remedies Engine
+
+Vetro bridges static analysis with autonomous AI refactoring by converting AST findings into deterministic, high-precision remediation prompts.
+
+### The 3-Phase Prompt Template
+Generic prompts (e.g., *"fix this catch block"*) cause LLMs to invent hallucinated patterns, swallow errors with nested try/catches, or introduce unapproved external libraries. Each Vetro finding assembles a 3-phase prompt:
+
+1. **Phase 1: Isolated Context (Enclosing Scope)**:
+   - Rather than extracting just the failing line, the AST Visitor traverses up to the enclosing `MethodDeclaration` or `FunctionDeclaration`.
+   - The LLM receives the full method signature, parameter types, and return contract, allowing it to accurately change the return type to `Result<T, E>`.
+2. **Phase 2: Negative Constraints (Prohibitions)**:
+   - Explicit instructions barring destructive AI tendencies (e.g., *"DO NOT wrap in a nested try/catch"*, *"DO NOT catch generic Exception"*, *"DO NOT add unapproved dependencies like fpdart"*, *"DO NOT expose raw errors to UI state"*).
+3. **Phase 3: Solution Contract (`vetro_core`)**:
+   - Explicit prescription of runtime primitives: `Result.guardAsync()`, `Result<T, FeatureFailure>`, `BaseFeatureErrorMapper<F>`, and `CompositeErrorMapper`.
+   - Strict output constraint: *"Return only the refactored, directly replaceable code block without conversational explanations."*
+
+### Topological Resolution Ordering
+When multiple findings exist, `.vetro/remedies.md` orders refactoring tasks by structural dependency rather than file system order:
+1. **Level 1 (Layer Architecture & Contracts)**: `boundary_violation`, `circular_dependency`
+2. **Level 2 (Data Flow & Boundary Mappers)**: `unchecked_boundary`
+3. **Level 3 (Resilient Error Handling)**: `empty_catch`
+4. **Level 4 (Control Flow & Cognitive Complexity)**: `cognitive_complexity`, `cyclomatic_complexity`, `halstead_complexity`
+5. **Level 5 (Semantic Redundancy)**: `semantic_duplication`, `copy_mutate`
+6. **Level 6+ (Modularity & Cohesion)**: `low_cohesion`, `tight_coupling`, `low_entropy`
+
+---
+
+## 8. Architectural Invariants
 
 1. **Zero-Leakage Policy**: Vetro is a universal developer tool. No domain-specific business logic, client identifiers, or private filesystem paths may ever be committed to this repository.
 2. **Deterministic Analysis**: All rules must produce identical results across operating systems, path separators, and execution environments.
 3. **Dogfooding Standard**: Every new rule and metric added to Vetro is immediately run against the Vetro codebase itself to maintain zero technical debt.
+
