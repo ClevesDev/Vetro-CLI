@@ -407,5 +407,84 @@ void main() {
       final findings = rule.analyzeFile(fileContext);
       expect(findings, isEmpty);
     });
+
+    test(
+      'does not flag widgets with dynamic string interpolation, GoogleFonts, or copyWith calls',
+      () {
+        const projectContext = ProjectContext(
+          projectPath: '.',
+          isFlutterProject: true,
+          flutterVersion: Version(3, 44, 0),
+        );
+
+        const source = '''
+        class MyWidget extends StatelessWidget {
+          final dynamic update;
+          MyWidget({required this.update});
+
+          @override
+          Widget build(BuildContext context) {
+            return Column(
+              children: [
+                Text('v\${update.currentVersion}'),
+                Text('Hello', style: GoogleFonts.outfit(color: AppColors.primary)),
+                Text('Hello', style: AppTypography.bodyMedium.copyWith(color: AppColors.primary)),
+              ],
+            );
+          }
+        }
+      ''';
+
+        final unit = parseString(content: source).unit;
+        final fileContext = FileContext(
+          filePath: 'lib/my_widget.dart',
+          sourceCode: source,
+          functions: const [],
+          classes: const [],
+          imports: const [],
+          projectContext: projectContext,
+          nativeAst: unit,
+        );
+
+        final findings = rule.analyzeFile(fileContext);
+        expect(findings, isEmpty);
+      },
+    );
+
+    test('does not flag widgets inside a const collection literal parent', () {
+      const projectContext = ProjectContext(
+        projectPath: '.',
+        isFlutterProject: true,
+        flutterVersion: Version(3, 44, 0),
+      );
+
+      const source = '''
+        class MyWidget extends StatelessWidget {
+          @override
+          Widget build(BuildContext context) {
+            return Column(
+              children: const [
+                Text('InConstList'),
+                SizedBox(width: 10),
+              ],
+            );
+          }
+        }
+      ''';
+
+      final unit = parseString(content: source).unit;
+      final fileContext = FileContext(
+        filePath: 'lib/my_widget.dart',
+        sourceCode: source,
+        functions: const [],
+        classes: const [],
+        imports: const [],
+        projectContext: projectContext,
+        nativeAst: unit,
+      );
+
+      final findings = rule.analyzeFile(fileContext);
+      expect(findings, isEmpty);
+    });
   });
 }
