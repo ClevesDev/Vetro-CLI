@@ -296,5 +296,103 @@ Future<void> fetchUser() async {
         ),
       );
     });
+
+    test('renders executive summary table and caps output with maxRemedies', () {
+      final findings = List.generate(
+        10,
+        (i) => Finding(
+          ruleId: i.isEven ? 'boundary_violation' : 'empty_catch',
+          ruleName: i.isEven ? 'Boundary Violation' : 'Empty Catch Block',
+          severity: Severity.warning,
+          filePath: tempFile.path,
+          line: i + 1,
+          message: 'Finding #$i',
+        ),
+      );
+
+      final fileReport = FileReport(
+        filePath: tempFile.path,
+        findings: findings,
+        lineCount: 30,
+        analysisTimeMs: 10,
+      );
+
+      final report = ProjectReport(
+        projectPath: tempDir.path,
+        fileReports: [fileReport],
+        totalAnalysisTimeMs: 20,
+        analyzedAt: DateTime(2026, 6, 17, 12, 0, 0),
+      );
+
+      const cappedReporter = PromptReporter(maxRemedies: 3);
+      final output = cappedReporter.format(report);
+
+      // Verify Executive Summary Table
+      expect(
+        output,
+        contains('## 📊 Resumen Ejecutivo de Deuda y Priorización Topológica'),
+      );
+      expect(
+        output,
+        contains('| Nivel | Categoría Arquitectónica | Detectados | Mostrados |'),
+      );
+      expect(
+        output,
+        contains(
+          '| **TOTAL** | **Todas las categorías** | **10** | **3** |',
+        ),
+      );
+      expect(output, contains('Protección de IDE y Ergonomía'));
+
+      // Verify exactly 3 remedies are output
+      expect(output, contains('Remedio #1:'));
+      expect(output, contains('Remedio #2:'));
+      expect(output, contains('Remedio #3:'));
+      expect(output, isNot(contains('Remedio #4:')));
+
+      // Verify footer limit notice
+      expect(output, contains('Límite de visualización alcanzado (3 / 10)'));
+    });
+
+    test('outputs all findings when maxRemedies is 0', () {
+      final findings = List.generate(
+        5,
+        (i) => Finding(
+          ruleId: 'empty_catch',
+          ruleName: 'Empty Catch Block',
+          severity: Severity.warning,
+          filePath: tempFile.path,
+          line: i + 1,
+          message: 'Catch #$i',
+        ),
+      );
+
+      final fileReport = FileReport(
+        filePath: tempFile.path,
+        findings: findings,
+        lineCount: 30,
+        analysisTimeMs: 10,
+      );
+
+      final report = ProjectReport(
+        projectPath: tempDir.path,
+        fileReports: [fileReport],
+        totalAnalysisTimeMs: 20,
+        analyzedAt: DateTime(2026, 6, 17, 12, 0, 0),
+      );
+
+      const unlimitedReporter = PromptReporter(maxRemedies: 0);
+      final output = unlimitedReporter.format(report);
+
+      expect(
+        output,
+        contains(
+          '| **TOTAL** | **Todas las categorías** | **5** | **5** |',
+        ),
+      );
+      expect(output, contains('Remedio #1:'));
+      expect(output, contains('Remedio #5:'));
+      expect(output, isNot(contains('Límite de visualización alcanzado')));
+    });
   });
 }

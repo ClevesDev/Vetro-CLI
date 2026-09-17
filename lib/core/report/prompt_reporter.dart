@@ -7,7 +7,15 @@ import 'package:vetro/core/report/reporter.dart';
 /// structured in three deterministic phases: Isolated Context, Negative Constraints,
 /// and Solution Contract (vetro_core), ordered topologically by architectural impact.
 final class PromptReporter extends Reporter {
-  const PromptReporter();
+  /// Creates a prompt reporter.
+  ///
+  /// [maxRemedies] limits the number of AI remediation prompts included in the output.
+  /// Defaults to 50 to prevent IDE memory exhaustion on large codebases.
+  /// Pass 0 for unlimited output.
+  const PromptReporter({this.maxRemedies = 50});
+
+  /// Maximum number of remedies to include in the output (0 = unlimited).
+  final int maxRemedies;
 
   @override
   String format(ProjectReport report) {
@@ -30,6 +38,13 @@ final class PromptReporter extends Reporter {
       return buffer.toString();
     }
 
+    // Calculate finding counts per topological level
+    final countsByLevel = <int, int>{};
+    for (final f in allFindings) {
+      final level = _ruleTopologicalOrder(f.ruleId);
+      countsByLevel[level] = (countsByLevel[level] ?? 0) + 1;
+    }
+
     // Topological sorting of findings by architectural impact
     final sortedFindings = List<Finding>.from(allFindings)
       ..sort((a, b) {
@@ -49,8 +64,47 @@ final class PromptReporter extends Reporter {
         return a.line.compareTo(b.line);
       });
 
+    final effectiveLimit = maxRemedies > 0
+        ? (maxRemedies < sortedFindings.length
+            ? maxRemedies
+            : sortedFindings.length)
+        : sortedFindings.length;
+    final displayedFindings = sortedFindings.take(effectiveLimit).toList();
+
+    // Calculate displayed counts per topological level
+    final displayedByLevel = <int, int>{};
+    for (final f in displayedFindings) {
+      final level = _ruleTopologicalOrder(f.ruleId);
+      displayedByLevel[level] = (displayedByLevel[level] ?? 0) + 1;
+    }
+
+    // Render Executive Summary Table
+    buffer.writeln('## 📊 Resumen Ejecutivo de Deuda y Priorización Topológica');
+    buffer.writeln();
+    buffer.writeln('| Nivel | Categoría Arquitectónica | Detectados | Mostrados |');
+    buffer.writeln('|:---:|---|:---:|:---:|');
+    for (var level = 1; level <= 6; level++) {
+      final total = countsByLevel[level] ?? 0;
+      if (total > 0) {
+        final catName = _topologicalCategoryName(level);
+        final disp = displayedByLevel[level] ?? 0;
+        buffer.writeln('| **Nivel $level** | $catName | $total | $disp |');
+      }
+    }
+    buffer.writeln(
+      '| **TOTAL** | **Todas las categorías** | **${allFindings.length}** | **${displayedFindings.length}** |',
+    );
+    buffer.writeln();
+
+    if (maxRemedies > 0 && allFindings.length > maxRemedies) {
+      buffer.writeln(
+        '> 💡 **Protección de IDE y Ergonomía:** Se muestran los **$effectiveLimit** hallazgos de mayor prioridad topológica para evitar saturar la memoria de tu editor (VS Code, Cursor, Android Studio). Para exportar todos los hallazgos o ajustar el límite, utiliza `--max-remedies <n>` o `--max-remedies 0`.',
+      );
+      buffer.writeln();
+    }
+
     var index = 1;
-    for (final finding in sortedFindings) {
+    for (final finding in displayedFindings) {
       final filePath = finding.filePath;
       final relPath = p.relative(filePath, from: report.projectPath);
       final priority = _ruleTopologicalOrder(finding.ruleId);
@@ -113,6 +167,18 @@ final class PromptReporter extends Reporter {
       buffer.writeln();
 
       index++;
+    }
+
+    if (maxRemedies > 0 && allFindings.length > maxRemedies) {
+      buffer.writeln('---');
+      buffer.writeln();
+      buffer.writeln(
+        '> ℹ️ **Límite de visualización alcanzado ($effectiveLimit / ${allFindings.length}):**',
+      );
+      buffer.writeln(
+        '> Para inspeccionar los hallazgos restantes, resuelve primero los de mayor prioridad topológica (Nivel 1 y 2) o incrementa el límite con la opción `--max-remedies <n>` (o `--max-remedies 0` para exportación completa).',
+      );
+      buffer.writeln();
     }
 
     return buffer.toString();
