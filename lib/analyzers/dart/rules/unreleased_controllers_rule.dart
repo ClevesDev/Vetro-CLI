@@ -74,13 +74,27 @@ class _ControllerVisitor extends RecursiveAstVisitor<void> {
     }
 
     final superclass = extendsClause.superclass.toString();
-    // Typical state classes: extends State<MyWidget> or State, etc.
-    final isStateClass =
-        superclass.startsWith('State') || superclass.contains('State<');
+    // Typical state classes: extends State<MyWidget> or ConsumerState<MyWidget>
+    final isStateClass = superclass == 'State' ||
+        superclass.startsWith('State<') ||
+        superclass == 'ConsumerState' ||
+        superclass.startsWith('ConsumerState<');
 
     if (!isStateClass) {
       super.visitClassDeclaration(node);
       return;
+    }
+
+    // Collect constructor-injected fields (this.foo)
+    final injectedFields = <String>{};
+    for (final member in node.members) {
+      if (member is ConstructorDeclaration) {
+        for (final param in member.parameters.parameters) {
+          if (param is FieldFormalParameter) {
+            injectedFields.add(param.name.lexeme);
+          }
+        }
+      }
     }
 
     // Map of declared controller names to their variable nodes
@@ -92,6 +106,11 @@ class _ControllerVisitor extends RecursiveAstVisitor<void> {
         final isControllerType = typeStr.endsWith('Controller');
 
         for (final variable in member.fields.variables) {
+          final varName = variable.name.lexeme;
+          if (injectedFields.contains(varName)) {
+            continue;
+          }
+
           var isController = isControllerType;
 
           if (!isController && variable.initializer != null) {
@@ -110,7 +129,7 @@ class _ControllerVisitor extends RecursiveAstVisitor<void> {
           }
 
           if (isController) {
-            declaredControllers[variable.name.lexeme] = variable;
+            declaredControllers[varName] = variable;
           }
         }
       }
@@ -168,6 +187,80 @@ class _DisposeBodyVisitor extends RecursiveAstVisitor<void> {
 
     if (methodName == 'dispose' && target != null) {
       onDisposeCall(target);
+    }
+
+    // Handle collection forEach: [_ctrl1, _ctrl2].forEach((c) => c.dispose());
+    if (methodName == 'forEach') {
+      final listTarget = node.target;
+      if (listTarget is ListLiteral && node.argumentList.arguments.isNotEmpty) {
+        final callback = node.argumentList.arguments.first;
+        if (callback is FunctionExpression) {
+          final paramName =
+              callback.parameters?.parameters.firstOrNull?.name?.lexeme;
+          if (paramName != null &&
+              _containsDisposeCallFor(callback.body, paramName)) {
+            for (final element in listTarget.elements) {
+              if (element is SimpleIdentifier) {
+                onDisposeCall(element.name);
+              }
+            }
+          }
+        }
+      }
+    }
+
+    super.visitMethodInvocation(node);
+  }
+
+  @override
+  void visitForStatement(ForStatement node) {
+    // Handle for-in loops: for (final c in [_ctrl1, _ctrl2]) { c.dispose(); }
+    final parts = node.forLoopParts;
+    if (parts is ForEachParts) {
+      final iterable = parts.iterable;
+      if (iterable is ListLiteral) {
+        String? loopVar;
+        if (parts is ForEachPartsWithDeclaration) {
+          loopVar = parts.loopVariable.name.lexeme;
+        } else if (parts is ForEachPartsWithIdentifier) {
+          loopVar = parts.identifier.name;
+        }
+
+        if (loopVar != null && _containsDisposeCallFor(node.body, loopVar)) {
+          for (final element in iterable.elements) {
+            if (element is SimpleIdentifier) {
+              onDisposeCall(element.name);
+            }
+          }
+        }
+      }
+    }
+
+    super.visitForStatement(node);
+  }
+
+  static bool _containsDisposeCallFor(AstNode body, String varName) {
+    var found = false;
+    body.accept(
+      _DisposeTargetFinder(
+        varName: varName,
+        onFound: () => found = true,
+      ),
+    );
+    return found;
+  }
+}
+
+class _DisposeTargetFinder extends RecursiveAstVisitor<void> {
+  _DisposeTargetFinder({required this.varName, required this.onFound});
+  final String varName;
+  final void Function() onFound;
+
+  @override
+  void visitMethodInvocation(MethodInvocation node) {
+    if (node.methodName.name == 'dispose' &&
+        node.target?.toString() == varName) {
+      onFound();
     }
     super.visitMethodInvocation(node);
   }
