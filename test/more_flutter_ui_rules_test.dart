@@ -145,6 +145,124 @@ void main() {
       final findings = rule.analyzeFile(fileContext);
       expect(findings, isEmpty);
     });
+
+    test('does not flag constructor-injected controllers in widgets', () {
+      const projectContext = ProjectContext(
+        projectPath: '.',
+        isFlutterProject: true,
+        flutterVersion: Version(3, 44, 0),
+      );
+
+      const source = '''
+        class EmailDomainAutocompleteField extends StatefulWidget {
+          final TextEditingController controller;
+          const EmailDomainAutocompleteField({super.key, required this.controller});
+
+          @override
+          State<EmailDomainAutocompleteField> createState() => _State();
+        }
+
+        class _State extends State<EmailDomainAutocompleteField> {
+          @override
+          Widget build(BuildContext context) {
+            return Container();
+          }
+        }
+      ''';
+
+      final unit = parseString(content: source).unit;
+      final fileContext = FileContext(
+        filePath: 'lib/my_widget.dart',
+        sourceCode: source,
+        functions: const [],
+        classes: const [],
+        imports: const [],
+        projectContext: projectContext,
+        nativeAst: unit,
+      );
+
+      final findings = rule.analyzeFile(fileContext);
+      expect(findings, isEmpty);
+    });
+
+    test('does not flag controllers disposed in for-in loop', () {
+      const projectContext = ProjectContext(
+        projectPath: '.',
+        isFlutterProject: true,
+        flutterVersion: Version(3, 44, 0),
+      );
+
+      const source = '''
+        class _MyWidgetState extends State<MyWidget> {
+          final _c1 = TextEditingController();
+          final _c2 = TextEditingController();
+          final _c3 = ScrollController();
+
+          @override
+          void dispose() {
+            for (final c in [_c1, _c2, _c3]) {
+              c.dispose();
+            }
+            super.dispose();
+          }
+
+          @override
+          Widget build(BuildContext context) => Container();
+        }
+      ''';
+
+      final unit = parseString(content: source).unit;
+      final fileContext = FileContext(
+        filePath: 'lib/my_widget.dart',
+        sourceCode: source,
+        functions: const [],
+        classes: const [],
+        imports: const [],
+        projectContext: projectContext,
+        nativeAst: unit,
+      );
+
+      final findings = rule.analyzeFile(fileContext);
+      expect(findings, isEmpty);
+    });
+
+    test('does not flag controllers disposed via forEach callback', () {
+      const projectContext = ProjectContext(
+        projectPath: '.',
+        isFlutterProject: true,
+        flutterVersion: Version(3, 44, 0),
+      );
+
+      const source = '''
+        class _MyWidgetState extends State<MyWidget> {
+          final _c1 = TextEditingController();
+          final _c2 = ScrollController();
+
+          @override
+          void dispose() {
+            [_c1, _c2].forEach((c) => c.dispose());
+            super.dispose();
+          }
+
+          @override
+          Widget build(BuildContext context) => Container();
+        }
+      ''';
+
+      final unit = parseString(content: source).unit;
+      final fileContext = FileContext(
+        filePath: 'lib/my_widget.dart',
+        sourceCode: source,
+        functions: const [],
+        classes: const [],
+        imports: const [],
+        projectContext: projectContext,
+        nativeAst: unit,
+      );
+
+      final findings = rule.analyzeFile(fileContext);
+      expect(findings, isEmpty);
+    });
   });
 
   group('HardcodedUiTokensRule', () {
