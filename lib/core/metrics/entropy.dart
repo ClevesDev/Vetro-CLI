@@ -17,12 +17,32 @@ double commentIntentRatio(String source) {
     'hack',
     'workaround',
     'todo',
+    'porque',
+    'por qué',
+    'por que',
+    'motivo',
+    'razón',
+    'razon',
+    'propósito',
+    'proposito',
+    'objetivo',
+    'nota',
+    'importante',
+    'parche',
+    'temporal',
+    'pendiente',
+    'para',
   };
 
   for (final line in lines) {
     final trimmed = line.trim();
     if (trimmed.startsWith('//') || trimmed.startsWith('///')) {
       commentCount++;
+      if (trimmed.startsWith('///') &&
+          trimmed.replaceAll(RegExp(r'[/\\*\s]'), '').length >= 20) {
+        intentCount++;
+        continue;
+      }
       final lower = trimmed.toLowerCase();
       for (final kw in intentKeywords) {
         if (lower.contains(kw)) {
