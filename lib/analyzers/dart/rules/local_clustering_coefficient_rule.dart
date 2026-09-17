@@ -75,7 +75,7 @@ final class LocalClusteringCoefficientRule extends CrossFileRule {
         .toInt();
     final minFanOut = config.options['min_fan_out'] is num
         ? (config.options['min_fan_out'] as num).toInt()
-        : 0;
+        : 2;
     final findings = <Finding>[];
 
     for (final node in graph.nodes) {

@@ -80,5 +80,45 @@ void main() {
       expect(centerFindings.first.ruleId, equals('tight_coupling'));
       expect(centerFindings.first.message, contains('tight coupling: 150.0%'));
     });
+
+    test('does not flag leaf nodes with fan-out < min_fan_out despite high fan-in', () async {
+      // Leaf tokens file imported by everyone, but importing nothing itself (fan-out: 0)
+      const sourceTokens = '';
+      const sourceA = "import 'tokens.dart';";
+      const sourceB = "import 'tokens.dart';";
+      const sourceC = "import 'tokens.dart';";
+
+      final unitTokens = parseString(content: sourceTokens).unit;
+      final unitA = parseString(content: sourceA).unit;
+      final unitB = parseString(content: sourceB).unit;
+      final unitC = parseString(content: sourceC).unit;
+
+      final root = Directory.current.path;
+      final pathTokens = p.join(root, 'lib', 'tokens.dart');
+      final pathA = p.join(root, 'lib', 'a.dart');
+      final pathB = p.join(root, 'lib', 'b.dart');
+      final pathC = p.join(root, 'lib', 'c.dart');
+
+      final units = {
+        pathTokens: unitTokens,
+        pathA: unitA,
+        pathB: unitB,
+        pathC: unitC,
+      };
+      final sources = {
+        pathTokens: sourceTokens,
+        pathA: sourceA,
+        pathB: sourceB,
+        pathC: sourceC,
+      };
+
+      const rule = TightCouplingRule(
+        config: RuleConfig(enabled: true, thresholds: {'max_coupling': 0.1}),
+      );
+      final findings = await rule.analyzeProject(units, sources);
+
+      final tokenFindings = findings.where((f) => f.filePath == pathTokens);
+      expect(tokenFindings, isEmpty);
+    });
   });
 }
