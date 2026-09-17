@@ -34,6 +34,22 @@ const _intentKeywords = [
   'hack',
   'workaround',
   'todo',
+  // Multilingual support: Spanish intent keywords
+  'porque',
+  'por qué',
+  'por que',
+  'motivo',
+  'razón',
+  'razon',
+  'propósito',
+  'proposito',
+  'objetivo',
+  'nota',
+  'importante',
+  'parche',
+  'temporal',
+  'pendiente',
+  'para',
 ];
 
 /// Detects functions with high complexity but no intent documentation.
@@ -104,8 +120,16 @@ final class IntentGapRule extends Rule {
       _ => null,
     };
 
-    if (docComment != null && _containsIntentKeyword(docComment.toString())) {
-      return true;
+    if (docComment != null) {
+      final docStr = docComment.toString();
+      if (_containsIntentKeyword(docStr)) {
+        return true;
+      }
+      // A non-trivial docstring (>= 20 characters of actual text) provides documented intent.
+      final cleanText = docStr.replaceAll(RegExp(r'[/\\*\s]'), '');
+      if (cleanText.length >= 20) {
+        return true;
+      }
     }
 
     // Check preceding and inline comments by scanning the token stream.
@@ -114,7 +138,12 @@ final class IntentGapRule extends Rule {
     // Scan preceding comments attached to the begin token.
     var comment = beginToken.precedingComments;
     while (comment != null) {
-      if (_containsIntentKeyword(comment.lexeme)) return true;
+      final text = comment.lexeme;
+      if (_containsIntentKeyword(text)) return true;
+      if (text.startsWith('///') &&
+          text.replaceAll(RegExp(r'[/\\*\s]'), '').length >= 20) {
+        return true;
+      }
       comment = comment.next as CommentToken?;
     }
 
@@ -123,6 +152,10 @@ final class IntentGapRule extends Rule {
     node.accept(visitor);
     for (final commentText in visitor.comments) {
       if (_containsIntentKeyword(commentText)) return true;
+      if (commentText.startsWith('///') &&
+          commentText.replaceAll(RegExp(r'[/\\*\s]'), '').length >= 20) {
+        return true;
+      }
     }
 
     return false;

@@ -150,6 +150,11 @@ class _BoundaryCatchVisitor extends RecursiveAstVisitor<void> {
     'UserMessage',
     'mapFailure',
     'mapError',
+    'AppError',
+    'DomainError',
+    'UiError',
+    'UIError',
+    'ErrorHandler',
   };
 
   @override
@@ -194,6 +199,14 @@ class _BoundaryCatchBodyInspector extends RecursiveAstVisitor<void> {
     'errorMapper',
     'CompositeErrorMapper',
     'FeatureErrorMapper',
+    'AppError',
+    'DomainError',
+    'UiError',
+    'UIError',
+    'ErrorHandler',
+    'fromObject',
+    'fromException',
+    'fromError',
   };
 
   @override
@@ -201,9 +214,16 @@ class _BoundaryCatchBodyInspector extends RecursiveAstVisitor<void> {
     final methodName = node.methodName.name.toLowerCase();
     final targetName = node.target?.toSource().toLowerCase() ?? '';
 
-    // Check for error mapper calls: e.g. errorMapper.map(e), mapper.map(e)
-    if ((targetName.contains('mapper') || targetName.contains('errormapper')) &&
-        (methodName == 'map' || methodName == 'mapfailure')) {
+    // Check for error mapper calls: e.g. errorMapper.map(e), mapper.map(e),
+    // and factory methods on error/failure classes e.g. AppError.fromObject(e)
+    if ((targetName.contains('mapper') ||
+            targetName.contains('error') ||
+            targetName.contains('failure') ||
+            targetName.contains('handler')) &&
+        (methodName.startsWith('map') ||
+            methodName.startsWith('from') ||
+            methodName == 'handle' ||
+            methodName == 'recorderror')) {
       hasDomainMapping = true;
     }
 

@@ -99,6 +99,50 @@ void main() {
 
       expect(findings, isEmpty);
     });
+
+    test('does not flag complex function with Spanish intent comment', () {
+      const config = RuleConfig(
+        enabled: true,
+        severity: Severity.info,
+        thresholds: {'min_complexity': 2.0},
+      );
+      const rule = IntentGapRule(config: config);
+
+      const source = '''
+        // Motivo: porque los valores negativos corresponden a reembolsos del torneo.
+        void procesarMonto(int a) {
+          if (a > 0) {
+            print('pago');
+          }
+        }
+      ''';
+      final unit = parseString(content: source).unit;
+      final findings = rule.analyze(unit, 'test.dart', source);
+
+      expect(findings, isEmpty);
+    });
+
+    test('does not flag complex function with descriptive docstring (///)', () {
+      const config = RuleConfig(
+        enabled: true,
+        severity: Severity.info,
+        thresholds: {'min_complexity': 2.0},
+      );
+      const rule = IntentGapRule(config: config);
+
+      const source = '''
+        /// Mapea y valida las respuestas devueltas por el servidor backend.
+        void mapearRespuesta(int a) {
+          if (a > 0) {
+            print('ok');
+          }
+        }
+      ''';
+      final unit = parseString(content: source).unit;
+      final findings = rule.analyze(unit, 'test.dart', source);
+
+      expect(findings, isEmpty);
+    });
   });
 
   group('Model Boilerplate Duplication Exclusion', () {

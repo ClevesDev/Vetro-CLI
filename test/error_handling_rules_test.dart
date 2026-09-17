@@ -213,6 +213,43 @@ void main() {
       expect(findings, isEmpty);
     });
 
+    test('does not flag controller delegating to AppError.fromObject or DomainError', () {
+      const source = '''
+        class PaymentController {
+          void process() {
+            try {
+              gateway.charge();
+            } catch (e) {
+              final err = AppError.fromObject(e);
+              notify(err);
+            }
+          }
+        }
+      ''';
+      final findings = rule.analyzeFile(
+        createContext(source, path: 'lib/presentation/payment_controller.dart'),
+      );
+      expect(findings, isEmpty);
+    });
+
+    test('does not flag controller delegating to ErrorHandler.handle', () {
+      const source = '''
+        class SyncNotifier {
+          void sync() {
+            try {
+              syncService.run();
+            } catch (e) {
+              ErrorHandler.handle(e);
+            }
+          }
+        }
+      ''';
+      final findings = rule.analyzeFile(
+        createContext(source, path: 'lib/presentation/sync_notifier.dart'),
+      );
+      expect(findings, isEmpty);
+    });
+
     test('does not flag non-presentation classes (e.g. data source)', () {
       const source = '''
         class RemoteUserDataSource {
