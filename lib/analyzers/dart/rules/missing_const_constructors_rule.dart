@@ -94,8 +94,87 @@ class _BuildBodyVisitor extends RecursiveAstVisitor<void> {
     'EdgeInsets',
   };
 
+  static const _knownConstClasses = {
+    'SizedBox',
+    'Spacer',
+    'Divider',
+    'VerticalDivider',
+    'Padding',
+    'Align',
+    'Center',
+    'Text',
+    'Icon',
+    'TextStyle',
+    'EdgeInsets',
+    'BorderRadius',
+    'Radius',
+    'Color',
+    'BoxDecoration',
+    'BoxConstraints',
+    'Key',
+    'Duration',
+    'Offset',
+  };
+
+  static const _excludedDynamicClasses = {
+    'GoogleFonts',
+    'Theme',
+    'MediaQuery',
+    'Navigator',
+    'ScaffoldMessenger',
+    'DateFormat',
+    'DateTime',
+    'Platform',
+    'AppColors',
+  };
+
+  static const _excludedDynamicMethods = {
+    'copyWith',
+    'withOpacity',
+    'withValues',
+    'withAlpha',
+    'of',
+    'maybeOf',
+    'format',
+    'parse',
+    'toString',
+    'toJson',
+    'fromJson',
+  };
+
   bool _isConstantExpression(Expression expr) {
+    if (expr is StringInterpolation) {
+      for (final element in expr.elements) {
+        if (element is InterpolationExpression) {
+          if (!_isConstantExpression(element.expression)) {
+            return false;
+          }
+        }
+      }
+      return true;
+    }
+
     if (expr is Literal) return true;
+
+    if (expr is PrefixExpression) {
+      return _isConstantExpression(expr.operand);
+    }
+
+    if (expr is BinaryExpression) {
+      return _isConstantExpression(expr.leftOperand) &&
+          _isConstantExpression(expr.rightOperand);
+    }
+
+    if (expr is ListLiteral) {
+      return expr.isConst ||
+          expr.elements.every(
+            (e) => e is Expression && _isConstantExpression(e),
+          );
+    }
+
+    if (expr is SetOrMapLiteral) {
+      return expr.isConst;
+    }
 
     if (expr is PrefixedIdentifier) {
       final prefix = expr.prefix.name;
@@ -104,10 +183,7 @@ class _BuildBodyVisitor extends RecursiveAstVisitor<void> {
     }
 
     if (expr is PropertyAccess) {
-      final targetStr = expr.realTarget.toString();
-      return targetStr.isNotEmpty &&
-          RegExp('^[A-Z]').hasMatch(targetStr.substring(0, 1)) &&
-          !targetStr.contains('(');
+      return false;
     }
 
     if (expr is SimpleIdentifier) {
@@ -122,9 +198,13 @@ class _BuildBodyVisitor extends RecursiveAstVisitor<void> {
       final target = expr.target;
       final methodName = expr.methodName.name;
 
+      if (_excludedDynamicMethods.contains(methodName)) {
+        return false;
+      }
+
       if (target == null) {
         // Constructor invocation without new (e.g. Text('Hello'))
-        if (_candidateConstClasses.contains(methodName)) {
+        if (_knownConstClasses.contains(methodName)) {
           var allArgsConstant = true;
           for (final arg in expr.argumentList.arguments) {
             if (!_isConstantExpression(arg)) {
@@ -136,21 +216,26 @@ class _BuildBodyVisitor extends RecursiveAstVisitor<void> {
         }
       } else {
         // Named static class constructor/factory (e.g. EdgeInsets.all(8.0))
-        final targetStr = target.toString();
-        final isStaticClass =
-            targetStr.isNotEmpty &&
-            RegExp('^[A-Z]').hasMatch(targetStr.substring(0, 1)) &&
-            !targetStr.contains('(');
-
-        if (isStaticClass) {
-          var allArgsConstant = true;
-          for (final arg in expr.argumentList.arguments) {
-            if (!_isConstantExpression(arg)) {
-              allArgsConstant = false;
-              break;
-            }
+        if (target is SimpleIdentifier) {
+          final className = target.name;
+          if (_excludedDynamicClasses.contains(className)) {
+            return false;
           }
-          return allArgsConstant;
+
+          final isStaticClass =
+              className.isNotEmpty &&
+              RegExp('^[A-Z]').hasMatch(className.substring(0, 1));
+
+          if (isStaticClass) {
+            var allArgsConstant = true;
+            for (final arg in expr.argumentList.arguments) {
+              if (!_isConstantExpression(arg)) {
+                allArgsConstant = false;
+                break;
+              }
+            }
+            return allArgsConstant;
+          }
         }
       }
       return false;
@@ -183,7 +268,8 @@ class _BuildBodyVisitor extends RecursiveAstVisitor<void> {
         var hasConstParent = false;
         var parent = node.parent;
         while (parent != null) {
-          if (parent is InstanceCreationExpression && parent.isConst) {
+          if ((parent is InstanceCreationExpression && parent.isConst) ||
+              (parent is TypedLiteral && parent.isConst)) {
             hasConstParent = true;
             break;
           }
@@ -222,14 +308,18 @@ class _BuildBodyVisitor extends RecursiveAstVisitor<void> {
       _checkConstPossibility(node, methodName, node.argumentList);
     } else {
       // Named constructor call without new (e.g. EdgeInsets.all(8.0))
-      final targetStr = target.toString();
-      final isStaticClass =
-          targetStr.isNotEmpty &&
-          RegExp('^[A-Z]').hasMatch(targetStr.substring(0, 1)) &&
-          !targetStr.contains('(');
+      if (target is SimpleIdentifier) {
+        final className = target.name;
+        if (!_excludedDynamicClasses.contains(className) &&
+            !_excludedDynamicMethods.contains(methodName)) {
+          final isStaticClass =
+              className.isNotEmpty &&
+              RegExp('^[A-Z]').hasMatch(className.substring(0, 1));
 
-      if (isStaticClass) {
-        _checkConstPossibility(node, targetStr, node.argumentList);
+          if (isStaticClass) {
+            _checkConstPossibility(node, className, node.argumentList);
+          }
+        }
       }
     }
     super.visitMethodInvocation(node);
