@@ -88,13 +88,17 @@ final class FileReport {
     required this.findings,
     required this.lineCount,
     required this.analysisTimeMs,
+    this.suppressedFindings = const [],
   });
 
   /// Absolute path to the analyzed file.
   final String filePath;
 
-  /// All findings discovered in this file.
+  /// All active findings discovered in this file.
   final List<Finding> findings;
+
+  /// Findings in this file that were suppressed by ignore directives.
+  final List<Finding> suppressedFindings;
 
   /// Total number of lines in the file.
   final int lineCount;
@@ -106,7 +110,7 @@ final class FileReport {
   int countBySeverity(Severity severity) =>
       findings.where((f) => f.severity == severity).length;
 
-  /// True if this file has no findings.
+  /// True if this file has no active findings.
   bool get isClean => findings.isEmpty;
 }
 
@@ -130,6 +134,10 @@ final class ProjectReport {
 
   /// Timestamp when analysis was performed.
   final DateTime analyzedAt;
+
+  /// Total number of findings suppressed by ignore directives.
+  int get suppressedCount =>
+      fileReports.fold(0, (sum, r) => sum + r.suppressedFindings.length);
 
   /// All findings across all files.
   List<Finding> get allFindings =>

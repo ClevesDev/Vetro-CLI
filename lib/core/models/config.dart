@@ -60,6 +60,12 @@ final class VetroConfig {
             orElse: () => Severity.warning,
           );
 
+          final exclude = <String>[];
+          final docExclude = ruleVal['exclude'];
+          if (docExclude is YamlList) {
+            exclude.addAll(docExclude.map((e) => e.toString()));
+          }
+
           final thresholds = <String, double>{};
           final docThresholds = ruleVal['thresholds'];
           if (docThresholds is YamlMap) {
@@ -74,8 +80,14 @@ final class VetroConfig {
           final options = <String, dynamic>{};
           for (final optEntry in ruleVal.entries) {
             final key = optEntry.key.toString();
-            if (key != 'enabled' && key != 'severity' && key != 'thresholds') {
+            if (key != 'enabled' &&
+                key != 'severity' &&
+                key != 'thresholds' &&
+                key != 'exclude') {
               final val = optEntry.value;
+              if (val is num) {
+                thresholds[key] = val.toDouble();
+              }
               if (val is YamlList) {
                 options[key] = val.map((e) => e.toString()).toList();
               } else if (val is YamlMap) {
@@ -91,6 +103,7 @@ final class VetroConfig {
             severity: severity,
             thresholds: thresholds,
             options: options,
+            exclude: exclude,
           );
         }
       }
@@ -271,6 +284,7 @@ final class RuleConfig {
     this.severity = Severity.warning,
     this.thresholds = const {},
     this.options = const {},
+    this.exclude = const [],
   });
 
   /// Whether this rule is active.
@@ -286,9 +300,20 @@ final class RuleConfig {
   /// Rule-specific options, keyed by option name.
   final Map<String, dynamic> options;
 
+  /// Glob patterns for files to exclude from this specific rule.
+  final List<String> exclude;
+
   /// Convenience getter for a specific threshold with a default.
-  double threshold(String key, {double defaultValue = 0.0}) =>
-      thresholds[key] ?? defaultValue;
+  double threshold(String key, {double defaultValue = 0.0}) {
+    if (thresholds.containsKey(key)) {
+      return thresholds[key]!;
+    }
+    final optVal = options[key];
+    if (optVal is num) {
+      return optVal.toDouble();
+    }
+    return defaultValue;
+  }
 }
 
 /// Output format options.

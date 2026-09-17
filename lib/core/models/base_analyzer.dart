@@ -8,6 +8,7 @@ import 'package:vetro/core/models/context.dart';
 import 'package:vetro/core/models/finding.dart';
 import 'package:vetro/core/models/project_context.dart';
 import 'package:vetro/core/rules/rule.dart';
+import 'package:vetro/core/suppression/suppression_helper.dart';
 
 /// Base class that coordinates the analysis pipeline.
 ///
@@ -118,9 +119,13 @@ abstract class BaseAnalyzer<AST> {
     for (final entry in contexts.entries) {
       final filePath = entry.key;
       final context = entry.value;
+      final relativePath = p.relative(filePath, from: projectPath);
       final findings = <Finding>[];
 
       for (final rule in singleFileRules) {
+        if (_isRuleExcluded(rule.id, relativePath, config)) {
+          continue;
+        }
         findings.addAll(rule.analyzeFile(context));
       }
 
@@ -142,22 +147,39 @@ abstract class BaseAnalyzer<AST> {
 
     // Merge cross-file findings.
     for (final finding in crossFindings) {
+      final relativePath = p.relative(finding.filePath, from: projectPath);
+      if (_isRuleExcluded(finding.ruleId, relativePath, config)) {
+        continue;
+      }
       fileFindings
           .putIfAbsent(finding.filePath, () => <Finding>[])
           .add(finding);
     }
 
-    // Step 7: Build FileReports.
+    // Step 7: Build FileReports with suppression handling.
     final fileReports = <FileReport>[];
     for (final entry in sources.entries) {
       final filePath = entry.key;
       final source = entry.value;
-      final findings = fileFindings[filePath] ?? const [];
+      final rawFindings = fileFindings[filePath] ?? const [];
+
+      final suppression = FileSuppression.fromSource(source);
+      final activeFindings = <Finding>[];
+      final suppressedFindings = <Finding>[];
+
+      for (final finding in rawFindings) {
+        if (suppression.isSuppressed(finding.ruleId, finding.line)) {
+          suppressedFindings.add(finding);
+        } else {
+          activeFindings.add(finding);
+        }
+      }
 
       fileReports.add(
         FileReport(
           filePath: filePath,
-          findings: findings,
+          findings: activeFindings,
+          suppressedFindings: suppressedFindings,
           lineCount: lineCount(source),
           analysisTimeMs: 0,
         ),
@@ -243,5 +265,16 @@ abstract class BaseAnalyzer<AST> {
   int lineCount(String source) {
     if (source.isEmpty) return 0;
     return source.split('\n').length;
+  }
+
+  bool _isRuleExcluded(String ruleId, String relativePath, VetroConfig config) {
+    final ruleConf = config.ruleConfig(ruleId);
+    if (ruleConf.exclude.isEmpty) return false;
+    for (final pattern in ruleConf.exclude) {
+      if (Glob(pattern).matches(relativePath)) {
+        return true;
+      }
+    }
+    return false;
   }
 }
