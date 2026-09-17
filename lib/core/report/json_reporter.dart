@@ -50,6 +50,7 @@ final class JsonReporter extends Reporter {
   Map<String, Object> _buildSummary(ProjectReport report) => {
     'file_count': report.fileCount,
     'line_count': report.totalLines,
+    'suppressed_count': report.suppressedCount,
     'ai_debt_score': report.aiDebtScore,
     'analysis_time_ms': report.totalAnalysisTimeMs,
     'findings_by_severity': {

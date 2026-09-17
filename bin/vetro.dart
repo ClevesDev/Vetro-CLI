@@ -739,10 +739,14 @@ Future<void> _handleDiff(String? baseRef, ArgResults argResults) async {
     final filteredFindings = fileReport.findings
         .where((f) => modifiedLines.contains(f.line))
         .toList();
+    final filteredSuppressed = fileReport.suppressedFindings
+        .where((f) => modifiedLines.contains(f.line))
+        .toList();
     filteredFileReports.add(
       FileReport(
         filePath: fileReport.filePath,
         findings: filteredFindings,
+        suppressedFindings: filteredSuppressed,
         lineCount: fileReport.lineCount,
         analysisTimeMs: fileReport.analysisTimeMs,
       ),

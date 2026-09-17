@@ -49,6 +49,9 @@ final class MarkdownReporter extends Reporter {
     buf.writeln('| **Files analyzed** | ${report.fileCount} |');
     buf.writeln('| **Lines of code** | ${formatNumber(report.totalLines)} |');
     buf.writeln('| **Analysis time** | ${timeSeconds}s |');
+    if (report.suppressedCount > 0) {
+      buf.writeln('| **Suppressed findings** | ${report.suppressedCount} |');
+    }
     buf.writeln('| **Analyzed at** | ${report.analyzedAt.toIso8601String()} |');
     buf.writeln();
   }

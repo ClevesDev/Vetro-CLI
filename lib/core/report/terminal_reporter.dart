@@ -64,6 +64,9 @@ final class TerminalReporter extends Reporter {
     buf.writeln('  Files analyzed: ${report.fileCount.toString().padLeft(8)}');
     buf.writeln('  Lines of code:  ${lines.padLeft(8)}');
     buf.writeln('  Analysis time:  ${timeSeconds.padLeft(7)}s');
+    if (report.suppressedCount > 0) {
+      buf.writeln('  Suppressed:     ${report.suppressedCount.toString().padLeft(8)}');
+    }
     buf.writeln();
   }
 
@@ -122,6 +125,15 @@ final class TerminalReporter extends Reporter {
           }
         }
       }
+      buf.writeln();
+    }
+
+    if (report.suppressedCount > 0) {
+      buf.writeln(
+        Ansi.dim(
+          '  ℹ️  ${report.suppressedCount} finding(s) suppressed by ignore comments',
+        ),
+      );
       buf.writeln();
     }
   }

@@ -35,3 +35,4 @@ export 'core/rules/intent_gap_rule.dart';
 export 'core/rules/low_entropy_rule.dart';
 export 'core/rules/rule.dart';
 export 'core/rules/rule_registry.dart';
+export 'core/suppression/suppression_helper.dart';
