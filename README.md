@@ -137,6 +137,11 @@ vetro analyze ./lib --format json      # JSON (for CI/CD)
 vetro analyze ./lib --format markdown  # Markdown (for PRs)
 ```
 
+## Documentation & Manuals
+
+* 📘 **[Configuration & Usage Manual (English)](docs/CONFIGURATION_MANUAL.md):** Complete guide covering all 24 rules, YAML schema, CLI options, inline suppressions (`// vetro:ignore`), CI/CD quality gates, and AI-Agent Compliance Contracts.
+* 📕 **[Manual de Configuración y Uso (Español)](docs/es/MANUAL_CONFIGURACION.md):** Guía completa con el catálogo de 24 reglas, esquema de `vetro.yaml`, directivas inline y contrato de cumplimiento para agentes de IA.
+
 ## Real-World Audits & Benchmarks
 
 Vetro has been heavily tested and verified against real-world projects and production pull requests to validate its metrics:
